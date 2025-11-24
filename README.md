@@ -1,109 +1,152 @@
-# Helix
+# Helix - Architecture & Planning Documentation
 
-<a alt="Nx logo" href="https://nx.dev" target="_blank" rel="noreferrer"><img src="https://raw.githubusercontent.com/nrwl/nx/master/images/nx-logo.png" width="45"></a>
+This documentation package contains complete architecture, technical decisions, and development guidelines for building a modern, modular rich text editor.
 
-✨ Your new, shiny [Nx workspace](https://nx.dev) is ready ✨.
+## 📋 Documentation Files
 
-[Learn more about this workspace setup and its capabilities](https://nx.dev/nx-api/js?utm_source=nx_project&amp;utm_medium=readme&amp;utm_campaign=nx_projects) or run `npx nx graph` to visually explore what was created. Now, let's get you up to speed!
+### Core Documentation
+1. **[00-PROJECT-OVERVIEW.md](./docs/00-PROJECT-OVERVIEW.md)** - Vision, goals, and project scope
+2. **[01-TECH-STACK.md](./docs/01-TECH-STACK.md)** - All technology decisions with rationale
+3. **[02-ARCHITECTURE.md](./docs/02-ARCHITECTURE.md)** - Domain-Driven Design model and system architecture
+4. **[03-MONOREPO-STRUCTURE.md](./docs/03-MONOREPO-STRUCTURE.md)** - Package organization and structure
 
-## Generate a library
+### Development Process
+5. **[04-TESTING-STRATEGY.md](./docs/04-TESTING-STRATEGY.md)** - TDD approach and test levels
+6. **[05-CI-CD.md](./docs/05-CI-CD.md)** - Continuous Integration and Deployment pipelines
+7. **[06-GITHUB-WORKFLOW.md](./docs/06-GITHUB-WORKFLOW.md)** - Agile process and issue management
+8. **[07-DEVELOPMENT-GUIDE.md](./docs/07-DEVELOPMENT-GUIDE.md)** - Day-to-day development practices
 
-```sh
-npx nx g @nx/js:lib packages/pkg1 --publishable --importPath=@my-org/pkg1
+### Future Planning
+9. **[08-TODO-FUTURE.md](./docs/08-TODO-FUTURE.md)** - Deferred decisions and future features
+
+## 🎯 Quick Start for Claude Code
+
+### Before Coding
+1. Read **00-PROJECT-OVERVIEW.md** for vision
+2. Review **02-ARCHITECTURE.md** for domain model
+3. Check **07-DEVELOPMENT-GUIDE.md** for workflow
+
+### Key Principles
+- ✅ **Domain-Driven Design** - Respect bounded contexts
+- ✅ **Test-Driven Development** - Write tests first
+- ✅ **Monorepo Structure** - Keep packages independent
+- ✅ **Type Safety** - TypeScript strict mode
+- ✅ **Documentation** - Code is self-documenting
+
+### Tech Stack Summary
+- **Language**: TypeScript (strict)
+- **Package Manager**: pnpm
+- **Monorepo**: Nx
+- **Build**: @nx/rollup
+- **Testing**: Vitest + Playwright
+- **Core Engine**: ProseMirror
+
+## 📐 Architecture Overview
+
+### 4 Bounded Contexts
+1. **Document Domain** - Content structure and validation
+2. **Editor Domain** - Editor engine and state
+3. **Extension Domain** - Plugin system
+4. **Serialization Domain** - Format conversion
+
+### Package Structure
+```
+packages/
+├── core/              # @helix/core
+├── extensions/        # @helix/extension-*
+│   ├── bold/
+│   ├── italic/
+│   └── ...
+├── react/            # @helix/react
+├── vue/              # @helix/vue
+└── vanilla/          # @helix/vanilla
 ```
 
-## Run tasks
+## 🧪 Development Workflow
 
-To build the library use:
+### TDD Cycle
+1. **RED** - Write failing test
+2. **GREEN** - Minimal implementation
+3. **REFACTOR** - Improve code
 
-```sh
-npx nx build pkg1
-```
+### GitHub Workflow
+1. Pick issue from "Ready" column
+2. Create feature branch
+3. Follow TDD process
+4. Create Pull Request
+5. Code review
+6. Merge to develop
 
-To run any task with Nx use:
+## 📝 How to Use This Documentation
 
-```sh
-npx nx <target> <project-name>
-```
+### For Project Setup
+→ Read 00-03 (Overview, Tech Stack, Architecture, Structure)
 
-These targets are either [inferred automatically](https://nx.dev/concepts/inferred-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) or defined in the `project.json` or `package.json` files.
+### For Development
+→ Read 04-07 (Testing, CI/CD, GitHub Workflow, Development Guide)
 
-[More about running tasks in the docs &raquo;](https://nx.dev/features/run-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+### For Planning
+→ Read 08 (TODO & Future)
 
-## Versioning and releasing
+## 🔄 Keeping Documentation Updated
 
-To version and release the library use
+This documentation is a living guide:
+- Update when making architectural decisions
+- Document new patterns as they emerge
+- Add to TODO when deferring decisions
+- Review quarterly for accuracy
 
-```
-npx nx release
-```
+## 🎓 Learning Resources
 
-Pass `--dry-run` to see what would happen without actually releasing the library.
+### Domain-Driven Design
+- "Domain-Driven Design" by Eric Evans
+- "Implementing Domain-Driven Design" by Vaughn Vernon
 
-[Learn more about Nx release &raquo;](https://nx.dev/features/manage-releases?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+### Test-Driven Development
+- "Test Driven Development: By Example" by Kent Beck
+- "Growing Object-Oriented Software, Guided by Tests" by Freeman & Pryce
 
-## Keep TypeScript project references up to date
+### ProseMirror
+- [ProseMirror Guide](https://prosemirror.net/docs/guide/)
+- [ProseMirror Examples](https://prosemirror.net/examples/)
 
-Nx automatically updates TypeScript [project references](https://www.typescriptlang.org/docs/handbook/project-references.html) in `tsconfig.json` files to ensure they remain accurate based on your project dependencies (`import` or `require` statements). This sync is automatically done when running tasks such as `build` or `typecheck`, which require updated references to function correctly.
+### Monorepos
+- [Nx Documentation](https://nx.dev/)
+- [Monorepo.tools](https://monorepo.tools/)
 
-To manually trigger the process to sync the project graph dependencies information to the TypeScript project references, run the following command:
+## 🤝 Contributing
 
-```sh
-npx nx sync
-```
+When adding to this documentation:
+1. Keep it concise and actionable
+2. Provide examples where helpful
+3. Explain *why*, not just *what*
+4. Update the README if adding new files
 
-You can enforce that the TypeScript project references are always in the correct state when running in CI by adding a step to your CI job configuration that runs the following command:
+## 📄 License
 
-```sh
-npx nx sync:check
-```
+Helix follows an **open-core model**:
 
-[Learn more about nx sync](https://nx.dev/reference/nx-commands#sync)
+### Open Source (MIT License)
+The following packages are freely available under MIT License:
+- Core packages (`@helix/core`)
+- Basic extensions (`@helix/extension-bold`, `@helix/extension-italic`, etc.)
+- Framework bindings (`@helix/react`, `@helix/vue`, `@helix/vanilla`)
+- Self-hosted collaboration backend
 
-## Set up CI!
+### Commercial License (v1.0+)
+Premium extensions and cloud services require a commercial license:
+- AI extensions (`@helix/extension-ai`)
+- Advanced collaboration features
+- Helix Cloud (managed hosting)
 
-### Step 1
+See individual package `LICENSE` files for specific terms.
 
-To connect to Nx Cloud, run the following command:
+**For v0.1 - v1.0:** Everything is MIT licensed and free.
 
-```sh
-npx nx connect
-```
+---
 
-Connecting to Nx Cloud ensures a [fast and scalable CI](https://nx.dev/ci/intro/why-nx-cloud?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) pipeline. It includes features such as:
+**Version**: 1.0.0
+**Last Updated**: November 2025
+**Maintained By**: Project Team
 
-- [Remote caching](https://nx.dev/ci/features/remote-cache?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Task distribution across multiple machines](https://nx.dev/ci/features/distribute-task-execution?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Automated e2e test splitting](https://nx.dev/ci/features/split-e2e-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Task flakiness detection and rerunning](https://nx.dev/ci/features/flaky-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-### Step 2
-
-Use the following command to configure a CI workflow for your workspace:
-
-```sh
-npx nx g ci-workflow
-```
-
-[Learn more about Nx on CI](https://nx.dev/ci/intro/ci-with-nx#ready-get-started-with-your-provider?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-## Install Nx Console
-
-Nx Console is an editor extension that enriches your developer experience. It lets you run tasks, generate code, and improves code autocompletion in your IDE. It is available for VSCode and IntelliJ.
-
-[Install Nx Console &raquo;](https://nx.dev/getting-started/editor-setup?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-## Useful links
-
-Learn more:
-
-- [Learn more about this workspace setup](https://nx.dev/nx-api/js?utm_source=nx_project&amp;utm_medium=readme&amp;utm_campaign=nx_projects)
-- [Learn about Nx on CI](https://nx.dev/ci/intro/ci-with-nx?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Releasing Packages with Nx release](https://nx.dev/features/manage-releases?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [What are Nx plugins?](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-And join the Nx community:
-- [Discord](https://go.nx.dev/community)
-- [Follow us on X](https://twitter.com/nxdevtools) or [LinkedIn](https://www.linkedin.com/company/nrwl)
-- [Our Youtube channel](https://www.youtube.com/@nxdevtools)
-- [Our blog](https://nx.dev/blog?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+For questions or clarifications, please create a GitHub issue.
