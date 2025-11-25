@@ -19,6 +19,14 @@ export class Fragment<TNode extends Node> {
     return this.content.length;
   }
 
+  get firstChild(): TNode | undefined {
+    return this.content[0];
+  }
+
+  get lastChild(): TNode | undefined {
+    return this.content[this.content.length - 1];
+  }
+
   child(index: number): TNode {
     if (index < 0 || index >= this.content.length) {
       throw new Error(

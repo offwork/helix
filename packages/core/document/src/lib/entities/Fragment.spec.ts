@@ -56,4 +56,32 @@ describe('Fragment', () => {
       );
     });
   });
+
+  describe('firstChild and lastChild', () => {
+    it('returns first and last child', () => {
+      const node1 = new Node(new NodeType('paragraph'), { text: 'First' });
+      const node2 = new Node(new NodeType('paragraph'), { text: 'Middle' });
+      const node3 = new Node(new NodeType('paragraph'), { text: 'Last' });
+
+      const fragment = Fragment.from([node1, node2, node3]);
+
+      expect(fragment.firstChild).toBe(node1);
+      expect(fragment.lastChild).toBe(node3);
+    });
+
+    it('returns undefined for empty fragment', () => {
+      const fragment = Fragment.empty<Node>();
+
+      expect(fragment.firstChild).toBeUndefined();
+      expect(fragment.lastChild).toBeUndefined();
+    });
+
+    it('returns same node when fragment has one child', () => {
+      const node = new Node(new NodeType('paragraph'), { text: 'Only' });
+      const fragment = Fragment.from([node]);
+
+      expect(fragment.firstChild).toBe(node);
+      expect(fragment.lastChild).toBe(node);
+    });
+  });
 });
