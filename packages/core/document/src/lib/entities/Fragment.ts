@@ -35,4 +35,8 @@ export class Fragment<TNode extends Node> {
     }
     return this.content[index];
   }
+
+  forEach(callback: (node: TNode, index: number) => void): void {
+    this.content.forEach(callback);
+  }
 }
