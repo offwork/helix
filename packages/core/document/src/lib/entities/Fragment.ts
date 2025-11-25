@@ -21,7 +21,9 @@ export class Fragment<TNode extends Node> {
 
   child(index: number): TNode {
     if (index < 0 || index >= this.content.length) {
-      throw new Error('Index out of bounds');
+      throw new Error(
+        `Index out of bounds: ${index} (size: ${this.content.length})`
+      );
     }
     return this.content[index];
   }

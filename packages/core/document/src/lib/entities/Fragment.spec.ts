@@ -38,7 +38,9 @@ describe('Fragment', () => {
         new Node(new NodeType('paragraph'), { text: 'Hello' }),
       ]);
 
-      expect(() => fragment.child(-1)).toThrow('Index out of bounds');
+      expect(() => fragment.child(-1)).toThrow(
+        'Index out of bounds: -1 (size: 1)'
+      );
     });
 
     it('throws on index >= size', () => {
@@ -46,8 +48,12 @@ describe('Fragment', () => {
         new Node(new NodeType('paragraph'), { text: 'Hello' }),
       ]);
 
-      expect(() => fragment.child(1)).toThrow('Index out of bounds');
-      expect(() => fragment.child(5)).toThrow('Index out of bounds');
+      expect(() => fragment.child(1)).toThrow(
+        'Index out of bounds: 1 (size: 1)'
+      );
+      expect(() => fragment.child(5)).toThrow(
+        'Index out of bounds: 5 (size: 1)'
+      );
     });
   });
 });
