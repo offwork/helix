@@ -84,4 +84,44 @@ describe('Fragment', () => {
       expect(fragment.lastChild).toBe(node);
     });
   });
+
+  describe('forEach', () => {
+    it('iterates over all children', () => {
+      const node1 = new Node(new NodeType('paragraph'), { text: 'First' });
+      const node2 = new Node(new NodeType('paragraph'), { text: 'Second' });
+      const node3 = new Node(new NodeType('paragraph'), { text: 'Third' });
+      const fragment = Fragment.from([node1, node2, node3]);
+
+      const visited: Node[] = [];
+      fragment.forEach((node) => {
+        visited.push(node);
+      });
+
+      expect(visited).toEqual([node1, node2, node3]);
+    });
+
+    it('passes index to callback', () => {
+      const node1 = new Node(new NodeType('paragraph'), { text: 'First' });
+      const node2 = new Node(new NodeType('paragraph'), { text: 'Second' });
+      const fragment = Fragment.from([node1, node2]);
+
+      const indces: number[] = [];
+      fragment.forEach((node, index) => {
+        indces.push(index);
+      });
+
+      expect(indces).toEqual([0, 1]);
+    });
+
+    it('does nothing for empty fragment', () => {
+      const fragment = Fragment.empty<Node>();
+
+      const visited: Node[] = [];
+      fragment.forEach((node) => {
+        visited.push(node);
+      });
+
+      expect(visited).toEqual([]);
+    });
+  });
 });
