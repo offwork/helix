@@ -176,7 +176,9 @@ describe('Fragment', () => {
         new Node(new NodeType('paragraph'), { text: 'First' }),
       ]);
 
-      expect(() => fragment.slice(-1, 1)).toThrow('Invalid slice range');
+      expect(() => fragment.slice(-1, 1)).toThrow(
+        'Invalid slice range: [-1, 1) (size: 1)'
+      );
     });
 
     it('throws when to exceeds size', () => {
@@ -184,7 +186,9 @@ describe('Fragment', () => {
         new Node(new NodeType('paragraph'), { text: 'First' }),
       ]);
 
-      expect(() => fragment.slice(0, 5)).toThrow('Invalid slice range');
+      expect(() => fragment.slice(0, 5)).toThrow(
+        'Invalid slice range: [0, 5) (size: 1)'
+      );
     });
 
     it('throws when from is greater than to', () => {
@@ -192,7 +196,9 @@ describe('Fragment', () => {
         new Node(new NodeType('paragraph'), { text: 'First' }),
       ]);
 
-      expect(() => fragment.slice(1, 0)).toThrow('Invalid slice range');
+      expect(() => fragment.slice(1, 0)).toThrow(
+        'Invalid slice range: [1, 0) (size: 1)'
+      );
     });
   });
 });

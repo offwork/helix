@@ -42,7 +42,9 @@ export class Fragment<TNode extends Node> {
 
   slice(from: number, to: number): Fragment<TNode> {
     if (from < 0 || to > this.content.length || from > to) {
-      throw new Error('Invalid slice range');
+      throw new Error(
+        `Invalid slice range: [${from}, ${to}) (size: ${this.content.length})`
+      );
     }
 
     return new Fragment<TNode>(this.content.slice(from, to));
