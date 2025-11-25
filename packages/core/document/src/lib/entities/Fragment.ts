@@ -12,7 +12,7 @@ export class Fragment<TNode extends Node> {
   }
 
   static from<TNode extends Node>(nodes: readonly TNode[]): Fragment<TNode> {
-    return new Fragment<TNode>(nodes);
+    return new Fragment<TNode>([...nodes]); // Defensive copy
   }
 
   get size(): number {
