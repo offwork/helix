@@ -39,4 +39,12 @@ export class Fragment<TNode extends Node> {
   forEach(callback: (node: TNode, index: number) => void): void {
     this.content.forEach(callback);
   }
+
+  slice(from: number, to: number): Fragment<TNode> {
+    if (from < 0 || to > this.content.length || from > to) {
+      throw new Error('Invalid slice range');
+    }
+
+    return new Fragment<TNode>(this.content.slice(from, to));
+  }
 }

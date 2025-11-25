@@ -124,4 +124,75 @@ describe('Fragment', () => {
       expect(visited).toEqual([]);
     });
   });
+
+  describe('slice', () => {
+    it('slices fragment with valid range', () => {
+      const node1 = new Node(new NodeType('paragraph'), { text: 'First' });
+      const node2 = new Node(new NodeType('paragraph'), { text: 'Second' });
+      const node3 = new Node(new NodeType('paragraph'), { text: 'Third' });
+      const node4 = new Node(new NodeType('paragraph'), { text: 'Fourth' });
+      const fragment = Fragment.from([node1, node2, node3, node4]);
+
+      const slice = fragment.slice(1, 3);
+
+      expect(slice.size).toBe(2);
+      expect(slice.child(0)).toBe(node2);
+      expect(slice.child(1)).toBe(node3);
+    });
+
+    it('slices from start when from is 0', () => {
+      const node1 = new Node(new NodeType('paragraph'), { text: 'First' });
+      const node2 = new Node(new NodeType('paragraph'), { text: 'Second' });
+      const fragment = Fragment.from([node1, node2]);
+
+      const slice = fragment.slice(0, 1);
+
+      expect(slice.size).toBe(1);
+      expect(slice.child(0)).toBe(node1);
+    });
+
+    it('slices to end when to equals size', () => {
+      const node1 = new Node(new NodeType('paragraph'), { text: 'First' });
+      const node2 = new Node(new NodeType('paragraph'), { text: 'Second' });
+      const fragment = Fragment.from([node1, node2]);
+
+      const slice = fragment.slice(1, 2);
+
+      expect(slice.size).toBe(1);
+      expect(slice.child(0)).toBe(node2);
+    });
+
+    it('returns empty fragment when from equals to', () => {
+      const node = new Node(new NodeType('paragraph'), { text: 'First' });
+      const fragment = Fragment.from([node]);
+
+      const slice = fragment.slice(0, 0);
+
+      expect(slice.size).toBe(0);
+    });
+
+    it('throws when from is negative', () => {
+      const fragment = Fragment.from([
+        new Node(new NodeType('paragraph'), { text: 'First' }),
+      ]);
+
+      expect(() => fragment.slice(-1, 1)).toThrow('Invalid slice range');
+    });
+
+    it('throws when to exceeds size', () => {
+      const fragment = Fragment.from([
+        new Node(new NodeType('paragraph'), { text: 'First' }),
+      ]);
+
+      expect(() => fragment.slice(0, 5)).toThrow('Invalid slice range');
+    });
+
+    it('throws when from is greater than to', () => {
+      const fragment = Fragment.from([
+        new Node(new NodeType('paragraph'), { text: 'First' }),
+      ]);
+
+      expect(() => fragment.slice(1, 0)).toThrow('Invalid slice range');
+    });
+  });
 });
