@@ -11,6 +11,10 @@ export class Fragment<TNode extends Node> {
     return new Fragment<TNode>([]);
   }
 
+  static from<TNode extends Node>(nodes: readonly TNode[]): Fragment<TNode> {
+    return new Fragment<TNode>(nodes);
+  }
+
   get size(): number {
     return this.content.length;
   }
