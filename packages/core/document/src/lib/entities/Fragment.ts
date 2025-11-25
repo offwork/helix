@@ -1,4 +1,4 @@
-import { Node } from "./Node";
+import { Node } from './Node';
 
 export class Fragment<TNode extends Node> {
   private readonly content: readonly TNode[];
@@ -17,5 +17,12 @@ export class Fragment<TNode extends Node> {
 
   get size(): number {
     return this.content.length;
+  }
+
+  child(index: number): TNode {
+    if (index < 0 || index >= this.content.length) {
+      throw new Error('Index out of bounds');
+    }
+    return this.content[index];
   }
 }
