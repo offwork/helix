@@ -3,7 +3,7 @@ export class Mark<TAttrs = Record<string, unknown>> {
   readonly attrs: TAttrs;
   constructor(type: string, attrs: TAttrs) {
     if (typeof type !== 'string') throw new Error('Type must be a string');
-    if (typeof attrs !== 'object' || attrs === null)
+    if (typeof attrs !== 'object' || attrs === null || Array.isArray(attrs))
       throw new Error('Attrs must be an object');
 
     this.attrs = { ...attrs } as TAttrs;
