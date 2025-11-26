@@ -11,5 +11,9 @@ describe('Mark Value Object', () => {
       expect(mark.type).toBe('bold');
       expect(mark.attrs).toEqual({ color: 'purple' });
     });
+
+    it('should throw when type is null', () => {
+      expect(() => new Mark(null as never, {})).toThrow('Type must be a string');
+    });
   });
 });
