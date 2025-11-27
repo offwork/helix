@@ -36,4 +36,13 @@ describe('Mark Value Object', () => {
       );
     });
   });
+
+  describe('Equals', () => {
+    it('should return true for marks with same type and attrs', () => {
+      const mark1 = new Mark('bold', { color: 'purple' });
+      const mark2 = new Mark('bold', { color: 'purple' });
+
+      expect(mark1.equals(mark2)).toBe(true);
+    });
+  });
 });
