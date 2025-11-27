@@ -9,4 +9,8 @@ export class Mark<TAttrs = Record<string, unknown>> {
     this.attrs = { ...attrs } as TAttrs;
     this.type = type;
   }
+
+  equals(other: Mark<TAttrs>): boolean {
+    return other.type === this.type && JSON.stringify(this.attrs) === JSON.stringify(other.attrs);
+  }
 }
