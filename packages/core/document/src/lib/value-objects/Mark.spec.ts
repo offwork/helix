@@ -37,12 +37,28 @@ describe('Mark Value Object', () => {
     });
   });
 
-  describe('Equals', () => {
+  describe('Equality', () => {
     it('should return true for marks with same type and attrs', () => {
       const mark1 = new Mark('bold', { color: 'purple' });
       const mark2 = new Mark('bold', { color: 'purple' });
 
       expect(mark1.equals(mark2)).toBe(true);
+    });
+
+    it('should throw when comparing with null', () => {
+      const mark = new Mark('bold', { color: 'purple' });
+
+      expect(mark.equals(null as never)).toThrow(
+        'Mark cannot be null or undefined'
+      );
+    });
+
+    it('should throw when comparing with undefined', () => {
+      const mark = new Mark('bold', { color: 'purple' });
+
+      expect(mark.equals(undefined as never)).toThrow(
+        'Mark cannot be null or undefined'
+      );
     });
   });
 });
