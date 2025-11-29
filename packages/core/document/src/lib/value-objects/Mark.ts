@@ -32,6 +32,9 @@ export class Mark<TAttrs = Record<string, unknown>> {
    * ```
    */
   equals(other: Mark<TAttrs>): boolean {
+    if (other === null || other === undefined)
+      throw new Error('Mark cannot be null or undefined');
+
     if (other.type !== this.type) {
       return false;
     }

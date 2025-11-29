@@ -48,7 +48,7 @@ describe('Mark Value Object', () => {
     it('should throw when comparing with null', () => {
       const mark = new Mark('bold', { color: 'purple' });
 
-      expect(mark.equals(null as never)).toThrow(
+      expect(() => mark.equals(null as never)).toThrow(
         'Mark cannot be null or undefined'
       );
     });
@@ -56,9 +56,32 @@ describe('Mark Value Object', () => {
     it('should throw when comparing with undefined', () => {
       const mark = new Mark('bold', { color: 'purple' });
 
-      expect(mark.equals(undefined as never)).toThrow(
+      expect(() => mark.equals(undefined as never)).toThrow(
         'Mark cannot be null or undefined'
       );
+    });
+
+    it('should return false for different types', () => {
+      const mark1 = new Mark('bold', { color: 'red' });
+      const mark2 = new Mark('italic', { color: 'red' });
+      expect(mark1.equals(mark2)).toBe(false);
+    });
+
+    it('should return false for different attrs', () => {
+      const mark1 = new Mark('bold', { color: 'red' });
+      const mark2 = new Mark('bold', { color: 'blue' });
+      expect(mark1.equals(mark2)).toBe(false);
+    });
+
+    it('should return true for self comparison', () => {
+      const mark = new Mark('bold', { color: 'red' });
+      expect(mark.equals(mark)).toBe(true);
+    });
+
+    it('should handle empty attrs equality', () => {
+      const mark1 = new Mark('bold', {});
+      const mark2 = new Mark('bold', {});
+      expect(mark1.equals(mark2)).toBe(true);
     });
   });
 });
