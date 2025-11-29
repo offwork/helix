@@ -1,37 +1,41 @@
 import { Mark } from './Mark';
 
+function createMark<TAttrs = Record<string, unknown>>(
+  type: string,
+  attrs: TAttrs
+): Mark<TAttrs> {
+  return new Mark(type, attrs);
+}
+
 describe('Mark Value Object', () => {
   describe('Construction', () => {
     it('should create mark with type and attrs', () => {
-      const type = 'bold';
-      const attrs = { color: 'purple' };
-
-      const mark = new Mark(type, attrs);
+      const mark = createMark('bold', { color: 'purple' });
 
       expect(mark.type).toBe('bold');
       expect(mark.attrs).toEqual({ color: 'purple' });
     });
 
     it('should throw when type is null', () => {
-      expect(() => new Mark(null as never, {})).toThrow(
+      expect(() => createMark(null as never, {})).toThrow(
         'Type must be a string'
       );
     });
 
     it('should throw when type is undefined', () => {
-      expect(() => new Mark(undefined as never, {})).toThrow(
+      expect(() => createMark(undefined as never, {})).toThrow(
         'Type must be a string'
       );
     });
 
     it('should throw when attrs is null', () => {
-      expect(() => new Mark('bold', null as never)).toThrow(
+      expect(() => createMark('bold', null as never)).toThrow(
         'Attrs must be an object'
       );
     });
 
     it('should throw when attrs is undefined', () => {
-      expect(() => new Mark('bold', undefined as never)).toThrow(
+      expect(() => createMark('bold', undefined as never)).toThrow(
         'Attrs must be an object'
       );
     });
@@ -39,49 +43,43 @@ describe('Mark Value Object', () => {
 
   describe('Equality', () => {
     it('should return true for marks with same type and attrs', () => {
-      const mark1 = new Mark('bold', { color: 'purple' });
-      const mark2 = new Mark('bold', { color: 'purple' });
+      const mark = createMark('bold', { color: 'purple' });
+      const mark2 = createMark('bold', { color: 'purple' });
 
-      expect(mark1.equals(mark2)).toBe(true);
+      expect(mark.equals(mark2)).toBe(true);
     });
 
     it('should throw when comparing with null', () => {
-      const mark = new Mark('bold', { color: 'purple' });
-
-      expect(() => mark.equals(null as never)).toThrow(
-        'Mark cannot be null or undefined'
-      );
+      expect(() =>
+        createMark('bold', { color: 'purple' }).equals(null as never)
+      ).toThrow('Mark cannot be null or undefined');
     });
 
     it('should throw when comparing with undefined', () => {
-      const mark = new Mark('bold', { color: 'purple' });
-
-      expect(() => mark.equals(undefined as never)).toThrow(
-        'Mark cannot be null or undefined'
-      );
+      expect(() =>
+        createMark('bold', { color: 'purple' }).equals(undefined as never)
+      ).toThrow('Mark cannot be null or undefined');
     });
 
     it('should return false for different types', () => {
-      const mark1 = new Mark('bold', { color: 'red' });
-      const mark2 = new Mark('italic', { color: 'red' });
-      expect(mark1.equals(mark2)).toBe(false);
+      const mark = createMark('bold', { color: 'purple' });
+      const mark2 = createMark('italic', { color: 'red' });
+      expect(mark.equals(mark2)).toBe(false);
     });
 
     it('should return false for different attrs', () => {
-      const mark1 = new Mark('bold', { color: 'red' });
-      const mark2 = new Mark('bold', { color: 'blue' });
-      expect(mark1.equals(mark2)).toBe(false);
+      const mark = createMark('bold', { color: 'purple' });
+      const mark2 = createMark('bold', { color: 'blue' });
+      expect(mark.equals(mark2)).toBe(false);
     });
 
     it('should return true for self comparison', () => {
-      const mark = new Mark('bold', { color: 'red' });
+      const mark = createMark('bold', { color: 'purple' });
       expect(mark.equals(mark)).toBe(true);
     });
 
     it('should handle empty attrs equality', () => {
-      const mark1 = new Mark('bold', {});
-      const mark2 = new Mark('bold', {});
-      expect(mark1.equals(mark2)).toBe(true);
+      expect(createMark('', {}).equals(createMark('', {}))).toBe(true);
     });
   });
 });
