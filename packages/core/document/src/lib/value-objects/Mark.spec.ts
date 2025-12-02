@@ -1,6 +1,6 @@
 import { Mark } from './Mark';
 
-function createMark<TAttrs = Record<string, unknown>>(
+function createMark<TAttrs extends Record<string, unknown>>(
   type: string,
   attrs: TAttrs
 ): Mark<TAttrs> {

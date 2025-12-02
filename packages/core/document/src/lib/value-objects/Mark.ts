@@ -1,4 +1,4 @@
-export class Mark<TAttrs = Record<string, unknown>> {
+export class Mark<TAttrs extends Record<string, unknown> = Record<string, unknown>> {
   readonly type: string;
   readonly attrs: TAttrs;
   constructor(type: string, attrs: TAttrs) {
@@ -32,12 +32,7 @@ export class Mark<TAttrs = Record<string, unknown>> {
    * ```
    */
   equals(other: Mark<TAttrs>): boolean {
-    if (other === null || other === undefined)
-      throw new Error('Mark cannot be null or undefined');
-
-    if (other.type !== this.type) {
-      return false;
-    }
+    if (!this.validateMark(other)) return false;
 
     const thisKeys = Object.keys(this.attrs as object);
     const otherKeys = Object.keys(other.attrs as object);
@@ -53,16 +48,20 @@ export class Mark<TAttrs = Record<string, unknown>> {
     });
   }
 
-  merge<TOther extends Record<string, unknown>>(other: Mark<TOther>): Mark<TAttrs & TOther> | null {
-    if (other === null || other === undefined)
-      throw new Error('Mark cannot be null or undefined');
-
-    if (other.type !== this.type) {
-      return null;
-    }
+  merge<TOther extends Record<string, unknown>>(
+    other: Mark<TOther>
+  ): Mark<TAttrs & TOther> | null {
+    if (!this.validateMark(other)) return null;
 
     const attrs = { ...this.attrs, ...other.attrs };
 
     return new Mark(other.type, attrs);
+  }
+
+  private validateMark(other: Mark<Record<string, unknown>>): boolean {
+    if (other === null || other === undefined)
+      throw new Error('Mark cannot be null or undefined');
+
+    return this.type === other.type;
   }
 }
