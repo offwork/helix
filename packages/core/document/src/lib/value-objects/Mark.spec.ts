@@ -91,8 +91,8 @@ describe('Mark Value Object', () => {
       const merged = mark1.merge(mark2);
 
       expect(merged).not.toBeNull();
-      expect(merged.type).toBe('link');
-      expect(merged.attrs).toBe({ href: 'example.com', title: 'Example' });
+      expect(merged?.type).toBe('link');
+      expect(merged?.attrs).toEqual({ href: 'example.com', title: 'Example' });
     });
 
     it('should return null for different types', () => {
@@ -109,7 +109,7 @@ describe('Mark Value Object', () => {
       const merged = mark1.merge(mark2);
 
       expect(merged).not.toBeNull();
-      expect(merged.attrs).toEqual({ href: 'new.com', title: 'Old' });
+      expect(merged?.attrs).toEqual({ href: 'new.com', title: 'Old' });
     });
 
     it('should throw when merging with null', () => {

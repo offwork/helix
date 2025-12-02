@@ -52,4 +52,17 @@ export class Mark<TAttrs = Record<string, unknown>> {
       );
     });
   }
+
+  merge<TOther extends Record<string, unknown>>(other: Mark<TOther>): Mark<TAttrs & TOther> | null {
+    if (other === null || other === undefined)
+      throw new Error('Mark cannot be null or undefined');
+
+    if (other.type !== this.type) {
+      return null;
+    }
+
+    const attrs = { ...this.attrs, ...other.attrs };
+
+    return new Mark(other.type, attrs);
+  }
 }
