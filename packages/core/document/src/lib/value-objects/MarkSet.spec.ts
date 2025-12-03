@@ -3,20 +3,20 @@ import { MarkSet } from './MarkSet';
 
 describe('MarkSet Value Object', () => {
   describe('Construction', () => {
-    it('should create empty markset via static factory', () => {
+    it('empty, given no parameters, returns MarkSet instance', () => {
       const markSet = MarkSet.empty();
 
       expect(markSet).toBeInstanceOf(MarkSet);
     });
 
-    it('should return same instance for multiple empty() calls', () => {
+    it('empty, given multiple calls, returns same instance', () => {
       const markSet1 = MarkSet.empty();
       const markSet2 = MarkSet.empty();
 
       expect(markSet1).toBe(markSet2);
     });
 
-    it('should create markset from array', () => {
+    it('from, given marks array, returns MarkSet instance', () => {
       const mark1 = new Mark('strong', { color: 'red' });
       const mark2 = new Mark('italic', {});
 
@@ -25,19 +25,19 @@ describe('MarkSet Value Object', () => {
       expect(markSet).toBeInstanceOf(MarkSet);
     });
 
-    it('should create empty markset when from() gets empty array', () => {
+    it('from, given empty array, returns empty MarkSet', () => {
       const markSet = MarkSet.from([]);
 
       expect(markSet).toBeInstanceOf(MarkSet);
     });
 
-    it('should throw when array contains non-mark values', () => {
+    it('from, given non-mark values, throws error', () => {
       expect(() => MarkSet.from(['bold'] as never)).toThrow(
         'MarkSet must be created with array of mark objects'
       );
     });
 
-    it('should store marks immutably', () => {
+    it('from, given external array mutated, MarkSet remains unchanged', () => {
       const mark1 = new Mark('strong', { color: 'red' });
       const mark2 = new Mark('italic', {});
       const mark3 = new Mark('', {});
@@ -52,13 +52,13 @@ describe('MarkSet Value Object', () => {
   });
 
   describe('Basic properties', () => {
-    it('should return correct size for empty markset', () => {
+    it('size, given empty markset, returns 0', () => {
       const markSet = MarkSet.empty();
 
       expect(markSet.size).toBe(0);
     });
 
-    it('should return correct size for markset with marks', () => {
+    it('size, given markset with marks, returns correct count', () => {
       const mark1 = new Mark('strong', { color: 'red' });
       const mark2 = new Mark('italic', {});
 

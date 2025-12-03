@@ -15,16 +15,20 @@ export class MarkSet {
   static from(marks: Mark<Record<string, unknown>>[]): MarkSet {
     if (marks.length === 0) return MarkSet._empty;
 
-    for (const mark of marks) {
-      if (!(mark instanceof Mark)) {
-        throw new Error('MarkSet must be created with array of mark objects');
-      }
-    }
+    MarkSet.validateMarks(marks);
 
     return new MarkSet(marks);
   }
 
   get size(): number {
     return this.marks.length;
+  }
+
+  private static validateMarks(marks: unknown[]): void {
+    for (const mark of marks) {
+      if (!(mark instanceof Mark)) {
+        throw new Error('MarkSet must be created with array of mark objects');
+      }
+    }
   }
 }
