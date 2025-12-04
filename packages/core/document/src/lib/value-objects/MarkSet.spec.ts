@@ -113,4 +113,32 @@ describe('MarkSet Value Object', () => {
       expect(markSet.size).toBe(2);
     });
   });
+
+  describe('contains() method', () => {
+    it('contains, given mark type exists, returns true', () => {
+      const markStrong = new Mark('strong', { color: 'red' });
+      const markItalic = new Mark('italic', {});
+
+      const markSet = MarkSet.from([markStrong, markItalic]);
+
+      expect(markSet.contains(markItalic)).toBe(true);
+    });
+
+    it('contains, given mark type does not exist, returns false', () => {
+      const markStrong = new Mark('strong', { color: 'red' });
+      const markItalic = new Mark('italic', {});
+      const markUnderline = new Mark('underline', {});
+
+      const markSet = MarkSet.from([markStrong, markItalic]);
+
+      expect(markSet.contains(markUnderline)).toBe(false);
+    });
+
+    it('contains, given empty markset, returns false', () => {
+      const markStrong = new Mark('strong', { color: 'red' });
+      const markSet = MarkSet.empty();
+
+      expect(markSet.contains(markStrong)).toBe(false);
+    });
+  });
 });
