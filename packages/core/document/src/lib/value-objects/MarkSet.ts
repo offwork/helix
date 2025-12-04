@@ -32,6 +32,10 @@ export class MarkSet {
     return new MarkSet([...this.marks, mark]);
   }
 
+  contains(mark: Mark<Record<string, unknown>>): boolean {
+    return this.hasDuplicate(mark)
+  }
+
   private static validateMarks(marks: unknown[]): void {
     for (const mark of marks) {
       if (!(mark instanceof Mark)) {
