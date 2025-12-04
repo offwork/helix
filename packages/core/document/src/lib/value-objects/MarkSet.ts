@@ -25,7 +25,7 @@ export class MarkSet {
   }
 
   add(mark: Mark<Record<string, unknown>>): MarkSet {
-    if (this.hasDuplicate(mark)) {
+    if (this.hasMark(mark)) {
       return this;
     }
 
@@ -33,7 +33,7 @@ export class MarkSet {
   }
 
   contains(mark: Mark<Record<string, unknown>>): boolean {
-    return this.hasDuplicate(mark)
+    return this.hasMark(mark)
   }
 
   private static validateMarks(marks: unknown[]): void {
@@ -44,7 +44,7 @@ export class MarkSet {
     }
   }
 
-  private hasDuplicate(mark: Mark<Record<string, unknown>>): boolean {
+  private hasMark(mark: Mark<Record<string, unknown>>): boolean {
     return this.marks.some((existingMark) => existingMark.type === mark.type);
   }
 }
