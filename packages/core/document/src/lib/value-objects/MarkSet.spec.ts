@@ -67,4 +67,50 @@ describe('MarkSet Value Object', () => {
       expect(markSet.size).toEqual(2);
     });
   });
+
+  describe('add() method', () => {
+    it('add, given empty markset, returns new markset with mark', () => {
+      const markSet = MarkSet.empty();
+      const mark = new Mark('bold', {});
+
+      const result = markSet.add(mark);
+
+      expect(result).toBeInstanceOf(MarkSet);
+    });
+
+    it('add, given markset with marks, returns new markset with added mark', () => {
+      const mark1 = new Mark('strong', { color: 'red' });
+      const mark2 = new Mark('italic', {});
+      const mark3 = new Mark('underline', {});
+
+      const markSet = MarkSet.from([mark1, mark2]);
+
+      const result = markSet.add(mark3);
+
+      expect(result).toBeInstanceOf(MarkSet);
+    });
+
+    it('add, given mark with same type exists, returns same instance', () => {
+      const mark1 = new Mark('strong', { weight: '900' });
+      const mark2 = new Mark('strong', {});
+
+      const markSet = MarkSet.from([mark1]);
+
+      const result = markSet.add(mark2);
+
+      expect(result).toBe(markSet);
+    });
+
+    it('add, given mark added, original markset remains unchanged', () => {
+      const mark1 = new Mark('strong', { color: 'red' });
+      const mark2 = new Mark('italic', {});
+      const mark3 = new Mark('underline', {});
+
+      const markSet = MarkSet.from([mark1, mark2]);
+
+      markSet.add(mark3);
+
+      expect(markSet.size).toBe(2);
+    });
+  });
 });
