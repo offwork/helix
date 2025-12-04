@@ -24,6 +24,15 @@ export class MarkSet {
     return this.marks.length;
   }
 
+  add(mark: Mark<Record<string, unknown>>): MarkSet {
+    const hasDuplicates = this.marks.some((value) => value.type === mark.type);
+    if (hasDuplicates) {
+      return this
+    }
+
+    return new MarkSet([ ...this.marks, mark]);
+  }
+
   private static validateMarks(marks: unknown[]): void {
     for (const mark of marks) {
       if (!(mark instanceof Mark)) {
