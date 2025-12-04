@@ -25,12 +25,11 @@ export class MarkSet {
   }
 
   add(mark: Mark<Record<string, unknown>>): MarkSet {
-    const hasDuplicates = this.marks.some((value) => value.type === mark.type);
-    if (hasDuplicates) {
-      return this
+    if (this.hasDuplicate(mark)) {
+      return this;
     }
 
-    return new MarkSet([ ...this.marks, mark]);
+    return new MarkSet([...this.marks, mark]);
   }
 
   private static validateMarks(marks: unknown[]): void {
@@ -39,5 +38,9 @@ export class MarkSet {
         throw new Error('MarkSet must be created with array of mark objects');
       }
     }
+  }
+
+  private hasDuplicate(mark: Mark<Record<string, unknown>>): boolean {
+    return this.marks.some((existingMark) => existingMark.type === mark.type);
   }
 }
