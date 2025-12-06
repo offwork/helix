@@ -141,4 +141,49 @@ describe('MarkSet Value Object', () => {
       expect(markSet.contains(markStrong)).toBe(false);
     });
   });
+
+  describe('remove() method', () => {
+    it('remove, given mark exists, returns new markset without mark', () => {
+      const mark = new Mark('strong', { color: 'red' });
+      const markSet = MarkSet.from([mark]);
+
+      const result = markSet.remove(mark);
+
+      expect(result).toBeInstanceOf(MarkSet);
+      expect(result.contains(mark)).toBe(false);
+    });
+
+    it('remove, given mark does not exist, returns same instance', () => {
+      const markStrong = new Mark('strong', { color: 'red' });
+      const markItalic = new Mark('italic', {});
+      const markUnderline = new Mark('underline', {});
+
+      const markSet = MarkSet.from([markStrong, markItalic]);
+
+      const result = markSet.remove(markUnderline);
+
+      expect(result).toBe(markSet);
+    });
+
+    it('remove, given empty markset, returns same instance', () => {
+      const mark = new Mark('strong', { color: 'red' });
+      const markSet = MarkSet.empty();
+
+      const result = markSet.remove(mark);
+
+      expect(result).toBe(markSet);
+    });
+
+    it('remove, given mark removed, original markset remains unchanged', () => {
+      const mark1 = new Mark('strong', { color: 'red' });
+      const mark2 = new Mark('italic', {});
+      const mark3 = new Mark('underline', {});
+
+      const markSet = MarkSet.from([mark1, mark2, mark3]);
+
+      markSet.remove(mark3);
+
+      expect(markSet.size).toBe(3);
+    });
+  });
 });
