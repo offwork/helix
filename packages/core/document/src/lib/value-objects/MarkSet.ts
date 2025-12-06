@@ -32,8 +32,17 @@ export class MarkSet {
     return new MarkSet([...this.marks, mark]);
   }
 
+  remove(mark: Mark<Record<string, unknown>>): MarkSet {
+    if (!this.hasMark(mark)) {
+      return this;
+    }
+
+    const newMarks = this.marks.filter((value) => value.type !== mark.type);
+    return new MarkSet(newMarks);
+  }
+
   contains(mark: Mark<Record<string, unknown>>): boolean {
-    return this.hasMark(mark)
+    return this.hasMark(mark);
   }
 
   private static validateMarks(marks: unknown[]): void {
