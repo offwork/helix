@@ -37,7 +37,9 @@ export class MarkSet {
       return this;
     }
 
-    const newMarks = this.marks.filter((value) => value.type !== mark.type);
+    const newMarks = this.marks.filter(
+      (existingMark) => existingMark.type !== mark.type
+    );
     return new MarkSet(newMarks);
   }
 
