@@ -1,6 +1,10 @@
 import { Mark } from './Mark';
 import { MarkSet } from './MarkSet';
 
+function createMarks(...types: string[]): Mark<Record<string, unknown>>[] {
+  return types.map((type) => new Mark(type, {}));
+}
+
 describe('MarkSet Value Object', () => {
   describe('Construction', () => {
     it('empty, given no parameters, returns MarkSet instance', () => {
@@ -17,8 +21,7 @@ describe('MarkSet Value Object', () => {
     });
 
     it('from, given marks array, returns MarkSet instance', () => {
-      const mark1 = new Mark('strong', { color: 'red' });
-      const mark2 = new Mark('italic', {});
+      const [mark1, mark2] = createMarks('strong', 'italic');
 
       const markSet = MarkSet.from([mark1, mark2]);
 
@@ -38,14 +41,10 @@ describe('MarkSet Value Object', () => {
     });
 
     it('from, given external array mutated, MarkSet remains unchanged', () => {
-      const mark1 = new Mark('strong', { color: 'red' });
-      const mark2 = new Mark('italic', {});
-      const mark3 = new Mark('', {});
-
-      const marks = [mark1, mark2];
+      const marks = createMarks('strong', 'italic');
 
       const markSet = MarkSet.from(marks);
-      marks.push(mark3);
+      marks.push(new Mark('', {}));
 
       expect(markSet.size).toBe(2);
     });
@@ -59,8 +58,7 @@ describe('MarkSet Value Object', () => {
     });
 
     it('size, given markset with marks, returns correct count', () => {
-      const mark1 = new Mark('strong', { color: 'red' });
-      const mark2 = new Mark('italic', {});
+      const [mark1, mark2] = createMarks('strong', 'italic');
 
       const markSet = MarkSet.from([mark1, mark2]);
 
@@ -71,28 +69,24 @@ describe('MarkSet Value Object', () => {
   describe('add() method', () => {
     it('add, given empty markset, returns new markset with mark', () => {
       const markSet = MarkSet.empty();
-      const mark = new Mark('bold', {});
 
-      const result = markSet.add(mark);
+      const result = markSet.add(new Mark('bold', {}));
 
       expect(result).toBeInstanceOf(MarkSet);
     });
 
     it('add, given markset with marks, returns new markset with added mark', () => {
-      const mark1 = new Mark('strong', { color: 'red' });
-      const mark2 = new Mark('italic', {});
-      const mark3 = new Mark('underline', {});
+      const [mark1, mark2] = createMarks('strong', 'italic');
 
       const markSet = MarkSet.from([mark1, mark2]);
 
-      const result = markSet.add(mark3);
+      const result = markSet.add(new Mark('underline', {}));
 
       expect(result).toBeInstanceOf(MarkSet);
     });
 
     it('add, given mark with same type exists, returns same instance', () => {
-      const mark1 = new Mark('strong', { weight: '900' });
-      const mark2 = new Mark('strong', {});
+      const [mark1, mark2] = createMarks('strong', 'strong');
 
       const markSet = MarkSet.from([mark1]);
 
@@ -102,13 +96,11 @@ describe('MarkSet Value Object', () => {
     });
 
     it('add, given mark added, original markset remains unchanged', () => {
-      const mark1 = new Mark('strong', { color: 'red' });
-      const mark2 = new Mark('italic', {});
-      const mark3 = new Mark('underline', {});
+      const [mark1, mark2] = createMarks('strong', 'italic');
 
       const markSet = MarkSet.from([mark1, mark2]);
 
-      markSet.add(mark3);
+      markSet.add(new Mark('underline', {}));
 
       expect(markSet.size).toBe(2);
     });
@@ -116,29 +108,23 @@ describe('MarkSet Value Object', () => {
 
   describe('contains() method', () => {
     it('contains, given mark type exists, returns true', () => {
-      const markStrong = new Mark('strong', { color: 'red' });
-      const markItalic = new Mark('italic', {});
-
+      const [markStrong, markItalic] = createMarks('strong', 'italic');
       const markSet = MarkSet.from([markStrong, markItalic]);
 
       expect(markSet.contains(markItalic)).toBe(true);
     });
 
     it('contains, given mark type does not exist, returns false', () => {
-      const markStrong = new Mark('strong', { color: 'red' });
-      const markItalic = new Mark('italic', {});
-      const markUnderline = new Mark('underline', {});
-
+      const [markStrong, markItalic] = createMarks('strong', 'italic');
       const markSet = MarkSet.from([markStrong, markItalic]);
 
-      expect(markSet.contains(markUnderline)).toBe(false);
+      expect(markSet.contains(new Mark('underline', {}))).toBe(false);
     });
 
     it('contains, given empty markset, returns false', () => {
-      const markStrong = new Mark('strong', { color: 'red' });
       const markSet = MarkSet.empty();
 
-      expect(markSet.contains(markStrong)).toBe(false);
+      expect(markSet.contains(new Mark('strong', { color: 'red' }))).toBe(false);
     });
   });
 
@@ -154,8 +140,7 @@ describe('MarkSet Value Object', () => {
     });
 
     it('remove, given mark does not exist, returns same instance', () => {
-      const markStrong = new Mark('strong', { color: 'red' });
-      const markItalic = new Mark('italic', {});
+      const [markStrong, markItalic] = createMarks('strong', 'italic');
       const markUnderline = new Mark('underline', {});
 
       const markSet = MarkSet.from([markStrong, markItalic]);
@@ -175,9 +160,11 @@ describe('MarkSet Value Object', () => {
     });
 
     it('remove, given mark removed, original markset remains unchanged', () => {
-      const mark1 = new Mark('strong', { color: 'red' });
-      const mark2 = new Mark('italic', {});
-      const mark3 = new Mark('underline', {});
+      const [mark1, mark2, mark3] = createMarks(
+        'strong',
+        'italic',
+        'underline'
+      );
 
       const markSet = MarkSet.from([mark1, mark2, mark3]);
 
@@ -189,9 +176,11 @@ describe('MarkSet Value Object', () => {
 
   describe('equals() method', () => {
     it('equals, given same marks in same order, returns true', () => {
-      const mark1 = new Mark('strong', { color: 'red' });
-      const mark2 = new Mark('italic', {});
-      const mark3 = new Mark('underline', {});
+      const [mark1, mark2, mark3] = createMarks(
+        'strong',
+        'italic',
+        'underline'
+      );
 
       const markSet1 = MarkSet.from([mark1, mark2, mark3]);
       const markSet2 = MarkSet.from([mark1, mark2, mark3]);
@@ -200,9 +189,11 @@ describe('MarkSet Value Object', () => {
     });
 
     it('equals, given same marks in different order, returns true', () => {
-      const mark1 = new Mark('strong', { color: 'red' });
-      const mark2 = new Mark('italic', {});
-      const mark3 = new Mark('underline', {});
+      const [mark1, mark2, mark3] = createMarks(
+        'strong',
+        'italic',
+        'underline'
+      );
 
       const markSet1 = MarkSet.from([mark1, mark2, mark3]);
       const markSet2 = MarkSet.from([mark3, mark2, mark1]);
@@ -211,10 +202,12 @@ describe('MarkSet Value Object', () => {
     });
 
     it('equals, given different marks, returns false', () => {
-      const mark1 = new Mark('strong', { color: 'red' });
-      const mark2 = new Mark('italic', {});
-      const mark3 = new Mark('underline', {});
-      const mark4 = new Mark('bold', { color: 'black' });
+      const [mark1, mark2, mark3, mark4] = createMarks(
+        'strong',
+        'italic',
+        'underline',
+        'bold'
+      );
 
       const markSet1 = MarkSet.from([mark1, mark3]);
       const markSet2 = MarkSet.from([mark4, mark2]);
@@ -223,10 +216,12 @@ describe('MarkSet Value Object', () => {
     });
 
     it('equals, given different size, returns false', () => {
-      const mark1 = new Mark('strong', { color: 'red' });
-      const mark2 = new Mark('italic', {});
-      const mark3 = new Mark('underline', {});
-      const mark4 = new Mark('bold', { color: 'black' });
+      const [mark1, mark2, mark3, mark4] = createMarks(
+        'strong',
+        'italic',
+        'underline',
+        'bold'
+      );
 
       const markSet1 = MarkSet.from([mark1, mark2, mark3, mark4]);
       const markSet2 = MarkSet.from([mark2, mark4]);
