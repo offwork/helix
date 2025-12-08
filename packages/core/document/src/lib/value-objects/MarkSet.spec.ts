@@ -186,4 +186,59 @@ describe('MarkSet Value Object', () => {
       expect(markSet.size).toBe(3);
     });
   });
+
+  describe('equals() method', () => {
+    it('equals, given same marks in same order, returns true', () => {
+      const mark1 = new Mark('strong', { color: 'red' });
+      const mark2 = new Mark('italic', {});
+      const mark3 = new Mark('underline', {});
+
+      const markSet1 = MarkSet.from([mark1, mark2, mark3]);
+      const markSet2 = MarkSet.from([mark1, mark2, mark3]);
+
+      expect(markSet1.equals(markSet2)).toBe(true);
+    });
+
+    it('equals, given same marks in different order, returns true', () => {
+      const mark1 = new Mark('strong', { color: 'red' });
+      const mark2 = new Mark('italic', {});
+      const mark3 = new Mark('underline', {});
+
+      const markSet1 = MarkSet.from([mark1, mark2, mark3]);
+      const markSet2 = MarkSet.from([mark3, mark2, mark1]);
+
+      expect(markSet1.equals(markSet2)).toBe(true);
+    });
+
+    it('equals, given different marks, returns false', () => {
+      const mark1 = new Mark('strong', { color: 'red' });
+      const mark2 = new Mark('italic', {});
+      const mark3 = new Mark('underline', {});
+      const mark4 = new Mark('bold', { color: 'black' });
+
+      const markSet1 = MarkSet.from([mark1, mark3]);
+      const markSet2 = MarkSet.from([mark4, mark2]);
+
+      expect(markSet1.equals(markSet2)).toBe(false);
+    });
+
+    it('equals, given different size, returns false', () => {
+      const mark1 = new Mark('strong', { color: 'red' });
+      const mark2 = new Mark('italic', {});
+      const mark3 = new Mark('underline', {});
+      const mark4 = new Mark('bold', { color: 'black' });
+
+      const markSet1 = MarkSet.from([mark1, mark2, mark3, mark4]);
+      const markSet2 = MarkSet.from([mark2, mark4]);
+
+      expect(markSet1.equals(markSet2)).toBe(false);
+    });
+
+    it('equals, given both empty, returns true', () => {
+      const markSet1 = MarkSet.empty();
+      const markSet2 = MarkSet.empty();
+
+      expect(markSet1.equals(markSet2)).toBe(true);
+    });
+  });
 });
