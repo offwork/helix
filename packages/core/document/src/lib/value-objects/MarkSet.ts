@@ -47,6 +47,14 @@ export class MarkSet {
     return this.hasMark(mark);
   }
 
+  equals(other: MarkSet): boolean {
+    if (this.size !== other.size) return false;
+
+    return this.marks.every((mark) =>
+      other.marks.some((otherMark) => mark.equals(otherMark))
+    );
+  }
+
   private static validateMarks(marks: unknown[]): void {
     for (const mark of marks) {
       if (!(mark instanceof Mark)) {
