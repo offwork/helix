@@ -1,5 +1,4 @@
 export interface NodeSpec {
-  name: string;
   attrs?: Record<string, unknown>;
 }
 

@@ -2,6 +2,9 @@ import { NodeType } from '../value-objects/NodeType';
 import { Fragment } from './Fragment';
 import { Node } from './Node';
 
+const mockSchema = {} as never;
+const spec = { attrs: {} };
+
 describe('Fragment', () => {
   describe('creation', () => {
     it('creates empty fragment', () => {
@@ -12,8 +15,12 @@ describe('Fragment', () => {
     });
 
     it('creates fragment with nodes', () => {
-      const node1 = new Node(new NodeType('paragraph'), { text: 'Hello' });
-      const node2 = new Node(new NodeType('paragraph'), { text: 'World' });
+      const node1 = new Node(new NodeType('paragraph', mockSchema, spec), {
+        text: 'Hello',
+      });
+      const node2 = new Node(new NodeType('paragraph', mockSchema, spec), {
+        text: 'World',
+      });
 
       const fragment = Fragment.from([node1, node2]);
 
@@ -24,8 +31,12 @@ describe('Fragment', () => {
 
   describe('child access', () => {
     it('accesses child by valid index', () => {
-      const node1 = new Node(new NodeType('paragraph'), { text: 'Hello' });
-      const node2 = new Node(new NodeType('paragraph'), { text: 'World' });
+      const node1 = new Node(new NodeType('paragraph', mockSchema, spec), {
+        text: 'Hello',
+      });
+      const node2 = new Node(new NodeType('paragraph', mockSchema, spec), {
+        text: 'World',
+      });
 
       const fragment = Fragment.from([node1, node2]);
 
@@ -35,7 +46,9 @@ describe('Fragment', () => {
 
     it('throws on negative index', () => {
       const fragment = Fragment.from([
-        new Node(new NodeType('paragraph'), { text: 'Hello' }),
+        new Node(new NodeType('paragraph', mockSchema, spec), {
+          text: 'Hello',
+        }),
       ]);
 
       expect(() => fragment.child(-1)).toThrow(
@@ -45,7 +58,9 @@ describe('Fragment', () => {
 
     it('throws on index >= size', () => {
       const fragment = Fragment.from([
-        new Node(new NodeType('paragraph'), { text: 'Hello' }),
+        new Node(new NodeType('paragraph', mockSchema, spec), {
+          text: 'Hello',
+        }),
       ]);
 
       expect(() => fragment.child(1)).toThrow(
@@ -59,9 +74,15 @@ describe('Fragment', () => {
 
   describe('firstChild and lastChild', () => {
     it('returns first and last child', () => {
-      const node1 = new Node(new NodeType('paragraph'), { text: 'First' });
-      const node2 = new Node(new NodeType('paragraph'), { text: 'Middle' });
-      const node3 = new Node(new NodeType('paragraph'), { text: 'Last' });
+      const node1 = new Node(new NodeType('paragraph', mockSchema, spec), {
+        text: 'First',
+      });
+      const node2 = new Node(new NodeType('paragraph', mockSchema, spec), {
+        text: 'Middle',
+      });
+      const node3 = new Node(new NodeType('paragraph', mockSchema, spec), {
+        text: 'Last',
+      });
 
       const fragment = Fragment.from([node1, node2, node3]);
 
@@ -77,7 +98,9 @@ describe('Fragment', () => {
     });
 
     it('returns same node when fragment has one child', () => {
-      const node = new Node(new NodeType('paragraph'), { text: 'Only' });
+      const node = new Node(new NodeType('paragraph', mockSchema, spec), {
+        text: 'Only',
+      });
       const fragment = Fragment.from([node]);
 
       expect(fragment.firstChild).toBe(node);
@@ -87,9 +110,15 @@ describe('Fragment', () => {
 
   describe('forEach', () => {
     it('iterates over all children', () => {
-      const node1 = new Node(new NodeType('paragraph'), { text: 'First' });
-      const node2 = new Node(new NodeType('paragraph'), { text: 'Second' });
-      const node3 = new Node(new NodeType('paragraph'), { text: 'Third' });
+      const node1 = new Node(new NodeType('paragraph', mockSchema, spec), {
+        text: 'First',
+      });
+      const node2 = new Node(new NodeType('paragraph', mockSchema, spec), {
+        text: 'Second',
+      });
+      const node3 = new Node(new NodeType('paragraph', mockSchema, spec), {
+        text: 'Third',
+      });
       const fragment = Fragment.from([node1, node2, node3]);
 
       const visited: Node[] = [];
@@ -101,8 +130,12 @@ describe('Fragment', () => {
     });
 
     it('passes index to callback', () => {
-      const node1 = new Node(new NodeType('paragraph'), { text: 'First' });
-      const node2 = new Node(new NodeType('paragraph'), { text: 'Second' });
+      const node1 = new Node(new NodeType('paragraph', mockSchema, spec), {
+        text: 'First',
+      });
+      const node2 = new Node(new NodeType('paragraph', mockSchema, spec), {
+        text: 'Second',
+      });
       const fragment = Fragment.from([node1, node2]);
 
       const indces: number[] = [];
@@ -127,10 +160,18 @@ describe('Fragment', () => {
 
   describe('slice', () => {
     it('slices fragment with valid range', () => {
-      const node1 = new Node(new NodeType('paragraph'), { text: 'First' });
-      const node2 = new Node(new NodeType('paragraph'), { text: 'Second' });
-      const node3 = new Node(new NodeType('paragraph'), { text: 'Third' });
-      const node4 = new Node(new NodeType('paragraph'), { text: 'Fourth' });
+      const node1 = new Node(new NodeType('paragraph', mockSchema, spec), {
+        text: 'First',
+      });
+      const node2 = new Node(new NodeType('paragraph', mockSchema, spec), {
+        text: 'Second',
+      });
+      const node3 = new Node(new NodeType('paragraph', mockSchema, spec), {
+        text: 'Third',
+      });
+      const node4 = new Node(new NodeType('paragraph', mockSchema, spec), {
+        text: 'Fourth',
+      });
       const fragment = Fragment.from([node1, node2, node3, node4]);
 
       const slice = fragment.slice(1, 3);
@@ -141,8 +182,12 @@ describe('Fragment', () => {
     });
 
     it('slices from start when from is 0', () => {
-      const node1 = new Node(new NodeType('paragraph'), { text: 'First' });
-      const node2 = new Node(new NodeType('paragraph'), { text: 'Second' });
+      const node1 = new Node(new NodeType('paragraph', mockSchema, spec), {
+        text: 'First',
+      });
+      const node2 = new Node(new NodeType('paragraph', mockSchema, spec), {
+        text: 'Second',
+      });
       const fragment = Fragment.from([node1, node2]);
 
       const slice = fragment.slice(0, 1);
@@ -152,8 +197,12 @@ describe('Fragment', () => {
     });
 
     it('slices to end when to equals size', () => {
-      const node1 = new Node(new NodeType('paragraph'), { text: 'First' });
-      const node2 = new Node(new NodeType('paragraph'), { text: 'Second' });
+      const node1 = new Node(new NodeType('paragraph', mockSchema, spec), {
+        text: 'First',
+      });
+      const node2 = new Node(new NodeType('paragraph', mockSchema, spec), {
+        text: 'Second',
+      });
       const fragment = Fragment.from([node1, node2]);
 
       const slice = fragment.slice(1, 2);
@@ -163,7 +212,9 @@ describe('Fragment', () => {
     });
 
     it('returns empty fragment when from equals to', () => {
-      const node = new Node(new NodeType('paragraph'), { text: 'First' });
+      const node = new Node(new NodeType('paragraph', mockSchema, spec), {
+        text: 'First',
+      });
       const fragment = Fragment.from([node]);
 
       const slice = fragment.slice(0, 0);
@@ -173,7 +224,9 @@ describe('Fragment', () => {
 
     it('throws when from is negative', () => {
       const fragment = Fragment.from([
-        new Node(new NodeType('paragraph'), { text: 'First' }),
+        new Node(new NodeType('paragraph', mockSchema, spec), {
+          text: 'First',
+        }),
       ]);
 
       expect(() => fragment.slice(-1, 1)).toThrow(
@@ -183,7 +236,9 @@ describe('Fragment', () => {
 
     it('throws when to exceeds size', () => {
       const fragment = Fragment.from([
-        new Node(new NodeType('paragraph'), { text: 'First' }),
+        new Node(new NodeType('paragraph', mockSchema, spec), {
+          text: 'First',
+        }),
       ]);
 
       expect(() => fragment.slice(0, 5)).toThrow(
@@ -193,7 +248,9 @@ describe('Fragment', () => {
 
     it('throws when from is greater than to', () => {
       const fragment = Fragment.from([
-        new Node(new NodeType('paragraph'), { text: 'First' }),
+        new Node(new NodeType('paragraph', mockSchema, spec), {
+          text: 'First',
+        }),
       ]);
 
       expect(() => fragment.slice(1, 0)).toThrow(
