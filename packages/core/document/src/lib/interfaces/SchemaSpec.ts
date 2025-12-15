@@ -3,6 +3,5 @@ export interface NodeSpec {
 }
 
 export interface MarkSpec {
-  name: string;
   attrs?: Record<string, unknown>;
 }
