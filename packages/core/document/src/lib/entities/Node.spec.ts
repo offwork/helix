@@ -5,9 +5,12 @@ interface ParagraphAttrs {
   align: 'left' | 'center' | 'right';
 }
 
+const mockSchema = {} as never;
+const spec = { attrs: {} };
+
 describe('Node', () => {
   it('should create a node with type and attrs', () => {
-    const type = new NodeType('paragraph');
+    const type = new NodeType('paragraph', mockSchema, spec);
     const attrs: ParagraphAttrs = { align: 'left' };
 
     const node = new Node<ParagraphAttrs>(type, attrs);
@@ -17,7 +20,7 @@ describe('Node', () => {
   });
 
   it('should create a node with empty attrs', () => {
-    const type = new NodeType('paragraph');
+    const type = new NodeType('paragraph', mockSchema, spec);
     const attrs = {};
 
     const node = new Node(type, attrs);
