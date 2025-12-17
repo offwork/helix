@@ -15,3 +15,4 @@ export { NodeType } from './lib/value-objects/NodeType';
 export { MarkType } from './lib/value-objects/MarkType';
 export { Mark } from './lib/value-objects/Mark';
 export { MarkSet } from './lib/value-objects/MarkSet';
+export { Position } from './lib/value-objects/Position';
