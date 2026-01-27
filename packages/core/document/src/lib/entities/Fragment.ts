@@ -15,7 +15,13 @@ export class Fragment<TNode extends Node> {
     return new Fragment<TNode>([...nodes]); // Defensive copy
   }
 
+  get childCount(): number {
+    return this.content.length;
+  }
+
   get size(): number {
+    // TODO: EPIC 2'de Node.nodeSize implementasyonundan sonra güncelle
+    // Şimdilik childCount ile aynı (tree traversal için yeterli)
     return this.content.length;
   }
 

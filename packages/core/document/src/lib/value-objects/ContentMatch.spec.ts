@@ -5,8 +5,15 @@ import { Fragment } from '../entities/Fragment';
 import { Edge } from '../interfaces/Edge';
 
 // Test Helpers
-function createMockNodeType(name = 'paragraph'): NodeType {
-  return new NodeType(name, {}, { attrs: { content: 'text*' } });
+function createMockNodeType(
+  name = 'paragraph',
+  options: { inline?: boolean } = {}
+): NodeType {
+  return new NodeType(
+    name,
+    {},
+    { attrs: { content: 'text*' }, inline: options.inline }
+  );
 }
 
 function createMockContentMatch(
@@ -375,6 +382,26 @@ describe('ContentMatch', () => {
     it('returns false when other is null', () => {
       const match = createMockContentMatch();
       expect(match.equals(null as never)).toBe(false);
+    });
+  });
+
+  describe('defaultType', () => {
+    it('returns null when edges array is empty', () => {
+      const match = new ContentMatch(true, []);
+      expect(match.defaultType()).toBeNull();
+    });
+
+    it("returns first edge's type when edges exist", () => {
+      const typeA = createMockNodeType('heading');
+      const typeB = createMockNodeType('paragraph');
+      const nextMatch = new ContentMatch(true, []);
+      const edges = [
+        { type: typeA, next: nextMatch },
+        { type: typeB, next: nextMatch },
+      ];
+      const match = new ContentMatch(false, edges);
+
+      expect(match.defaultType()).toBe(typeA);
     });
   });
 });

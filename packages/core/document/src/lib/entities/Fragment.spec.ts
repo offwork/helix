@@ -258,4 +258,22 @@ describe('Fragment', () => {
       );
     });
   });
+
+  describe('childCount', () => {
+    it('returns 0 for empty fragment', () => {
+      const fragment = Fragment.empty<Node>();
+      expect(fragment.childCount).toBe(0);
+    });
+
+    it('returns number of children', () => {
+      const nodeType = new NodeType('paragraph', {}, {});
+      const nodes = [
+        new Node(nodeType, {}),
+        new Node(nodeType, {}),
+        new Node(nodeType, {}),
+      ];
+      const fragment = Fragment.from(nodes);
+      expect(fragment.childCount).toBe(3);
+    });
+  });
 });

@@ -1,4 +1,5 @@
 import { NodeSpec } from '../interfaces/SchemaSpec';
+import { MarkType } from './MarkType';
 import { NodeType } from './NodeType';
 
 describe('NodeType', () => {
@@ -131,6 +132,72 @@ describe('NodeType', () => {
       expect(() => nodeType.equals(null as never)).toThrow(
         'NodeType equals parameter cannot be null'
       );
+    });
+  });
+
+  describe('allowsMarkType', () => {
+    const mockSchema = {} as never;
+
+    it('given null parameter, throws error', () => {
+      const nodeType = new NodeType('paragraph', mockSchema, {});
+      expect(() => nodeType.allowsMarkType(null as never)).toThrow(
+        'NodeType allowsMarkType parameter cannot be null'
+      );
+    });
+
+    it('given non-MarkType parameter, throws error', () => {
+      const nodeType = new NodeType('paragraph', mockSchema, {});
+      expect(() => nodeType.allowsMarkType('bold' as never)).toThrow(
+        'NodeType allowsMarkType parameter must be MarkType'
+      );
+    });
+
+    it('given marks spec is undefined, returns true when inline is true', () => {
+      const nodeType = new NodeType('text', mockSchema, { inline: true });
+      const boldType = new MarkType('bold', mockSchema, {});
+      expect(nodeType.allowsMarkType(boldType)).toBe(true);
+    });
+
+    it('given marks spec is undefined, returns false when inline is false', () => {
+      const nodeType = new NodeType('paragraph', mockSchema, { inline: false });
+      const boldType = new MarkType('bold', mockSchema, {});
+      expect(nodeType.allowsMarkType(boldType)).toBe(false);
+    });
+
+    it('given marks spec is undefined, returns false when inline is undefined', () => {
+      const nodeType = new NodeType('paragraph', mockSchema, {});
+      const boldType = new MarkType('bold', mockSchema, {});
+      expect(nodeType.allowsMarkType(boldType)).toBe(false);
+    });
+
+    it('given marks spec is "_", returns true for any mark type', () => {
+      const nodeType = new NodeType('paragraph', mockSchema, { marks: '_' });
+      const boldType = new MarkType('bold', mockSchema, {});
+      const linkType = new MarkType('link', mockSchema, {});
+      expect(nodeType.allowsMarkType(boldType)).toBe(true);
+      expect(nodeType.allowsMarkType(linkType)).toBe(true);
+    });
+
+    it('given marks spec is "", returns false for any mark type', () => {
+      const nodeType = new NodeType('code_block', mockSchema, { marks: '' });
+      const boldType = new MarkType('bold', mockSchema, {});
+      expect(nodeType.allowsMarkType(boldType)).toBe(false);
+    });
+
+    it('given marks spec is space-separated list, returns true for listed mark', () => {
+      const nodeType = new NodeType('paragraph', mockSchema, {
+        marks: 'bold italic',
+      });
+      const boldType = new MarkType('bold', mockSchema, {});
+      expect(nodeType.allowsMarkType(boldType)).toBe(true);
+    });
+
+    it('given marks spec is space-separated list, returns false for unlisted mark', () => {
+      const nodeType = new NodeType('paragraph', mockSchema, {
+        marks: 'bold italic',
+      });
+      const linkType = new MarkType('link', mockSchema, {});
+      expect(nodeType.allowsMarkType(linkType)).toBe(false);
     });
   });
 });

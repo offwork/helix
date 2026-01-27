@@ -119,6 +119,10 @@ export class ContentMatch {
     return true;
   }
 
+  defaultType(): NodeType | null {
+    return this.edges.length > 0 ? this.edges[0].type : null;
+  }
+
   private validateParameters(validEnd: boolean, edges: Edge[]): void {
     if (validEnd === null) {
       throw new Error('ContentMatch validEnd cannot be null');
