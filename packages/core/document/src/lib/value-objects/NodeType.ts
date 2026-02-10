@@ -55,6 +55,14 @@ export class NodeType {
     return allowedMarks.includes(markType.name);
   }
 
+  get isLeaf(): boolean {
+    return this.spec.leaf === true;
+  }
+
+  get isText(): boolean {
+    return this.spec.text === true;
+  }
+
   private validateParameter(paramName: string, paramValue: unknown): void {
     if (paramName === 'name') {
       if (

@@ -200,4 +200,28 @@ describe('NodeType', () => {
       expect(nodeType.allowsMarkType(linkType)).toBe(false);
     });
   });
+
+  describe('isLeaf', () => {
+    it('given spec.leaf true, returns true', () => {
+      const mockSchema = {} as never;
+      const spec: NodeSpec = { attrs: {}, leaf: true };
+      const nodeType = new NodeType('image', mockSchema, spec);
+
+      const result = nodeType.isLeaf;
+
+      expect(result).toBe(true);
+    });
+  });
+
+  describe('isText', () => {
+    it('given spec.text true, returns true', () => {
+      const mockSchema = {} as never;
+      const spec: NodeSpec = { attrs: {}, text: true };
+      const nodeType = new NodeType('paragraph', mockSchema, spec);
+
+      const result = nodeType.isText;
+
+      expect(result).toBe(true);
+    });
+  });
 });
