@@ -11,7 +11,7 @@ describe('Fragment', () => {
       const fragment = Fragment.empty<Node>();
 
       expect(fragment).toBeInstanceOf(Fragment);
-      expect(fragment.size).toBe(0);
+      expect(fragment.childCount).toBe(0);
     });
 
     it('creates fragment with nodes', () => {
@@ -25,7 +25,7 @@ describe('Fragment', () => {
       const fragment = Fragment.from([node1, node2]);
 
       expect(fragment).toBeInstanceOf(Fragment);
-      expect(fragment.size).toBe(2);
+      expect(fragment.childCount).toBe(2);
     });
   });
 
@@ -176,7 +176,7 @@ describe('Fragment', () => {
 
       const slice = fragment.slice(1, 3);
 
-      expect(slice.size).toBe(2);
+      expect(slice.childCount).toBe(2);
       expect(slice.child(0)).toBe(node2);
       expect(slice.child(1)).toBe(node3);
     });
@@ -192,7 +192,7 @@ describe('Fragment', () => {
 
       const slice = fragment.slice(0, 1);
 
-      expect(slice.size).toBe(1);
+      expect(slice.childCount).toBe(1);
       expect(slice.child(0)).toBe(node1);
     });
 
@@ -207,7 +207,7 @@ describe('Fragment', () => {
 
       const slice = fragment.slice(1, 2);
 
-      expect(slice.size).toBe(1);
+      expect(slice.childCount).toBe(1);
       expect(slice.child(0)).toBe(node2);
     });
 
@@ -259,6 +259,16 @@ describe('Fragment', () => {
     });
   });
 
+  describe('size', () => {
+    it('given text node, returns sum of nodeSize values', () => {
+      const textType = new NodeType('text', {}, { text: true });
+      const node = new Node(textType, {}, undefined, undefined, 'Hello World');
+      const fragment = Fragment.from([node]);
+
+      expect(fragment.size).toBe(11);
+    });
+  });
+
   describe('childCount', () => {
     it('returns 0 for empty fragment', () => {
       const fragment = Fragment.empty<Node>();
@@ -274,6 +284,58 @@ describe('Fragment', () => {
       ];
       const fragment = Fragment.from(nodes);
       expect(fragment.childCount).toBe(3);
+    });
+  });
+
+  describe('equals', () => {
+    it('given both empty, returns true', () => {
+      const fragment1 = Fragment.empty<Node>();
+      const fragment2 = Fragment.empty<Node>();
+
+      expect(fragment1.equals(fragment2)).toBe(true);
+    });
+
+    it('given different children, returns false', () => {
+      const node1 = new Node(new NodeType('paragraph', mockSchema, spec), {
+        text: 'First',
+      });
+      const node2 = new Node(new NodeType('heading', mockSchema, spec), {
+        text: 'Middle',
+      });
+      const node3 = new Node(new NodeType('paragraph', mockSchema, spec), {
+        text: 'Last',
+      });
+
+      const fragment1 = Fragment.from([node1, node2]);
+      const fragment2 = Fragment.from([node1, node3]);
+
+      expect(fragment1.equals(fragment2)).toBe(false);
+    });
+
+    it('given structurally equal children with different refs, returns true', () => {
+      const sharedType = new NodeType('paragraph', mockSchema, spec);
+
+      const nodeA = new Node(sharedType, { text: 'Hello' });
+      const nodeB = new Node(sharedType, { text: 'Hello' });
+
+      const fragment1 = Fragment.from([nodeA]);
+      const fragment2 = Fragment.from([nodeB]);
+
+      expect(fragment1.equals(fragment2)).toBe(true);
+    });
+
+    it('given null, throws error', () => {
+      const fragment = Fragment.empty<Node>();
+      expect(() => fragment.equals(null as never)).toThrow(
+        'Fragment equals parameter cannot be null'
+      );
+    });
+
+    it('given undefined, throws error', () => {
+      const fragment = Fragment.empty<Node>();
+      expect(() => fragment.equals(undefined as never)).toThrow(
+        'Fragment equals parameter cannot be undefined'
+      );
     });
   });
 });

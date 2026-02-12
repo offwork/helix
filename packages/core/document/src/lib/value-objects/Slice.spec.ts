@@ -100,10 +100,10 @@ describe('Slice Value Object', () => {
   });
 
   describe('size', () => {
-    it('returns content.size', () => {
+    it('returns content.childCount', () => {
       const slice = new Slice(content, 0, 0);
 
-      expect(slice.size).toBe(content.size);
+      expect(slice.size).toBe(content.childCount);
     });
   });
 

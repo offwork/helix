@@ -1,3 +1,4 @@
+import { deepEqual } from '../utils/deep-equal';
 import { Mark } from '../value-objects/Mark';
 import { NodeType } from '../value-objects/NodeType';
 import { Fragment } from './Fragment';
@@ -69,5 +70,27 @@ export class Node<TAttrs = Record<string, unknown>> {
     }
 
     return 2 + this.content.size;
+  }
+
+  equals(other: Node): boolean {
+    if (other === null) throw new Error('Node equals parameter cannot be null');
+
+    if (other === undefined)
+      throw new Error('Node equals parameter cannot be undefined');
+
+    if (this.text !== other.text) return false;
+
+    return (
+      this === other ||
+      (this.sameMarkup(other) && this.content.equals(other.content))
+    );
+  }
+
+  private sameMarkup(other: Node): boolean {
+    return (
+      this.type === other.type &&
+      deepEqual(this.attrs, other.attrs) &&
+      deepEqual(this.marks, other.marks)
+    );
   }
 }

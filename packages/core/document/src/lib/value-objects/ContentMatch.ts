@@ -67,7 +67,7 @@ export class ContentMatch {
     // eslint-disable-next-line @typescript-eslint/no-this-alias
     let match: ContentMatch = this;
 
-    for (let i = 0; i < fragment.size; i++) {
+    for (let i = 0; i < fragment.childCount; i++) {
       const node = fragment.child(i);
       const next = match.matchType(node.type);
 

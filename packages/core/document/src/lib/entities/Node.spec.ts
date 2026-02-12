@@ -114,10 +114,67 @@ describe('Node', () => {
 
   describe('equals', () => {
     it('given same type/attrs/content/marks, returns true', () => {
-      const node1 = new Node(type, spec, mockContent, []);
-      const node2 = new Node(type, spec, mockContent, []);
+      const node1 = new Node(
+        type,
+        { level: 1, visible: true },
+        mockContent,
+        []
+      );
+      const node2 = new Node(
+        type,
+        { level: 1, visible: true },
+        mockContent,
+        []
+      );
 
       expect(node1.equals(node2)).toBe(true);
+    });
+
+    it('given text nodes with different text, returns false', () => {
+      const node1 = new Node(
+        type,
+        { level: 1, visible: true },
+        mockContent,
+        [],
+        'Hello'
+      );
+      const node2 = new Node(
+        type,
+        { level: 1, visible: true },
+        mockContent,
+        [],
+        'World'
+      );
+
+      expect(node1.equals(node2)).toBe(false);
+    });
+
+    it('given null, throws error', () => {
+      const node = new Node(
+        type,
+        { level: 1, visible: true },
+        mockContent,
+        [],
+        'Hello'
+      );
+
+      expect(() => node.equals(null as never)).toThrow(
+        'Node equals parameter cannot be null'
+      );
+    });
+
+    it('given undefined, throws error', () => {
+      const node = new Node(
+        type,
+        { level: 1, visible: true },
+        mockContent,
+        [],
+        'Hello'
+      );
+
+      expect(() => node.equals(undefined as never)).toThrow(
+        'Node equals parameter cannot be undefined'
+      );
     });
   });
 });
