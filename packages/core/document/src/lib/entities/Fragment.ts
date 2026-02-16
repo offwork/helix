@@ -20,9 +20,7 @@ export class Fragment<TNode extends Node> {
   }
 
   get size(): number {
-    // TODO: EPIC 2'de Node.nodeSize implementasyonundan sonra güncelle
-    // Şimdilik childCount ile aynı (tree traversal için yeterli)
-    return this.content.length;
+    return this.content.reduce((sum, node) => sum += node.nodeSize, 0);
   }
 
   get firstChild(): TNode | undefined {
@@ -54,5 +52,17 @@ export class Fragment<TNode extends Node> {
     }
 
     return new Fragment<TNode>(this.content.slice(from, to));
+  }
+
+  equals(other: Fragment<TNode>): boolean {
+    if (other === null)
+      throw new Error('Fragment equals parameter cannot be null');
+
+    if (other === undefined)
+      throw new Error('Fragment equals parameter cannot be undefined');
+
+    if (this.content.length !== other.content.length) return false;
+
+    return this.content.every((node, index) => node.equals(other.content[index]));
   }
 }
