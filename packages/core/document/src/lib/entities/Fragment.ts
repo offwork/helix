@@ -20,8 +20,6 @@ export class Fragment<TNode extends Node> {
   }
 
   get size(): number {
-    // TODO: EPIC 2'de Node.nodeSize implementasyonundan sonra güncelle
-    // Şimdilik childCount ile aynı (tree traversal için yeterli)
     return this.content.reduce((sum, node) => sum += node.nodeSize, 0);
   }
 

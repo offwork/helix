@@ -1,4 +1,7 @@
+import { Fragment } from '../entities/Fragment';
+import { Node } from '../entities/Node';
 import { NodeSpec } from '../interfaces/SchemaSpec';
+import { ContentMatch } from './ContentMatch';
 import { MarkType } from './MarkType';
 import { NodeType } from './NodeType';
 
@@ -30,6 +33,24 @@ describe('NodeType', () => {
       const nodeType = new NodeType('paragraph', mockSchema, spec);
 
       expect(nodeType.spec).toBe(spec);
+    });
+
+    it('given default, is null', () => {
+      const spec: NodeSpec = { attrs: { level: 1 } };
+      const mockSchema = {} as never;
+
+      const nodeType = new NodeType('paragraph', mockSchema, spec);
+
+      expect(nodeType.contentMatch).toBe(null);
+    });
+
+    it('given default, is null', () => {
+      const spec: NodeSpec = { attrs: { level: 1 } };
+      const mockSchema = {} as never;
+
+      const nodeType = new NodeType('paragraph', mockSchema, spec);
+
+      expect(nodeType.inlineContent).toBe(null);
     });
 
     it('constructor, given empty name, throws error', () => {
@@ -222,6 +243,153 @@ describe('NodeType', () => {
       const result = nodeType.isText;
 
       expect(result).toBe(true);
+    });
+  });
+
+  describe('isBlock', () => {
+    it('given spec without inline and text flags, returns true', () => {
+      const mockSchema = {} as never;
+      const spec: NodeSpec = { attrs: {} };
+      const nodeType = new NodeType('paragraph', mockSchema, spec);
+
+      expect(nodeType.isBlock).toBe(true);
+    });
+  });
+
+  describe('isInline', () => {
+    it('given spec without inline and text flags, returns false', () => {
+      const mockSchema = {} as never;
+      const spec: NodeSpec = { attrs: {} };
+      const nodeType = new NodeType('paragraph', mockSchema, spec);
+
+      expect(nodeType.isInline).toBe(false);
+    });
+  });
+
+  describe('create()', () => {
+    it('given text node type, throws error', () => {
+      const mockSchema = {} as never;
+      const spec: NodeSpec = { attrs: {}, text: true };
+      const nodeType = new NodeType('text', mockSchema, spec);
+
+      expect(() => nodeType.create()).toThrow(
+        'NodeType.create cannot construct text nodes'
+      );
+    });
+
+    it('given block type with no args, returns Node with defaults', () => {
+      const mockSchema = {} as never;
+      const spec: NodeSpec = { attrs: {} };
+      const nodeType = new NodeType('paragraph', mockSchema, spec);
+
+      expect(nodeType.create()).toBeInstanceOf(Node);
+    });
+
+    it('create, given attrs and content, returns Node with provided values', () => {
+      const mockSchema = {} as never;
+      const spec: NodeSpec = { attrs: {} };
+      const nodeType = new NodeType('paragraph', mockSchema, spec);
+      const childNode = new Node(new NodeType('heading', mockSchema, spec), {
+        level: 2,
+        visible: true,
+      });
+
+      const attrs = { visible: true, class: 'text-wrapper' };
+      const content = Fragment.from([childNode]);
+      const node = nodeType.create(attrs, content);
+
+      expect(node.attrs).toEqual(attrs);
+      expect(node.content).toBe(content);
+    });
+
+    it('given array of nodes as content, wraps in Fragment', () => {
+      const mockSchema = {} as never;
+      const spec: NodeSpec = { attrs: {} };
+      const nodeType = new NodeType('paragraph', mockSchema, spec);
+      const childNode1 = new Node(new NodeType('heading', mockSchema, spec), {
+        level: 1,
+        visible: true,
+      });
+      const childNode2 = new Node(new NodeType('paragraph', mockSchema, spec), {
+        level: 2,
+        visible: true,
+      });
+
+      const attrs = { visible: true, class: 'text-wrapper' };
+      const node = nodeType.create(attrs, [childNode1, childNode2]);
+
+      expect(node.content.childCount).toBe(2);
+      expect(node.content).toBeInstanceOf(Fragment);
+    });
+  });
+
+  describe('validContent()', () => {
+    it('given matching content, returns true', () => {
+      const mockSchema = {} as never;
+      const spec: NodeSpec = { attrs: {} };
+
+      const headingType = new NodeType('heading', mockSchema, spec);
+      const paragraphType = new NodeType('paragraph', mockSchema, spec);
+
+      const finalMatch = new ContentMatch(true, []);
+      const match2 = new ContentMatch(false, [
+        { type: paragraphType, next: finalMatch },
+      ]);
+      const match1 = new ContentMatch(false, [
+        { type: headingType, next: match2 },
+      ]);
+
+      const nodeType = new NodeType('doc', mockSchema, spec);
+      nodeType.contentMatch = match1;
+
+      const content = Fragment.from([
+        new Node(headingType, {}),
+        new Node(paragraphType, {}),
+      ]);
+
+      expect(nodeType.validContent(content)).toBe(true);
+    });
+
+    it('validContent, given null, throws error', () => {
+      const mockSchema = {} as never;
+      const spec: NodeSpec = { attrs: {} };
+
+      const headingType = new NodeType('heading', mockSchema, spec);
+      const paragraphType = new NodeType('paragraph', mockSchema, spec);
+
+      const finalMatch = new ContentMatch(true, []);
+      const match2 = new ContentMatch(false, [
+        { type: paragraphType, next: finalMatch },
+      ]);
+      const match1 = new ContentMatch(false, [
+        { type: headingType, next: match2 },
+      ]);
+
+      const nodeType = new NodeType('doc', mockSchema, spec);
+      nodeType.contentMatch = match1;
+
+      expect(() => nodeType.validContent(null as never)).toThrow('NodeType validContent parameter cannot be null');
+    });
+
+    it('validContent, given undefined, throws error', () => {
+      const mockSchema = {} as never;
+      const spec: NodeSpec = { attrs: {} };
+
+      const headingType = new NodeType('heading', mockSchema, spec);
+      const paragraphType = new NodeType('paragraph', mockSchema, spec);
+
+      const finalMatch = new ContentMatch(true, []);
+      const match2 = new ContentMatch(false, [
+        { type: paragraphType, next: finalMatch },
+      ]);
+      const match1 = new ContentMatch(false, [
+        { type: headingType, next: match2 },
+      ]);
+
+      const nodeType = new NodeType('doc', mockSchema, spec);
+      nodeType.contentMatch = match1;
+
+      expect(() => nodeType.validContent(undefined as never)).toThrow('NodeType validContent parameter cannot be undefined');
     });
   });
 });
