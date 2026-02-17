@@ -404,4 +404,139 @@ describe('ContentMatch', () => {
       expect(match.defaultType()).toBe(typeA);
     });
   });
+
+  describe('compatible(other)', () => {
+    it('given same edge type, returns true', () => {
+      const sharedType = createMockNodeType('paragraph');
+      const nextMatch = createMockContentMatch();
+      const match1 = new ContentMatch(false, [
+        { type: sharedType, next: nextMatch },
+      ]);
+      const match2 = new ContentMatch(false, [
+        { type: sharedType, next: nextMatch },
+      ]);
+
+      expect(match1.compatible(match2)).toBe(true);
+    });
+
+    it('given null or undefined parameter, returns false', () => {
+      const match = createMockContentMatch();
+
+      expect(match.compatible(null as never)).toBe(false);
+      expect(match.compatible(undefined as never)).toBe(false);
+    });
+  });
+
+  describe('fillBefore(after, toEnd, startIndex)', () => {
+    it('given matching fragment, returns empty fragment', () => {
+      const paragraphType = createMockNodeType('paragraph');
+      const mockFragment = createMockFragment([new Node(paragraphType, {})]);
+      const nextMatch = new ContentMatch(true, []);
+      const match = createMockContentMatch(false, [
+        { type: paragraphType, next: nextMatch },
+      ]);
+
+      const result = match.fillBefore(mockFragment, false);
+
+      expect(result).toBeInstanceOf(Fragment);
+      expect(result?.size).toBe(0);
+    });
+
+    it('given non-matching fragment with fillable gap, returns filled fragment', () => {
+      const headingType = createMockNodeType('heading');
+      const paragraphType = createMockNodeType('paragraph');
+
+      const finalMatch = new ContentMatch(true, []);
+      const match2 = new ContentMatch(false, [
+        { type: paragraphType, next: finalMatch },
+      ]);
+      const match1 = new ContentMatch(false, [
+        { type: headingType, next: match2 },
+      ]);
+
+      const result = match1.fillBefore(
+        Fragment.from([new Node(paragraphType, {})]),
+        false
+      );
+
+      expect(result).toBeInstanceOf(Fragment);
+      expect(result?.childCount).toBe(1);
+      expect(result?.child(0).type).toBe(headingType);
+    });
+
+    it('given toEnd true and match reaches valid end, returns filled fragment', () => {
+      const headingType = createMockNodeType('heading');
+
+      const finalMatch = new ContentMatch(true, []);
+      const match = new ContentMatch(false, [
+        { type: headingType, next: finalMatch },
+      ]);
+
+      const result = match.fillBefore(Fragment.empty(), true);
+
+      expect(result).toBeInstanceOf(Fragment);
+      expect(result?.childCount).toBe(1);
+      expect(result?.child(0).type).toBe(headingType);
+    });
+
+    it('given toEnd true and match does not reach valid end, returns null', () => {
+      const headingType = createMockNodeType('heading');
+      const deadEnd = new ContentMatch(false, []);
+      const match = new ContentMatch(false, [
+        { type: headingType, next: deadEnd },
+      ]);
+
+      const result = match.fillBefore(Fragment.empty(), true);
+
+      expect(result).toBeNull();
+    });
+
+    it('given null after parameter, throws error', () => {
+      const match = createMockContentMatch();
+
+      expect(() => match.fillBefore(null as never, false)).toThrow(
+        'ContentMatch fillBefore after parameter cannot be null'
+      );
+    });
+
+    it('given multiple nodes needed to fill, returns fragment with all nodes', () => {
+      const headingType = createMockNodeType('heading');
+      const paragraphType = createMockNodeType('paragraph');
+
+      const finalMatch = new ContentMatch(true, []);
+      const match2 = new ContentMatch(false, [
+        { type: paragraphType, next: finalMatch },
+      ]);
+      const match1 = new ContentMatch(false, [
+        { type: headingType, next: match2 },
+      ]);
+
+      const result = match1.fillBefore(Fragment.empty(), true);
+
+      expect(result).toBeInstanceOf(Fragment);
+      expect(result?.childCount).toBe(2);
+      expect(result?.child(0).type).toBe(headingType);
+      expect(result?.child(1).type).toBe(paragraphType);
+    });
+
+    it('given startIndex greater than 0, skips initial fragment children', () => {
+      const headingType = createMockNodeType('heading');
+      const paragraphType = createMockNodeType('paragraph');
+
+      const finalMatch = new ContentMatch(true, []);
+      const match2 = new ContentMatch(false, [
+        { type: paragraphType, next: finalMatch },
+      ]);
+      const match1 = new ContentMatch(false, [
+        { type: headingType, next: match2 },
+      ]);
+
+      const result = match1.fillBefore(Fragment.empty(), true);
+
+      expect(result).toBeInstanceOf(Fragment);
+      expect(result?.childCount).toBe(2);
+      expect(result?.child(0).type).toBe(headingType);
+      expect(result?.child(1).type).toBe(paragraphType);
+    });
+  });
 });

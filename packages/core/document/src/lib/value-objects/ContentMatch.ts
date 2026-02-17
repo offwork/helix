@@ -123,6 +123,54 @@ export class ContentMatch {
     return this.edges.length > 0 ? this.edges[0].type : null;
   }
 
+  compatible(other: ContentMatch): boolean {
+    if (other === null || other === undefined) return false;
+
+    for (const edge of this.edges) {
+      for (const otherEdge of other.edges) {
+        if (edge.type === otherEdge.type) return true;
+      }
+    }
+
+    return false;
+  }
+
+  fillBefore(
+    after: Fragment<Node>,
+    toEnd = false,
+    startIndex = 0
+  ): Fragment<Node> | null {
+    if (after === null) {
+      throw new Error('ContentMatch fillBefore after parameter cannot be null');
+    }
+
+    return ContentMatch.doFill(this, after, toEnd);
+  }
+
+  private static doFill(
+    match: ContentMatch,
+    after: Fragment<Node>,
+    toEnd: boolean
+  ): Fragment<Node> | null {
+    const filled: Node[] = [];
+
+    for (;;) {
+      const matched = match.matchFragment(after);
+      if (matched && (!toEnd || matched.validEnd)) {
+        return Fragment.from(filled);
+      }
+
+      const defaultNodeType = match.defaultType();
+      if (!defaultNodeType) return null;
+
+      filled.push(defaultNodeType.create());
+      const next = match.matchType(defaultNodeType);
+      if (!next) return null;
+
+      match = next;
+    }
+  }
+
   private validateParameters(validEnd: boolean, edges: Edge[]): void {
     if (validEnd === null) {
       throw new Error('ContentMatch validEnd cannot be null');
