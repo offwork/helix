@@ -287,7 +287,7 @@ describe('ContentMatch', () => {
       expect(result).toBeNull();
     });
 
-    it('returns false when ends prematurely', () => {
+    it('returns null when fragment ends prematurely', () => {
       const mockNodeType1 = createMockNodeType('paragraph');
       const mockNodeType2 = createMockNodeType('heading');
       const match2 = new ContentMatch(false, [
@@ -301,7 +301,7 @@ describe('ContentMatch', () => {
       const fragment = createMockFragment([node]);
 
       const result = match1.matchFragment(fragment);
-      expect(result).toBe(false);
+      expect(result).toBeNull();
     });
 
     it('matches multiple nodes sequentially', () => {
@@ -321,6 +321,41 @@ describe('ContentMatch', () => {
 
       const result = match1.matchFragment(fragment);
       expect(result).toBe(finalMatch);
+    });
+
+    it('throws when start is negative', () => {
+      const match = createMockContentMatch();
+      const fragment = createMockFragment();
+
+      expect(() => match.matchFragment(fragment, -1)).toThrow(
+        'ContentMatch matchFragment invalid range'
+      );
+    });
+
+    it('throws when endIndex is less than start', () => {
+      const match = createMockContentMatch();
+      const fragment = createMockFragment();
+
+      expect(() => match.matchFragment(fragment, 2, 1)).toThrow(
+        'ContentMatch matchFragment invalid range'
+      );
+    });
+
+    it('throws when endIndex exceeds fragment size', () => {
+      const match = createMockContentMatch();
+      const fragment = createMockFragment([createMockNode()]);
+
+      expect(() => match.matchFragment(fragment, 0, 2)).toThrow(
+        'ContentMatch matchFragment invalid range'
+      );
+    });
+
+    it('returns current match when range is empty and validEnd is true', () => {
+      const match = createMockContentMatch(true);
+      const fragment = createMockFragment([createMockNode()]);
+
+      const result = match.matchFragment(fragment, 0, 0);
+      expect(result).toBe(match);
     });
 
     it('throws when fragment is null', () => {

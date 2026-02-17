@@ -54,37 +54,37 @@ export class ContentMatch {
     return null;
   }
 
-  matchFragment(fragment: Fragment<Node>): ContentMatch | false | null {
+  matchFragment(
+    fragment: Fragment<Node>,
+    start = 0,
+    end?: number
+  ): ContentMatch | null {
     if (fragment === null) {
       throw new Error('ContentMatch matchFragment parameter cannot be null');
     }
 
-    // Empty fragment always returns current match
-    if (fragment.size === 0) {
-      return this;
+    const endIndex = end ?? fragment.childCount;
+
+    if (start < 0 || endIndex < start || endIndex > fragment.childCount) {
+      throw new Error('ContentMatch matchFragment invalid range');
     }
+
+    // Empty fragment always returns current match
+    if (fragment.size === 0) return this;
 
     // eslint-disable-next-line @typescript-eslint/no-this-alias
-    let match: ContentMatch = this;
+    let current: ContentMatch | null = this;
+    let index = start;
 
-    for (let i = 0; i < fragment.childCount; i++) {
-      const node = fragment.child(i);
-      const next = match.matchType(node.type);
-
-      if (next === null) {
-        return null; // Required element couldn't fit
-      }
-
-      match = next;
+    while (index < endIndex && current) {
+      const node = fragment.child(index);
+      current = current.matchType(node.type);
+      index++;
     }
 
-    // If we reached a valid end, return the match
-    if (match.validEnd) {
-      return match;
-    }
-
-    // Otherwise, the fragment ended prematurely
-    return false;
+    // If we reached a valid end, return the match.
+    // Otherwise, the fragment ended prematurely return null
+    return current && current.validEnd ? current : null;
   }
 
   equals(other: ContentMatch): boolean {
@@ -134,6 +134,33 @@ export class ContentMatch {
 
     return false;
   }
+
+  /* fillBefore(after: Fragment, toEnd = false, startIndex = 0): Fragment | null {
+    let seen: ContentMatch[] = [this];
+    function search(
+      match: ContentMatch,
+      types: readonly NodeType[]
+    ): Fragment | null {
+      let finished = match.matchFragment(after, startIndex);
+      if (finished && (!toEnd || finished.validEnd))
+        return Fragment.from(types.map((tp) => tp.createAndFill()!));
+
+      for (let i = 0; i < match.next.length; i++) {
+        let { type, next } = match.next[i];
+        if (
+          !(type.isText || type.hasRequiredAttrs()) &&
+          seen.indexOf(next) == -1
+        ) {
+          seen.push(next);
+          let found = search(next, types.concat(type));
+          if (found) return found;
+        }
+      }
+      return null;
+    }
+
+    return search(this, []);
+  } */
 
   fillBefore(
     after: Fragment<Node>,
