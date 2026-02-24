@@ -93,6 +93,10 @@ export class NodeType {
     return new Node(this, attrs || {}, nodes, marks || []);
   }
 
+  hasRequiredAttrs(): boolean {
+    return false;
+  }
+
   validContent(content: Fragment<Node>): boolean {
     if (content === null)
       throw new Error('NodeType validContent parameter cannot be null');

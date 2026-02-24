@@ -3,6 +3,11 @@ import { Node } from '../entities/Node';
 import { Edge } from '../interfaces/Edge';
 import { NodeType } from './NodeType';
 
+type Active = {
+  match: ContentMatch;
+  type: NodeType | null;
+  via: Active | null;
+};
 export class ContentMatch {
   private static _empty: ContentMatch;
 
@@ -54,37 +59,36 @@ export class ContentMatch {
     return null;
   }
 
-  matchFragment(fragment: Fragment<Node>): ContentMatch | false | null {
+  matchFragment(
+    fragment: Fragment<Node>,
+    start = 0,
+    end?: number
+  ): ContentMatch | null {
     if (fragment === null) {
       throw new Error('ContentMatch matchFragment parameter cannot be null');
     }
 
-    // Empty fragment always returns current match
-    if (fragment.size === 0) {
-      return this;
+    const endIndex = end ?? fragment.childCount;
+
+    if (start < 0 || endIndex < start || endIndex > fragment.childCount) {
+      throw new Error('ContentMatch matchFragment invalid range');
     }
+
+    // Empty fragment always returns current match
+    if (fragment.size === 0) return this;
 
     // eslint-disable-next-line @typescript-eslint/no-this-alias
-    let match: ContentMatch = this;
+    let current: ContentMatch | null = this;
+    let index = start;
 
-    for (let i = 0; i < fragment.childCount; i++) {
-      const node = fragment.child(i);
-      const next = match.matchType(node.type);
-
-      if (next === null) {
-        return null; // Required element couldn't fit
-      }
-
-      match = next;
+    while (index < endIndex && current) {
+      const node = fragment.child(index);
+      current = current.matchType(node.type);
+      index++;
     }
 
-    // If we reached a valid end, return the match
-    if (match.validEnd) {
-      return match;
-    }
-
-    // Otherwise, the fragment ended prematurely
-    return false;
+    // If we reached a valid end, return the match. Otherwise, return null
+    return current;
   }
 
   equals(other: ContentMatch): boolean {
@@ -120,7 +124,103 @@ export class ContentMatch {
   }
 
   defaultType(): NodeType | null {
-    return this.edges.length > 0 ? this.edges[0].type : null;
+    for (const edge of this.edges) {
+      if (!(edge.type.isText || edge.type.hasRequiredAttrs())) {
+        return edge.type;
+      }
+    }
+    return null;
+  }
+
+  compatible(other: ContentMatch): boolean {
+    if (other === null || other === undefined) return false;
+
+    for (const edge of this.edges) {
+      for (const otherEdge of other.edges) {
+        if (edge.type === otherEdge.type) return true;
+      }
+    }
+
+    return false;
+  }
+
+  fillBefore(
+    after: Fragment<Node>,
+    toEnd = false,
+    startIndex = 0
+  ): Fragment<Node> | null {
+    if (after === null) {
+      throw new Error('ContentMatch fillBefore after parameter cannot be null');
+    }
+
+    const seen: ContentMatch[] = [this];
+
+    const search = (
+      match: ContentMatch,
+      types: NodeType[]
+    ): Fragment<Node> | null => {
+      const finished = match.matchFragment(after, startIndex);
+      if (finished && (!toEnd || finished.validEnd)) {
+        return Fragment.from(types.map((tp) => tp.create()));
+      }
+
+      for (const edge of match.edges) {
+        if (
+          !(edge.type.isText || edge.type.hasRequiredAttrs()) &&
+          seen.indexOf(edge.next) === -1
+        ) {
+          seen.push(edge.next);
+          const found = search(edge.next, types.concat(edge.type));
+          if (found) return found;
+        }
+      }
+      return null;
+    };
+
+    return search(this, []);
+  }
+
+  findWrapping(target: NodeType): NodeType[] | null {
+    if (target === null) {
+      throw new Error('ContentMatch findWrapping parameter cannot be null');
+    }
+
+    const seen: Record<string, boolean> = {};
+    const active: Active[] = [{ match: this, type: null, via: null }];
+
+    while (active.length) {
+      const current = active?.shift();
+      if (!current) continue;
+
+      if (current.match.matchType(target)) {
+        const result: NodeType[] = [];
+        let obj: Active | null = current;
+        while (obj?.type) {
+          result.push(obj.type);
+          obj = obj.via;
+        }
+        return result.reverse();
+      }
+
+      for (const edge of current.match.edges) {
+        if (
+          !edge.type.isLeaf &&
+          !edge.type.hasRequiredAttrs() &&
+          !(edge.type.name in seen) &&
+          (!current.type || edge.next.validEnd) &&
+          edge.type.contentMatch
+        ) {
+          active.push({
+            match: edge.type.contentMatch,
+            type: edge.type,
+            via: current,
+          });
+          seen[edge.type.name] = true;
+        }
+      }
+    }
+
+    return null;
   }
 
   private validateParameters(validEnd: boolean, edges: Edge[]): void {

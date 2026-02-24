@@ -323,6 +323,16 @@ describe('NodeType', () => {
     });
   });
 
+  describe('hasRequiredAttrs()', () => {
+    it('given current attrs system without required concept, returns false', () => {
+      const mockSchema = {} as never;
+      const spec: NodeSpec = { attrs: { level: 1 } };
+      const nodeType = new NodeType('heading', mockSchema, spec);
+
+      expect(nodeType.hasRequiredAttrs()).toBe(false);
+    });
+  });
+
   describe('validContent()', () => {
     it('given matching content, returns true', () => {
       const mockSchema = {} as never;
@@ -368,7 +378,9 @@ describe('NodeType', () => {
       const nodeType = new NodeType('doc', mockSchema, spec);
       nodeType.contentMatch = match1;
 
-      expect(() => nodeType.validContent(null as never)).toThrow('NodeType validContent parameter cannot be null');
+      expect(() => nodeType.validContent(null as never)).toThrow(
+        'NodeType validContent parameter cannot be null'
+      );
     });
 
     it('validContent, given undefined, throws error', () => {
@@ -389,7 +401,9 @@ describe('NodeType', () => {
       const nodeType = new NodeType('doc', mockSchema, spec);
       nodeType.contentMatch = match1;
 
-      expect(() => nodeType.validContent(undefined as never)).toThrow('NodeType validContent parameter cannot be undefined');
+      expect(() => nodeType.validContent(undefined as never)).toThrow(
+        'NodeType validContent parameter cannot be undefined'
+      );
     });
   });
 });
