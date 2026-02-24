@@ -287,23 +287,6 @@ describe('ContentMatch', () => {
       expect(result).toBeNull();
     });
 
-    it('returns null when fragment ends prematurely', () => {
-      const mockNodeType1 = createMockNodeType('paragraph');
-      const mockNodeType2 = createMockNodeType('heading');
-      const match2 = new ContentMatch(false, [
-        { type: mockNodeType2, next: createMockContentMatch() },
-      ]);
-      const match1 = new ContentMatch(false, [
-        { type: mockNodeType1, next: match2 },
-      ]);
-
-      const node = createMockNode(mockNodeType1);
-      const fragment = createMockFragment([node]);
-
-      const result = match1.matchFragment(fragment);
-      expect(result).toBeNull();
-    });
-
     it('matches multiple nodes sequentially', () => {
       const mockNodeType1 = createMockNodeType('paragraph');
       const mockNodeType2 = createMockNodeType('heading');
@@ -438,6 +421,19 @@ describe('ContentMatch', () => {
 
       expect(match.defaultType()).toBe(typeA);
     });
+
+    it('skips text type and returns first non-text type', () => {
+      const realTextType = new NodeType('text', {}, { attrs: {}, text: true });
+      const paragraphType = createMockNodeType('paragraph');
+      const nextMatch = new ContentMatch(true, []);
+      const edges = [
+        { type: realTextType, next: nextMatch },
+        { type: paragraphType, next: nextMatch },
+      ];
+      const match = new ContentMatch(false, edges);
+
+      expect(match.defaultType()).toBe(paragraphType);
+    });
   });
 
   describe('compatible(other)', () => {
@@ -559,19 +555,115 @@ describe('ContentMatch', () => {
       const paragraphType = createMockNodeType('paragraph');
 
       const finalMatch = new ContentMatch(true, []);
-      const match2 = new ContentMatch(false, [
+      const start = new ContentMatch(false, [
         { type: paragraphType, next: finalMatch },
       ]);
-      const match1 = new ContentMatch(false, [
-        { type: headingType, next: match2 },
+
+      const fragment = createMockFragment([
+        new Node(headingType, {}),
+        new Node(paragraphType, {}),
       ]);
 
-      const result = match1.fillBefore(Fragment.empty(), true);
+      const result = start.fillBefore(fragment, false, 1);
 
       expect(result).toBeInstanceOf(Fragment);
-      expect(result?.childCount).toBe(2);
-      expect(result?.child(0).type).toBe(headingType);
-      expect(result?.child(1).type).toBe(paragraphType);
+      expect(result?.childCount).toBe(0);
+    });
+
+    it('given branching graph where first edge fails, explores second edge', () => {
+      const headingType = createMockNodeType('heading');
+      const paragraphType = createMockNodeType('paragraph');
+
+      const deadEnd = new ContentMatch(false, []);
+      const validEnd = new ContentMatch(true, []);
+
+      const start = new ContentMatch(false, [
+        { type: headingType, next: deadEnd },
+        { type: paragraphType, next: validEnd },
+      ]);
+
+      const result = start.fillBefore(Fragment.empty(), true);
+
+      expect(result).toBeInstanceOf(Fragment);
+      expect(result?.childCount).toBe(1);
+      expect(result?.child(0).type).toBe(paragraphType);
+    });
+  });
+
+  describe('findWrapping(target)', () => {
+    it('given target directly matches current state, returns empty array', () => {
+      const headingType = createMockNodeType('heading');
+
+      const nextMatch = new ContentMatch(false, []);
+
+      const match = new ContentMatch(false, [
+        { type: headingType, next: nextMatch },
+      ]);
+
+      expect(match.findWrapping(headingType)).toEqual([]);
+    });
+
+    it('given target matches through one wrapper, returns wrapper array', () => {
+      const targetType = createMockNodeType('blockquote');
+      const wrappingType = createMockNodeType('paragraph');
+
+      const wrapperContentMatch = new ContentMatch(true, [
+        { type: targetType, next: new ContentMatch(true, []) },
+      ]);
+
+      wrappingType.contentMatch = wrapperContentMatch;
+
+      const match = new ContentMatch(false, [
+        { type: wrappingType, next: wrapperContentMatch },
+      ]);
+
+      expect(match.findWrapping(targetType)).toEqual([wrappingType]);
+    });
+
+    it('given no wrapping path exists, returns null', () => {
+      const targetType = createMockNodeType('blockquote');
+      const otherType = createMockNodeType('paragraph');
+
+      const match = new ContentMatch(false, [
+        { type: otherType, next: new ContentMatch(false, []) },
+      ]);
+
+      expect(match.findWrapping(targetType)).toBeNull();
+    });
+
+    it('given target is null, throws error', () => {
+      const match = new ContentMatch(false, [
+        {
+          type: createMockNodeType('paragraph'),
+          next: new ContentMatch(false, []),
+        },
+      ]);
+
+      expect(() => match.findWrapping(null as never)).toThrow(
+        'ContentMatch findWrapping parameter cannot be null'
+      );
+    });
+
+    it('given multiple depth wrapping needed, returns correct chain', () => {
+      const targetType = createMockNodeType('blockquote');
+      const innerType = createMockNodeType('section');
+      const outerType = createMockNodeType('article');
+
+      const innerContentMatch = new ContentMatch(true, [
+        { type: targetType, next: new ContentMatch(true, []) },
+      ]);
+      innerType.contentMatch = innerContentMatch;
+
+      const outerContentMatch = new ContentMatch(true, [
+        { type: innerType, next: new ContentMatch(true, []) },
+      ]);
+      outerType.contentMatch = outerContentMatch;
+
+      const match = new ContentMatch(false, [
+        { type: outerType, next: new ContentMatch(false, []) },
+      ]);
+
+      expect(match.findWrapping(targetType)).toEqual([outerType, innerType]);
     });
   });
 });

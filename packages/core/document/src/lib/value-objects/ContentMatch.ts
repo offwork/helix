@@ -3,6 +3,11 @@ import { Node } from '../entities/Node';
 import { Edge } from '../interfaces/Edge';
 import { NodeType } from './NodeType';
 
+type Active = {
+  match: ContentMatch;
+  type: NodeType | null;
+  via: Active | null;
+};
 export class ContentMatch {
   private static _empty: ContentMatch;
 
@@ -82,9 +87,8 @@ export class ContentMatch {
       index++;
     }
 
-    // If we reached a valid end, return the match.
-    // Otherwise, the fragment ended prematurely return null
-    return current && current.validEnd ? current : null;
+    // If we reached a valid end, return the match. Otherwise, return null
+    return current;
   }
 
   equals(other: ContentMatch): boolean {
@@ -120,7 +124,12 @@ export class ContentMatch {
   }
 
   defaultType(): NodeType | null {
-    return this.edges.length > 0 ? this.edges[0].type : null;
+    for (const edge of this.edges) {
+      if (!(edge.type.isText || edge.type.hasRequiredAttrs())) {
+        return edge.type;
+      }
+    }
+    return null;
   }
 
   compatible(other: ContentMatch): boolean {
@@ -135,33 +144,6 @@ export class ContentMatch {
     return false;
   }
 
-  /* fillBefore(after: Fragment, toEnd = false, startIndex = 0): Fragment | null {
-    let seen: ContentMatch[] = [this];
-    function search(
-      match: ContentMatch,
-      types: readonly NodeType[]
-    ): Fragment | null {
-      let finished = match.matchFragment(after, startIndex);
-      if (finished && (!toEnd || finished.validEnd))
-        return Fragment.from(types.map((tp) => tp.createAndFill()!));
-
-      for (let i = 0; i < match.next.length; i++) {
-        let { type, next } = match.next[i];
-        if (
-          !(type.isText || type.hasRequiredAttrs()) &&
-          seen.indexOf(next) == -1
-        ) {
-          seen.push(next);
-          let found = search(next, types.concat(type));
-          if (found) return found;
-        }
-      }
-      return null;
-    }
-
-    return search(this, []);
-  } */
-
   fillBefore(
     after: Fragment<Node>,
     toEnd = false,
@@ -171,31 +153,74 @@ export class ContentMatch {
       throw new Error('ContentMatch fillBefore after parameter cannot be null');
     }
 
-    return ContentMatch.doFill(this, after, toEnd);
-  }
+    const seen: ContentMatch[] = [this];
 
-  private static doFill(
-    match: ContentMatch,
-    after: Fragment<Node>,
-    toEnd: boolean
-  ): Fragment<Node> | null {
-    const filled: Node[] = [];
-
-    for (;;) {
-      const matched = match.matchFragment(after);
-      if (matched && (!toEnd || matched.validEnd)) {
-        return Fragment.from(filled);
+    const search = (
+      match: ContentMatch,
+      types: NodeType[]
+    ): Fragment<Node> | null => {
+      const finished = match.matchFragment(after, startIndex);
+      if (finished && (!toEnd || finished.validEnd)) {
+        return Fragment.from(types.map((tp) => tp.create()));
       }
 
-      const defaultNodeType = match.defaultType();
-      if (!defaultNodeType) return null;
+      for (const edge of match.edges) {
+        if (
+          !(edge.type.isText || edge.type.hasRequiredAttrs()) &&
+          seen.indexOf(edge.next) === -1
+        ) {
+          seen.push(edge.next);
+          const found = search(edge.next, types.concat(edge.type));
+          if (found) return found;
+        }
+      }
+      return null;
+    };
 
-      filled.push(defaultNodeType.create());
-      const next = match.matchType(defaultNodeType);
-      if (!next) return null;
+    return search(this, []);
+  }
 
-      match = next;
+  findWrapping(target: NodeType): NodeType[] | null {
+    if (target === null) {
+      throw new Error('ContentMatch findWrapping parameter cannot be null');
     }
+
+    const seen: Record<string, boolean> = {};
+    const active: Active[] = [{ match: this, type: null, via: null }];
+
+    while (active.length) {
+      const current = active?.shift();
+      if (!current) continue;
+
+      if (current.match.matchType(target)) {
+        const result: NodeType[] = [];
+        let obj: Active | null = current;
+        while (obj?.type) {
+          result.push(obj.type);
+          obj = obj.via;
+        }
+        return result.reverse();
+      }
+
+      for (const edge of current.match.edges) {
+        if (
+          !edge.type.isLeaf &&
+          !edge.type.hasRequiredAttrs() &&
+          !(edge.type.name in seen) &&
+          (!current.type || edge.next.validEnd) &&
+          edge.type.contentMatch
+        ) {
+          active.push({
+            match: edge.type.contentMatch,
+            type: edge.type,
+            via: current,
+          });
+          seen[edge.type.name] = true;
+        }
+      }
+    }
+
+    return null;
   }
 
   private validateParameters(validEnd: boolean, edges: Edge[]): void {
