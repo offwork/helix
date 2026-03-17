@@ -1,95 +1,339 @@
 import { Node } from '../entities/Node';
+import { NodeType } from './NodeType';
 import { ResolvedPos } from './ResolvedPos';
 
-const node = {} as Node;
+const path: (Node | number)[] = [];
+
+const createMockNode = (name = 'paragraph'): Node =>
+  new Node(new NodeType(name, {} as never, { attrs: {} }), {});
 
 describe('ResolvedPos', () => {
   describe('constructor', () => {
-    it('given valid parameters, creates ResolvedPos instance', () => {
-      const resolvedPos = new ResolvedPos(1, node, 5);
+    it('given valid parameters, stores pos, path and parentOffset', () => {
+      const resolvedPos = new ResolvedPos(1, path, 5);
 
       expect(resolvedPos).toBeInstanceOf(ResolvedPos);
       expect(resolvedPos.pos).toBe(1);
-      expect(resolvedPos.doc).toBe(node);
-      expect(resolvedPos.depth).toBe(5);
-    });
-
-    it('given negative pos, throws "ResolvedPos pos cannot be negative"', () => {
-      expect(() => new ResolvedPos(-1, node, 5)).toThrow(
-        'ResolvedPos pos cannot be negative'
-      );
+      expect(resolvedPos.path).toBe(path);
+      expect(resolvedPos.parentOffset).toBe(5);
     });
 
     it('given null pos, throws "ResolvedPos pos cannot be null"', () => {
-      expect(() => new ResolvedPos(null as never, node, 5)).toThrow(
+      expect(() => new ResolvedPos(null as never, path, 5)).toThrow(
         'ResolvedPos pos cannot be null'
       );
     });
 
     it('given undefined pos, throws "ResolvedPos pos cannot be undefined"', () => {
-      expect(() => new ResolvedPos(undefined as never, node, 5)).toThrow(
+      expect(() => new ResolvedPos(undefined as never, path, 5)).toThrow(
         'ResolvedPos pos cannot be undefined'
       );
     });
 
-    it('given null doc, throws "ResolvedPos doc cannot be null"', () => {
+    it('given negative pos, throws "ResolvedPos pos cannot be negative"', () => {
+      expect(() => new ResolvedPos(-1, path, 5)).toThrow(
+        'ResolvedPos pos cannot be negative'
+      );
+    });
+
+    it('given null path, throws "ResolvedPos path cannot be null"', () => {
       expect(() => new ResolvedPos(1, null as never, 5)).toThrow(
-        'ResolvedPos doc cannot be null'
+        'ResolvedPos path cannot be null'
       );
     });
 
-    it('given undefined doc, throws "ResolvedPos doc cannot be undefined"', () => {
+    it('given undefined path, throws "ResolvedPos path cannot be undefined"', () => {
       expect(() => new ResolvedPos(1, undefined as never, 5)).toThrow(
-        'ResolvedPos doc cannot be undefined'
+        'ResolvedPos path cannot be undefined'
       );
     });
 
-    it('given negative depth, throws "ResolvedPos depth cannot be negative"', () => {
-      expect(() => new ResolvedPos(1, node, -2)).toThrow(
-        'ResolvedPos depth cannot be negative'
+    it('given path length not multiple of 3, throws error', () => {
+      const invalidPath = [1, createMockNode()];
+
+      expect(() => new ResolvedPos(1, invalidPath, 5)).toThrow(
+        'ResolvedPos path length must be a multiple of 3'
       );
     });
 
-    it('given null depth, throws "ResolvedPos depth cannot be null"', () => {
-      expect(() => new ResolvedPos(1, node, null as never)).toThrow(
-        'ResolvedPos depth cannot be null'
+    it('given null parentOffset, throws "ResolvedPos parentOffset cannot be null"', () => {
+      expect(() => new ResolvedPos(1, path, null as never)).toThrow(
+        'ResolvedPos parentOffset cannot be null'
       );
     });
 
-    it('given undefined depth, throws "ResolvedPos depth cannot be undefined"', () => {
-      expect(() => new ResolvedPos(1, node, undefined as never)).toThrow(
-        'ResolvedPos depth cannot be undefined'
+    it('given undefined parentOffset, throws "ResolvedPos parentOffset cannot be undefined"', () => {
+      expect(() => new ResolvedPos(1, path, undefined as never)).toThrow(
+        'ResolvedPos parentOffset cannot be undefined'
+      );
+    });
+
+    it('given negative parentOffset, throws "ResolvedPos parentOffset cannot be negative"', () => {
+      expect(() => new ResolvedPos(1, path, -1)).toThrow(
+        'ResolvedPos parentOffset cannot be negative'
       );
     });
   });
 
+  describe('depth', () => {
+    it('given path with one level, is 0', () => {
+      const resolvedPos = new ResolvedPos(1, [createMockNode(), 1, 0], 5);
+
+      expect(resolvedPos.depth).toBe(0);
+    });
+
+    it('given path with two levels, is 1', () => {
+      const resolvedPos = new ResolvedPos(
+        1,
+        [createMockNode(), 1, 0, createMockNode(), 2, 0],
+        5
+      );
+
+      expect(resolvedPos.depth).toBe(1);
+    });
+  });
+
+  describe('doc', () => {
+    it('given valid path, returns root node', () => {
+      const rootNode = createMockNode();
+      const resolvedPos = new ResolvedPos(1, [rootNode, 1, 0], 5);
+
+      expect(resolvedPos.doc).toBe(rootNode);
+    });
+  });
+
+  describe('parent', () => {
+    it('given depth 0, returns root node', () => {
+      const rootNode = createMockNode();
+      const resolvedPos = new ResolvedPos(1, [rootNode, 1, 0], 5);
+
+      expect(resolvedPos.parent).toBe(rootNode);
+    });
+
+    it('given depth 1, returns node at depth 1', () => {
+      const rootNode = createMockNode();
+      const childNode = createMockNode();
+      const resolvedPos = new ResolvedPos(
+        1,
+        [rootNode, 1, 0, childNode, 2, 0],
+        5
+      );
+
+      expect(resolvedPos.parent).toBe(childNode);
+    });
+  });
+
+  describe('node', () => {
+    it('given depth 0, returns root node', () => {
+      const rootNode = createMockNode();
+      const resolvedPos = new ResolvedPos(1, [rootNode, 1, 0], 5);
+
+      expect(resolvedPos.node(0)).toBe(rootNode);
+    });
+
+    it('given no arguments, returns parent node', () => {
+      const rootNode = createMockNode();
+      const childNode = createMockNode();
+      const resolvedPos = new ResolvedPos(
+        1,
+        [rootNode, 1, 0, childNode, 2, 0],
+        5
+      );
+
+      expect(resolvedPos.node()).toBe(childNode);
+    });
+  });
+
+  describe('index', () => {
+    it('given depth 0, returns index at root level', () => {
+      const resolvedPos = new ResolvedPos(1, [createMockNode(), 1, 0], 5);
+
+      expect(resolvedPos.index(0)).toBe(1);
+    });
+
+    it('given no arguments, returns index at current depth', () => {
+      const resolvedPos = new ResolvedPos(
+        1,
+        [createMockNode(), 1, 0, createMockNode(), 2, 0],
+        5
+      );
+
+      expect(resolvedPos.index()).toBe(2);
+    });
+  });
+
+  describe('start', () => {
+    it('given depth 0, returns 0', () => {
+      const resolvedPos = new ResolvedPos(1, [createMockNode(), 1, 0], 5);
+
+      expect(resolvedPos.start(0)).toBe(0);
+    });
+  });
+
+  describe('end', () => {
+    it('given depth 0, returns root content size', () => {
+      const rootNode = createMockNode();
+      const resolvedPos = new ResolvedPos(1, [rootNode, 1, 0], 5);
+
+      expect(resolvedPos.end(0)).toBe(rootNode.content.size);
+    });
+  });
+
+  describe('before', () => {
+    it("given depth 0, throws 'There is no position before the top-level node'", () => {
+      const resolvedPos = new ResolvedPos(1, [createMockNode(), 1, 0], 5);
+
+      expect(() => resolvedPos.before(0)).toThrow(
+        'There is no position before the top-level node'
+      );
+    });
+
+    it('given depth 1, returns path start offset', () => {
+      const resolvedPos = new ResolvedPos(
+        1,
+        [createMockNode(), 1, 0, createMockNode(), 2, 0],
+        5
+      );
+
+      expect(resolvedPos.before(1)).toBe(0);
+    });
+  });
+
+  describe('after', () => {
+    it("given depth 0, throws 'There is no position after the top-level node'", () => {
+      const resolvedPos = new ResolvedPos(1, [createMockNode(), 1, 0], 5);
+
+      expect(() => resolvedPos.after(0)).toThrow(
+        'There is no position after the top-level node'
+      );
+    });
+
+    it('given depth 1, returns position after node', () => {
+      const resolvedPos = new ResolvedPos(
+        1,
+        [createMockNode(), 1, 0, createMockNode(), 2, 0],
+        5
+      );
+
+      expect(resolvedPos.after(1)).toBe(2);
+    });
+  });
+
+  describe('textOffset', () => {
+    it('given pos eqals last path offset, returns 0', () => {
+      const resolvedPos = new ResolvedPos(0, [createMockNode(), 1, 0], 0);
+
+      expect(resolvedPos.textOffset).toBe(0);
+    });
+  });
+
+  describe('indexAfter', () => {
+    it('given depth equals current depth and no textOffset, returns same as index', () => {
+      const resolvedPos = new ResolvedPos(
+        0,
+        [createMockNode(), 1, 0, createMockNode(), 2, 0],
+        0
+      );
+
+      expect(resolvedPos.indexAfter()).toBe(resolvedPos.index());
+    });
+  });
+
+  describe('sameParent', () => {
+    it('given positions with same parent, returns true', () => {
+      const rootNode = createMockNode();
+      const childNode = createMockNode();
+      const resolvedPos1 = new ResolvedPos(
+        1,
+        [rootNode, 1, 0, childNode, 2, 0],
+        1
+      );
+      const resolvedPos2 = new ResolvedPos(
+        2,
+        [rootNode, 1, 0, childNode, 2, 0],
+        2
+      );
+
+      expect(resolvedPos1.sameParent(resolvedPos2)).toBe(true);
+    });
+  });
+
+  describe('sharedDepth', () => {
+    it('given pos inside current node, returns current depth', () => {
+      const rootNode = createMockNode();
+      const childNode = createMockNode();
+      const resolvedPos = new ResolvedPos(
+        1,
+        [rootNode, 1, 0, childNode, 2, 0],
+        1
+      );
+
+      expect(resolvedPos.sharedDepth(1)).toBe(1);
+    });
+
+    it('given pos at root level only, returns 0', () => {
+      const rootNode = createMockNode();
+      const childNode = createMockNode();
+      const resolvedPos = new ResolvedPos(
+        1,
+        [rootNode, 1, 0, childNode, 2, 0],
+        1
+      );
+
+      expect(resolvedPos.sharedDepth(2)).toBe(0);
+    });
+  });
+
+  describe('max', () => {
+    it('given other with greater pos, returns other', () => {
+      const rootNode = createMockNode();
+      const path = [rootNode, 0, 0];
+      const a = new ResolvedPos(1, path, 0);
+      const b = new ResolvedPos(3, path, 0);
+
+      expect(a.max(b)).toBe(b);
+    });
+  });
+
+  describe('min', () => {
+    it('given other with smaller pos, returns other', () => {
+      const rootNode = createMockNode();
+      const path = [rootNode, 0, 0];
+      const a = new ResolvedPos(3, path, 0);
+      const b = new ResolvedPos(1, path, 0);
+
+      expect(a.min(b)).toBe(b);
+    });
+  });
+
   describe('equals', () => {
-    it('given ResolvedPos with same pos and doc, returns true', () => {
-      const resolvedPos1 = new ResolvedPos(1, node, 5);
-      const resolvedPos2 = new ResolvedPos(1, node, 5);
+    it('given same pos and doc, returns true', () => {
+      const rootNode = createMockNode();
+      const a = new ResolvedPos(1, [rootNode, 0, 0], 0);
+      const b = new ResolvedPos(1, [rootNode, 0, 0], 0);
 
-      expect(resolvedPos1.equals(resolvedPos2)).toBe(true);
+      expect(a.equals(b)).toBe(true);
     });
 
-    it('given ResolvedPos with different pos, returns false', () => {
-      const resolvedPos1 = new ResolvedPos(1, node, 5);
-      const resolvedPos2 = new ResolvedPos(3, node, 5);
+    it('given different pos, returns false', () => {
+      const rootNode = createMockNode();
+      const a = new ResolvedPos(1, [rootNode, 0, 0], 0);
+      const b = new ResolvedPos(2, [rootNode, 0, 0], 0);
 
-      expect(resolvedPos1.equals(resolvedPos2)).toBe(false);
+      expect(a.equals(b)).toBe(false);
     });
 
-    it('given ResolvedPos with different doc, returns false', () => {
-      const node2 = {} as Node;
-      const resolvedPos1 = new ResolvedPos(1, node, 5);
-      const resolvedPos2 = new ResolvedPos(1, node2, 4);
+    it('given different doc, returns false', () => {
+      const a = new ResolvedPos(1, [createMockNode(), 0, 0], 0);
+      const b = new ResolvedPos(1, [createMockNode(), 0, 0], 0);
 
-      expect(resolvedPos1.equals(resolvedPos2)).toBe(false);
+      expect(a.equals(b)).toBe(false);
     });
 
-    it('given null parameter, throws "ResolvedPos equals parameter cannot be null"', () => {
-      const resolvedPos = new ResolvedPos(1, node, 5);
+    it('given null, throws error', () => {
+      const a = new ResolvedPos(1, [createMockNode(), 0, 0], 0);
 
-      expect(() => resolvedPos.equals(null as never)).toThrow(
+      expect(() => a.equals(null as never)).toThrow(
         'ResolvedPos equals parameter cannot be null'
       );
     });
