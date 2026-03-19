@@ -338,4 +338,76 @@ describe('Fragment', () => {
       );
     });
   });
+
+  describe('findIndex', () => {
+    it('given pos is 0, returns index 0 and offset 0', () => {
+      const node1 = new Node(new NodeType('paragraph', mockSchema, spec), {
+        text: 'First',
+      });
+
+      const node2 = new Node(new NodeType('paragraph', mockSchema, spec), {
+        text: 'Second',
+      });
+
+      const fragment = Fragment.from([node1, node2]);
+
+      const result = fragment.findIndex(0);
+
+      expect(result).toEqual({ index: 0, offset: 0 });
+    });
+  });
+
+  it('given pos equals size, returns index childCount and offset size', () => {
+    const node1 = new Node(new NodeType('paragraph', mockSchema, spec), {
+      text: 'First',
+    });
+
+    const node2 = new Node(new NodeType('paragraph', mockSchema, spec), {
+      text: 'Second',
+    });
+
+    const fragment = Fragment.from([node1, node2]);
+
+    const result = fragment.findIndex(fragment.size);
+
+    expect(result).toEqual({
+      index: fragment.childCount,
+      offset: fragment.size,
+    });
+  });
+
+  it('given pos inside first child, returns index 0 and offset 0', () => {
+    const node1 = new Node(new NodeType('paragraph', mockSchema, spec), {
+      text: 'First',
+    });
+
+    const node2 = new Node(new NodeType('paragraph', mockSchema, spec), {
+      text: 'Second',
+    });
+
+    const fragment = Fragment.from([node1, node2]);
+
+    const result = fragment.findIndex(1);
+
+    expect(result).toEqual({ index: 0, offset: 0 });
+  });
+
+  it('given negative pos, throws RangeError', () => {
+    const fragment = Fragment.empty<Node>();
+
+    expect(() => fragment.findIndex(-1)).toThrow(
+      'Invalid position: -1 (size: 0)'
+    );
+  });
+
+  it('given pos greater than size, throws RangeError', () => {
+    const node = new Node(new NodeType('paragraph', mockSchema, spec), {
+      text: 'First',
+    });
+    const fragment = Fragment.from([node]);
+
+    expect(() => fragment.findIndex(100)).toThrow(
+      'Invalid position: 100 (size: 2)'
+    );
+  });
 });

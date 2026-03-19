@@ -20,7 +20,7 @@ export class Fragment<TNode extends Node> {
   }
 
   get size(): number {
-    return this.content.reduce((sum, node) => sum += node.nodeSize, 0);
+    return this.content.reduce((sum, node) => (sum += node.nodeSize), 0);
   }
 
   get firstChild(): TNode | undefined {
@@ -63,6 +63,33 @@ export class Fragment<TNode extends Node> {
 
     if (this.content.length !== other.content.length) return false;
 
-    return this.content.every((node, index) => node.equals(other.content[index]));
+    return this.content.every((node, index) =>
+      node.equals(other.content[index])
+    );
+  }
+
+  findIndex(pos: number): { index: number; offset: number } {
+    if (pos < 0 || pos > this.size) {
+      throw new RangeError(`Invalid position: ${pos} (size: ${this.size})`);
+    }
+
+    if (pos == 0) {
+      return { index: 0, offset: 0 };
+    }
+
+    if (pos == this.size) {
+      return { index: this.childCount, offset: this.size };
+    }
+
+    let i = 0,
+      curPos = 0;
+    while (i < this.content.length) {
+      const end = curPos + this.content[i].nodeSize;
+      if (end > pos) return { index: i, offset: curPos };
+      curPos = end;
+      i++;
+    }
+
+    return { index: i, offset: curPos };
   }
 }
