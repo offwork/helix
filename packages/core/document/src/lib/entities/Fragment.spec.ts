@@ -410,4 +410,84 @@ describe('Fragment', () => {
       'Invalid position: 100 (size: 2)'
     );
   });
+
+  describe('cut', () => {
+    it('given full range, returns this', () => {
+      const node1 = new Node(new NodeType('paragraph', mockSchema, spec), {
+        text: 'First',
+      });
+
+      const node2 = new Node(new NodeType('paragraph', mockSchema, spec), {
+        text: 'Second',
+      });
+
+      const fragment = Fragment.from([node1, node2]);
+
+      const result = fragment.cut(0, fragment.size);
+
+      expect(result).toBe(fragment);
+    });
+
+    it('given empty range (from equals to), returns empty fragment', () => {
+      const node1 = new Node(new NodeType('paragraph', mockSchema, spec), {
+        text: 'First',
+      });
+
+      const node2 = new Node(new NodeType('paragraph', mockSchema, spec), {
+        text: 'Second',
+      });
+
+      const fragment = Fragment.from([node1, node2]);
+
+      const result = fragment.cut(1, 1);
+
+      expect(result.size).toBe(0);
+    });
+
+    it('given partial range covering one child, returns that child', () => {
+      const node1 = new Node(new NodeType('paragraph', mockSchema, spec), {
+        text: 'First',
+      });
+
+      const node2 = new Node(new NodeType('paragraph', mockSchema, spec), {
+        text: 'Second',
+      });
+
+      const fragment = Fragment.from([node1, node2]);
+
+      const result = fragment.cut(0, 2);
+
+      expect(result.childCount).toBe(1);
+      expect(result.child(0)).toBe(node1);
+    });
+
+    it('given range cutting into text node, returns trimmed text node', () => {
+      const textType = new NodeType('text', mockSchema, { text: true });
+      const node = new Node(textType, {}, undefined, undefined, 'Hello World');
+      const fragment = Fragment.from([node]);
+
+      const result = fragment.cut(6, 11);
+
+      expect(result.childCount).toBe(1);
+      expect(result.child(0).text).toBe('World');
+    });
+
+    it('given range cutting into non-text node, returns trimmed node', () => {
+      const child1 = new Node(new NodeType('paragraph', mockSchema, spec), {});
+      const child2 = new Node(new NodeType('paragraph', mockSchema, spec), {});
+      const parent = new Node(
+        new NodeType('paragraph', mockSchema, spec),
+        {},
+        Fragment.from([child1, child2]),
+        []
+      );
+      const fragment = Fragment.from([parent]);
+
+      const result = fragment.cut(1, 3);
+
+      expect(result.childCount).toBe(1);
+      expect(result.child(0).content.childCount).toBe(1);
+      expect(result.child(0).content.child(0)).toBe(child1);
+    });
+  });
 });

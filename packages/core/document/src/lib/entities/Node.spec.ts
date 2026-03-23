@@ -177,4 +177,77 @@ describe('Node', () => {
       );
     });
   });
+
+  describe('copy', () => {
+    it('given same content, returns same node', () => {
+      const node = new Node(
+        type,
+        { level: 1, visible: true },
+        mockContent,
+        [],
+        'Hello'
+      );
+
+      const copy = node.copy(mockContent);
+
+      expect(copy).toBe(node);
+    });
+
+    it('given different content, returns new node with same type/attrs/marks/', () => {
+      const node = new Node(type, { level: 1, visible: true }, mockContent, []);
+
+      const newChildNode = new Node(type, {});
+      const newContent = Fragment.from<Node>([newChildNode]);
+
+      const copy = node.copy(newContent);
+
+      expect(copy).not.toBe(node);
+      expect(copy.type).toBe(node.type);
+      expect(copy.attrs).toEqual(node.attrs);
+      expect(copy.marks).toEqual(node.marks);
+    });
+  });
+
+  describe('cut', () => {
+    it('given from 0 and to content size, returns this', () => {
+      const node = new Node(type, { level: 1, visible: true }, mockContent, []);
+
+      const cut = node.cut(0, mockContent.size);
+
+      expect(cut).toBe(node);
+    });
+
+    it('given text node full range, returns this', () => {
+      const textType = new NodeType('text', mockSchema, { text: true });
+      const node = new Node(textType, {}, undefined, undefined, 'Hello');
+
+      expect(node.cut(0, 5)).toBe(node);
+    });
+
+    it('given text node partial range, returns trimmed text node', () => {
+      const textType = new NodeType('text', mockSchema, { text: true });
+      const node = new Node(textType, {}, undefined, undefined, 'Hello World');
+
+      const result = node.cut(6, 11);
+
+      expect(result.text).toBe('World');
+    });
+
+    it('given partial range, returns new node with cut content', () => {
+      const child1 = new Node(new NodeType('paragraph', mockSchema, spec), {});
+      const child2 = new Node(new NodeType('paragraph', mockSchema, spec), {});
+      const content = Fragment.from([child1, child2]);
+      const node = new Node(
+        new NodeType('paragraph', mockSchema, spec),
+        {},
+        content,
+        []
+      );
+
+      const result = node.cut(0, 2);
+
+      expect(result).not.toBe(node);
+      expect(result.content.childCount).toBe(1);
+    });
+  });
 });

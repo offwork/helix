@@ -86,6 +86,32 @@ export class Node<TAttrs = Record<string, unknown>> {
     );
   }
 
+  copy(content?: Fragment<Node>): Node<TAttrs> {
+    if (content === this.content) return this;
+    return new Node(
+      this.type,
+      this.attrs,
+      content ?? Fragment.empty<Node>(),
+      this.marks
+    );
+  }
+
+  cut(from: number, to: number = this.content.size): Node<TAttrs> {
+    if (this.type.isText) {
+      if (from === 0 && to === this.text?.length) return this;
+      return new Node(
+        this.type,
+        this.attrs,
+        this.content,
+        this.marks,
+        this.text?.slice(from, to)
+      );
+    }
+
+    if (from === 0 && to === this.content.size) return this;
+    return this.copy(this.content.cut(from, to));
+  }
+
   private sameMarkup(other: Node): boolean {
     return (
       this.type === other.type &&

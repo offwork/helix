@@ -92,4 +92,37 @@ export class Fragment<TNode extends Node> {
 
     return { index: i, offset: curPos };
   }
+
+  cut(from: number, to: number = this.size): Fragment<TNode> {
+    if (from === 0 && to === this.size) return this;
+    if (from === to) return Fragment.empty<TNode>();
+
+    const result: TNode[] = [];
+
+    if (to > from) {
+      for (let i = 0, pos = 0; pos < to; i++) {
+        let child = this.content[i];
+        const end = pos + child.nodeSize;
+        if (end > from) {
+          if (pos < from || end > to) {
+            if (child.type.isText) {
+              child = child.cut(
+                Math.max(0, from - pos),
+                Math.min(child.text?.length ?? 0, to - pos)
+              ) as TNode;
+            } else {
+              child = child.cut(
+                Math.max(0, from - pos - 1),
+                Math.min(child.content.size, to - pos - 1)
+              ) as TNode;
+            }
+          }
+          result.push(child);
+        }
+        pos = end;
+      }
+    }
+
+    return Fragment.from(result);
+  }
 }
