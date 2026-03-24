@@ -1,4 +1,6 @@
-export class Mark<TAttrs extends Record<string, unknown> = Record<string, unknown>> {
+export class Mark<
+  TAttrs extends Record<string, unknown> = Record<string, unknown>
+> {
   readonly type: string;
   readonly attrs: TAttrs;
   constructor(type: string, attrs: TAttrs) {
@@ -63,5 +65,27 @@ export class Mark<TAttrs extends Record<string, unknown> = Record<string, unknow
       throw new Error('Mark cannot be null or undefined');
 
     return this.type === other.type;
+  }
+
+  isInSet(set: readonly Mark<TAttrs>[]): boolean {
+    if (set === null || set === undefined) {
+      throw new Error('Mark isInSet set cannot be null or undefined');
+    }
+
+    return set.some((mark) => this.equals(mark));
+  }
+
+  removeFromSet(set: readonly Mark<TAttrs>[]): readonly Mark<TAttrs>[] {
+    if (set === null || set === undefined) {
+      throw new Error('Mark removeFromSet set cannot be null or undefined');
+    }
+
+    for (let i = 0; i < set.length; i++) {
+      if (this.equals(set[i])) {
+        return [...set.slice(0, i), ...set.slice(i + 1)];
+      }
+    }
+
+    return set;
   }
 }
