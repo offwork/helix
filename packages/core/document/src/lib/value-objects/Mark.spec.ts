@@ -96,8 +96,8 @@ describe('Mark Value Object', () => {
     });
 
     it('should return null for different types', () => {
-      const mark1 = createMark('bold', { });
-      const mark2 = createMark('italic', { });
+      const mark1 = createMark('bold', {});
+      const mark2 = createMark('italic', {});
 
       expect(mark1.merge(mark2)).toBeNull();
     });
@@ -114,12 +114,59 @@ describe('Mark Value Object', () => {
 
     it('should throw when merging with null', () => {
       const mark = createMark('bold', {});
-      expect(() => mark.merge(null as never)).toThrow('Mark cannot be null or undefined');
+      expect(() => mark.merge(null as never)).toThrow(
+        'Mark cannot be null or undefined'
+      );
     });
 
     it('should throw when merging with undefined', () => {
       const mark = createMark('bold', {});
-      expect(() => mark.merge(undefined as never)).toThrow('Mark cannot be null or undefined');
+      expect(() => mark.merge(undefined as never)).toThrow(
+        'Mark cannot be null or undefined'
+      );
+    });
+  });
+
+  describe('isInSet', () => {
+    it('given mark is in set, returns true', () => {
+      const mark = createMark('bold', { color: 'purple' });
+      const set = [createMark('italic', { color: 'purple' }), mark];
+
+      expect(mark.isInSet(set)).toBe(true);
+    });
+
+    it('given null set, throws error', () => {
+      const mark = createMark('bold', { color: 'purple' });
+      expect(() => mark.isInSet(null as never)).toThrow(
+        'Mark isInSet set cannot be null or undefined'
+      );
+    });
+  });
+
+  describe('removeFromSet', () => {
+    it('given mark is in set, returns new set without the mark', () => {
+      const mark = createMark('bold', { color: 'purple' });
+      const set = [createMark('italic', { color: 'purple' }), mark];
+
+      const newSet = mark.removeFromSet(set);
+
+      expect(newSet).toEqual([createMark('italic', { color: 'purple' })]);
+    });
+
+    it('given mark is not in set, returns same reference', () => {
+      const mark = createMark('bold', { color: 'purple' });
+      const set = [createMark('italic', { color: 'purple' })];
+
+      const newSet = mark.removeFromSet(set);
+
+      expect(newSet).toBe(set);
+    });
+
+    it('given null or undefined set, throws error', () => {
+      const mark = createMark('bold', { color: 'purple' });
+      expect(() => mark.removeFromSet(null as never)).toThrow(
+        'Mark removeFromSet set cannot be null or undefined'
+      );
     });
   });
 });
