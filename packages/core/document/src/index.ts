@@ -13,6 +13,7 @@ export { SchemaService } from './lib/services/SchemaService';
 
 // Value Objects
 export { ContentMatch } from './lib/value-objects/ContentMatch';
+export { NodeRange } from './lib/value-objects/NodeRange';
 export { NodeType } from './lib/value-objects/NodeType';
 export { Mark } from './lib/value-objects/Mark';
 export { MarkSet } from './lib/value-objects/MarkSet';
