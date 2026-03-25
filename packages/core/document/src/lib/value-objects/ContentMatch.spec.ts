@@ -12,7 +12,7 @@ function createMockNodeType(
   return new NodeType(
     name,
     {},
-    { attrs: { content: 'text*' }, inline: options.inline }
+    { attrs: { content: { default: 'text*' } }, inline: options.inline }
   );
 }
 

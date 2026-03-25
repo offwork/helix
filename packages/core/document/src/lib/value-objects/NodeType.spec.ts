@@ -27,7 +27,7 @@ describe('NodeType', () => {
     });
 
     it('constructor, given valid spec, stores spec', () => {
-      const spec: NodeSpec = { attrs: { level: 1 } };
+      const spec: NodeSpec = { attrs: { level: { default: 1 } } };
       const mockSchema = {} as never;
 
       const nodeType = new NodeType('paragraph', mockSchema, spec);
@@ -36,7 +36,7 @@ describe('NodeType', () => {
     });
 
     it('given default, is null', () => {
-      const spec: NodeSpec = { attrs: { level: 1 } };
+      const spec: NodeSpec = { attrs: { level: { default: 1 } } };
       const mockSchema = {} as never;
 
       const nodeType = new NodeType('paragraph', mockSchema, spec);
@@ -45,7 +45,7 @@ describe('NodeType', () => {
     });
 
     it('given default, is null', () => {
-      const spec: NodeSpec = { attrs: { level: 1 } };
+      const spec: NodeSpec = { attrs: { level: { default: 1 } } };
       const mockSchema = {} as never;
 
       const nodeType = new NodeType('paragraph', mockSchema, spec);
@@ -136,7 +136,7 @@ describe('NodeType', () => {
     it('equals, given different name, returns false', () => {
       const mockSchema = {} as never;
       const spec1: NodeSpec = { attrs: {} };
-      const spec2: NodeSpec = { attrs: { level: 1 } };
+      const spec2: NodeSpec = { attrs: { level: { default: 1 } } };
 
       const nodeType1 = new NodeType('paragraph', mockSchema, spec1);
       const nodeType2 = new NodeType('heading', mockSchema, spec2);
@@ -323,16 +323,6 @@ describe('NodeType', () => {
     });
   });
 
-  describe('hasRequiredAttrs()', () => {
-    it('given current attrs system without required concept, returns false', () => {
-      const mockSchema = {} as never;
-      const spec: NodeSpec = { attrs: { level: 1 } };
-      const nodeType = new NodeType('heading', mockSchema, spec);
-
-      expect(nodeType.hasRequiredAttrs()).toBe(false);
-    });
-  });
-
   describe('validContent()', () => {
     it('given matching content, returns true', () => {
       const mockSchema = {} as never;
@@ -404,6 +394,22 @@ describe('NodeType', () => {
       expect(() => nodeType.validContent(undefined as never)).toThrow(
         'NodeType validContent parameter cannot be undefined'
       );
+    });
+  });
+
+  describe('hasRequiredAttrs()', () => {
+    it('given one attr without default, returns true', () => {
+      const mockSchema = {} as never;
+      const spec: NodeSpec = {
+        attrs: {
+          title: { default: 'Untitled' },
+          level: {},
+        },
+      };
+
+      const nodeType = new NodeType('heading', mockSchema, spec);
+
+      expect(nodeType.hasRequiredAttrs()).toBe(true);
     });
   });
 });
