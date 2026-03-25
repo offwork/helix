@@ -6,12 +6,17 @@ export { Node } from './lib/entities/Node';
 
 // Interfaces
 export type { Edge } from './lib/interfaces/Edge';
-export type { NodeSpec, MarkSpec } from './lib/interfaces/SchemaSpec';
+export type {
+  AttributeSpec,
+  NodeSpec,
+  MarkSpec,
+} from './lib/interfaces/SchemaSpec';
 
 // Sevices
 export { SchemaService } from './lib/services/SchemaService';
 
 // Value Objects
+export { Attribute } from './lib/value-objects/Attribute';
 export { ContentMatch } from './lib/value-objects/ContentMatch';
 export { NodeRange } from './lib/value-objects/NodeRange';
 export { NodeType } from './lib/value-objects/NodeType';

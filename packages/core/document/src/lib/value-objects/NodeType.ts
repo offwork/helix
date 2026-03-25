@@ -1,6 +1,7 @@
 import { Fragment } from '../entities/Fragment';
 import { Node } from '../entities/Node';
 import { NodeSpec } from '../interfaces/SchemaSpec';
+import { Attribute } from './Attribute';
 import { ContentMatch } from './ContentMatch';
 import { Mark } from './Mark';
 import { MarkType } from './MarkType';
@@ -9,6 +10,7 @@ export class NodeType {
   readonly name: string;
   readonly schema: unknown;
   readonly spec: NodeSpec;
+  readonly attrs: Record<string, Attribute>;
 
   contentMatch: ContentMatch | null = null;
   inlineContent: boolean | null = null;
@@ -17,6 +19,13 @@ export class NodeType {
     this.validateParameter('name', name);
     this.validateParameter('schema', schema);
     this.validateParameter('spec', spec);
+
+    this.attrs = {};
+    if (spec.attrs) {
+      for (const [attrName, attrSpec] of Object.entries(spec.attrs)) {
+        this.attrs[attrName] = new Attribute(attrSpec);
+      }
+    }
 
     this.name = name;
     this.schema = schema;
@@ -94,6 +103,11 @@ export class NodeType {
   }
 
   hasRequiredAttrs(): boolean {
+    for (const attr of Object.values(this.attrs)) {
+      if (attr.isRequired) {
+        return true;
+      }
+    }
     return false;
   }
 

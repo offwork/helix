@@ -1,5 +1,5 @@
 export interface NodeSpec {
-  attrs?: Record<string, unknown>;
+  attrs?: Record<string, AttributeSpec>;
   inline?: boolean;
   marks?: string;
   leaf?: boolean;
@@ -8,4 +8,9 @@ export interface NodeSpec {
 
 export interface MarkSpec {
   attrs?: Record<string, unknown>;
+}
+
+export interface AttributeSpec {
+  default?: unknown;
+  validate?: (value: unknown) => void;
 }
