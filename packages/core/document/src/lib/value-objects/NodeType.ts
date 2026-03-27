@@ -102,6 +102,31 @@ export class NodeType {
     return new Node(this, attrs || {}, nodes, marks || []);
   }
 
+  createAndFill(
+    attrs?: Record<string, unknown>,
+    content?: Fragment<Node> | Node[],
+    marks?: Mark[]
+  ): Node | null {
+    if (this.isText)
+      throw new Error('NodeType.createAndFill cannot construct text nodes');
+
+    let nodes = Array.isArray(content)
+      ? Fragment.from(content)
+      : content ?? Fragment.empty<Node>();
+
+    if (nodes.size) {
+      const before = this.contentMatch?.fillBefore(nodes);
+      if (!before) return null;
+      nodes = before.append(nodes);
+    }
+
+    const matched = this.contentMatch?.matchFragment(nodes);
+    const after = matched && matched.fillBefore(Fragment.empty(), true);
+    if (!after) return null;
+
+    return new Node(this, attrs || {}, nodes.append(after), marks || []);
+  }
+
   hasRequiredAttrs(): boolean {
     for (const attr of Object.values(this.attrs)) {
       if (attr.isRequired) {

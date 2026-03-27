@@ -1,9 +1,14 @@
+import { Mark } from '../value-objects/Mark';
 import { NodeType } from '../value-objects/NodeType';
 import { Fragment } from './Fragment';
 import { Node } from './Node';
 
 const mockSchema = {} as never;
 const spec = { attrs: {} };
+
+function createMarks(...types: string[]): Mark<Record<string, unknown>>[] {
+  return types.map((type) => new Mark(type, {}));
+}
 
 describe('Fragment', () => {
   describe('creation', () => {
@@ -488,6 +493,90 @@ describe('Fragment', () => {
       expect(result.childCount).toBe(1);
       expect(result.child(0).content.childCount).toBe(1);
       expect(result.child(0).content.child(0)).toBe(child1);
+    });
+  });
+
+  describe('append', () => {
+    it('given other empty, returns this', () => {
+      const node1 = new Node(new NodeType('paragraph', mockSchema, spec), {});
+
+      const fragment = Fragment.from([node1]);
+
+      const result = fragment.append(Fragment.empty<Node>());
+
+      expect(result).toBe(fragment);
+    });
+
+    it('given this empty, returns other', () => {
+      const empty = Fragment.empty<Node>();
+      const other = Fragment.from([
+        new Node(new NodeType('paragraph', mockSchema, spec), {}),
+      ]);
+
+      const result = empty.append(other);
+
+      expect(result).toBe(other);
+    });
+
+    it('given both non-empty fragments, returns new fragment with all children', () => {
+      const node1 = new Node(new NodeType('paragraph', mockSchema, spec), {});
+      const node2 = new Node(new NodeType('paragraph', mockSchema, spec), {});
+      const node3 = new Node(new NodeType('paragraph', mockSchema, spec), {});
+      const node4 = new Node(new NodeType('paragraph', mockSchema, spec), {});
+
+      const fragment1 = Fragment.from([node1, node2]);
+      const fragment2 = Fragment.from([node3, node4]);
+
+      const result = fragment1.append(fragment2);
+
+      expect(Fragment.from([node1, node2, node3, node4]).equals(result)).toBe(
+        true
+      );
+    });
+
+    it('given last child of this and first child of other are text nodes with same marks, merges them into single node', () => {
+      const textType = new NodeType('text', mockSchema, { text: true });
+      const node1 = new Node(textType, {}, undefined, undefined, 'Hello ');
+      const node2 = new Node(textType, {}, undefined, undefined, 'World');
+
+      const fragment1 = Fragment.from([node1]);
+      const fragment2 = Fragment.from([node2]);
+
+      const result = fragment1.append(fragment2);
+      const expected = Fragment.from([
+        new Node(textType, {}, undefined, undefined, 'Hello World'),
+      ]);
+
+      expect(expected.equals(result)).toBe(true);
+    });
+
+    it('given last child of this and first child of other are text nodes with different marks, keeps them separate', () => {
+      const textType = new NodeType('text', mockSchema, { text: true });
+      const node1 = new Node(
+        textType,
+        {},
+        undefined,
+        createMarks('bold'),
+        'Hello '
+      );
+      const node2 = new Node(
+        textType,
+        {},
+        undefined,
+        createMarks('italic'),
+        'World'
+      );
+
+      const fragment1 = Fragment.from([node1]);
+      const fragment2 = Fragment.from([node2]);
+
+      const result = fragment1.append(fragment2);
+      const expected = Fragment.from([
+        new Node(textType, {}, undefined, createMarks('bold'), 'Hello '),
+        new Node(textType, {}, undefined, createMarks('italic'), 'World'),
+      ]);
+
+      expect(expected.equals(result)).toBe(true);
     });
   });
 });
