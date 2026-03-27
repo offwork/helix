@@ -412,4 +412,69 @@ describe('NodeType', () => {
       expect(nodeType.hasRequiredAttrs()).toBe(true);
     });
   });
+
+  describe('createAndFill()', () => {
+    it('given text node type, throws error', () => {
+      const mockSchema = {} as never;
+      const spec: NodeSpec = { attrs: {}, text: true };
+      const nodeType = new NodeType('text', mockSchema, spec);
+
+      expect(() => nodeType.createAndFill()).toThrow(
+        'NodeType.createAndFill cannot construct text nodes'
+      );
+    });
+
+    it('given content that cannot be filled, returns null', () => {
+      const paragraphType = new NodeType('paragraph', {} as never, {
+        attrs: {},
+      });
+      const headingType = new NodeType('heading', {} as never, { attrs: {} });
+
+      const finalMatch = new ContentMatch(true, []);
+      const match = new ContentMatch(false, [
+        { type: paragraphType, next: finalMatch },
+      ]);
+
+      const nodeType = new NodeType('doc', {} as never, { attrs: {} });
+      nodeType.contentMatch = match;
+
+      const content = Fragment.from([new Node(headingType, {})]);
+      const result = nodeType.createAndFill({}, content);
+
+      expect(result).toBe(null);
+    });
+
+    it('given empty content and valid contentMatch, returns node', () => {
+      const nodeType = new NodeType('doc', {} as never, { attrs: {} });
+      nodeType.contentMatch = new ContentMatch(true, []);
+
+      const result = nodeType.createAndFill();
+
+      expect(result).toBeInstanceOf(Node);
+    });
+
+    it('given non-empty content that needs fill, returns node with complete content', () => {
+      const paragraphType = new NodeType('paragraph', {} as never, {
+        attrs: {},
+      });
+      const headingType = new NodeType('heading', {} as never, { attrs: {} });
+
+      const finalMatch = new ContentMatch(true, []);
+      const match2 = new ContentMatch(false, [
+        { type: paragraphType, next: finalMatch },
+      ]);
+      const match1 = new ContentMatch(false, [
+        { type: headingType, next: match2 },
+      ]);
+
+      const nodeType = new NodeType('doc', {} as never, { attrs: {} });
+      nodeType.contentMatch = match1;
+
+      const content = Fragment.from([new Node(paragraphType, {})]);
+      const result = nodeType.createAndFill({}, content);
+
+      expect(result).toBeInstanceOf(Node);
+      expect(result?.content.childCount).toBe(2);
+    });
+  });
 });

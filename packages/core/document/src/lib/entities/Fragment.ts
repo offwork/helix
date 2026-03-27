@@ -1,3 +1,4 @@
+import { deepEqual } from '../utils/deep-equal';
 import { Node } from './Node';
 
 export class Fragment<TNode extends Node> {
@@ -124,5 +125,29 @@ export class Fragment<TNode extends Node> {
     }
 
     return Fragment.from(result);
+  }
+
+  append(other: Fragment<TNode>): Fragment<TNode> {
+    if (!other.size) return this;
+    if (!this.size) return other;
+    if (this.lastChild?.type === other.firstChild?.type) {
+      const last = this.lastChild;
+      const first = other.firstChild;
+      if (last && first && last.type.isText && first.type.isText && deepEqual(last.marks, first.marks)) {
+        const merged = new Node(
+          last.type,
+          last.attrs,
+          Fragment.empty(),
+          last.marks,
+          `${last.text}${first.text}`
+        ) as TNode;
+        return Fragment.from([
+          ...this.content.slice(0, -1),
+          merged,
+          ...other.content.slice(1),
+        ]);
+      }
+    }
+    return Fragment.from([...this.content, ...other.content]);
   }
 }
