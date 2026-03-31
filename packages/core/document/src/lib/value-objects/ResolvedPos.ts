@@ -27,6 +27,29 @@ export class ResolvedPos {
     return this.pos - (this.path[this.path.length - 1] as number);
   }
 
+  static resolve(doc: Node, pos: number): ResolvedPos {
+    if (!(pos >= 0 && pos <= doc.content.size)) {
+      throw new RangeError(`Position ${pos} out of range`);
+    }
+
+    const path: (Node | number)[] = [];
+    let start = 0,
+      parentOffset = pos;
+
+    for (let node = doc;; ) {
+      const { index, offset } = node.content.findIndex(parentOffset);
+      const rem = parentOffset - offset;
+      path.push(node, index, start + offset);
+      if (!rem) break;
+      node = node.content.child(index);
+      if (node.type.isText) break;
+      parentOffset = rem - 1;
+      start += offset + 1;
+    }
+
+    return new ResolvedPos(pos, path, parentOffset);
+  }
+
   index(depth?: number | null): number {
     const resolvedDepth = this.resolveDepth(depth);
     return this.path[resolvedDepth * 3 + 1] as number;
@@ -99,6 +122,12 @@ export class ResolvedPos {
     return this.pos < other.pos ? this : other;
   }
 
+  equals(other: ResolvedPos): boolean {
+    if (other === null)
+      throw new Error('ResolvedPos equals parameter cannot be null');
+    return this.pos === other.pos && this.doc === other.doc;
+  }
+
   private resolveDepth(depth?: number | null): number {
     if (depth === null || depth === undefined) {
       return this.depth;
@@ -109,12 +138,6 @@ export class ResolvedPos {
     }
 
     return depth;
-  }
-
-  equals(other: ResolvedPos): boolean {
-    if (other === null)
-      throw new Error('ResolvedPos equals parameter cannot be null');
-    return this.pos === other.pos && this.doc === other.doc;
   }
 
   private validateParameters(name: string, value: unknown) {

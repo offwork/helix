@@ -1,3 +1,4 @@
+import { Fragment } from '../entities/Fragment';
 import { Node } from '../entities/Node';
 import { NodeType } from './NodeType';
 import { ResolvedPos } from './ResolvedPos';
@@ -336,6 +337,41 @@ describe('ResolvedPos', () => {
       expect(() => a.equals(null as never)).toThrow(
         'ResolvedPos equals parameter cannot be null'
       );
+    });
+  });
+
+  describe('resolve', () => {
+    it('given pos is negative, throws RangeError', () => {
+      const rootNode = createMockNode();
+
+      expect(() => ResolvedPos.resolve(rootNode, -1)).toThrow(
+        'Position -1 out of range'
+      );
+    });
+
+    it('given pos exceeds document size, throws RangeError', () => {
+      const rootNode = createMockNode();
+
+      expect(() => ResolvedPos.resolve(rootNode, rootNode.content.size + 1)).toThrow(
+        `Position ${rootNode.content.size + 1} out of range`
+      );
+    });
+
+    it('given empty document and pos 0, returns ResolvedPos with depth 0 and parentOffset 0', () => {
+      const rootNode = createMockNode();
+      const resolvedPos = ResolvedPos.resolve(rootNode, 0);
+
+      expect(resolvedPos?.depth).toBe(0);
+      expect(resolvedPos?.parentOffset).toBe(0);
+    });
+
+    it('given document with one block child and pos inside block, returns depth 1 and parentOffset 0', () => {
+      const childNode = createMockNode();
+      const rootNode = new Node(createMockNode().type, {}, Fragment.from([childNode]));
+      const resolvedPos = ResolvedPos.resolve(rootNode, 1);
+
+      expect(resolvedPos?.depth).toBe(1);
+      expect(resolvedPos?.parentOffset).toBe(0);
     });
   });
 });
