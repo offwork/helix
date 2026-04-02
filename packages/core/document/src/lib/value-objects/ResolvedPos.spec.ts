@@ -352,9 +352,9 @@ describe('ResolvedPos', () => {
     it('given pos exceeds document size, throws RangeError', () => {
       const rootNode = createMockNode();
 
-      expect(() => ResolvedPos.resolve(rootNode, rootNode.content.size + 1)).toThrow(
-        `Position ${rootNode.content.size + 1} out of range`
-      );
+      expect(() =>
+        ResolvedPos.resolve(rootNode, rootNode.content.size + 1)
+      ).toThrow(`Position ${rootNode.content.size + 1} out of range`);
     });
 
     it('given empty document and pos 0, returns ResolvedPos with depth 0 and parentOffset 0', () => {
@@ -367,11 +367,92 @@ describe('ResolvedPos', () => {
 
     it('given document with one block child and pos inside block, returns depth 1 and parentOffset 0', () => {
       const childNode = createMockNode();
-      const rootNode = new Node(createMockNode().type, {}, Fragment.from([childNode]));
+      const rootNode = new Node(
+        createMockNode().type,
+        {},
+        Fragment.from([childNode])
+      );
       const resolvedPos = ResolvedPos.resolve(rootNode, 1);
 
       expect(resolvedPos?.depth).toBe(1);
       expect(resolvedPos?.parentOffset).toBe(0);
+    });
+  });
+
+  describe('nodeAfter', () => {
+    it('given pos at end of parent, returns null', () => {
+      const childNode = createMockNode();
+      const rootNode = new Node(
+        createMockNode().type,
+        {},
+        Fragment.from([childNode])
+      );
+      const resolvedPos = ResolvedPos.resolve(rootNode, 1);
+
+      expect(resolvedPos?.nodeAfter).toBeNull();
+    });
+
+    it('given pos inside text node, returns remaining text node', () => {
+      const textNode = new Node(
+        new NodeType('text', {} as never, { attrs: {}, text: true }),
+        {},
+        undefined,
+        [],
+        'hello'
+      );
+      const rootNode = new Node(
+        createMockNode().type,
+        {},
+        Fragment.from([textNode])
+      );
+      const resolvedPos = ResolvedPos.resolve(rootNode, 2);
+
+      expect(resolvedPos?.nodeAfter?.text).toBe('llo');
+    });
+
+    it('given pos between nodes, returns full next node', () => {
+      const firstNode = createMockNode();
+      const secondNode = createMockNode();
+      const rootNode = new Node(
+        createMockNode().type,
+        {},
+        Fragment.from([firstNode, secondNode])
+      );
+      const resolvedPos = ResolvedPos.resolve(rootNode, 2);
+
+      expect(resolvedPos?.nodeAfter).toBe(secondNode);
+    });
+  });
+
+  describe('nodeBefore', () => {
+    it('given pos at start of parent, returns null', () => {
+      const childNode = createMockNode();
+      const rootNode = new Node(
+        createMockNode().type,
+        {},
+        Fragment.from([childNode])
+      );
+      const resolvedPos = ResolvedPos.resolve(rootNode, 0);
+
+      expect(resolvedPos?.nodeBefore).toBeNull();
+    });
+
+    it('given pos inside text node, returns preceding text node', () => {
+      const textNode = new Node(
+        new NodeType('text', {} as never, { attrs: {}, text: true }),
+        {},
+        undefined,
+        [],
+        'hello'
+      );
+      const rootNode = new Node(
+        createMockNode().type,
+        {},
+        Fragment.from([textNode])
+      );
+      const resolvedPos = ResolvedPos.resolve(rootNode, 2);
+
+      expect(resolvedPos?.nodeBefore?.text).toBe('he');
     });
   });
 });

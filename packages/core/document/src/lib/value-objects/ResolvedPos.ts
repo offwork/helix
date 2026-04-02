@@ -27,6 +27,28 @@ export class ResolvedPos {
     return this.pos - (this.path[this.path.length - 1] as number);
   }
 
+  get nodeAfter(): Node | null {
+    if (this.index() == this.parent.childCount) return null;
+    if (this.textOffset > 0) {
+      const parent = this.parent;
+      const child = parent.content.child(this.index());
+      return child.cut(this.textOffset, child.text?.length ?? 0);
+    }
+
+    return this.parent.content.child(this.index());
+  }
+
+  get nodeBefore(): Node | null {
+    const parent = this.parent;
+    if (this.textOffset > 0) {
+      const child = parent.content.child(this.index());
+      return child.cut(0, this.textOffset);
+    }
+
+    if (this.index() == 0) return null;
+    return parent.content.child(this.index() - 1);
+  }
+
   static resolve(doc: Node, pos: number): ResolvedPos {
     if (!(pos >= 0 && pos <= doc.content.size)) {
       throw new RangeError(`Position ${pos} out of range`);
@@ -36,7 +58,7 @@ export class ResolvedPos {
     let start = 0,
       parentOffset = pos;
 
-    for (let node = doc;; ) {
+    for (let node = doc; ; ) {
       const { index, offset } = node.content.findIndex(parentOffset);
       const rem = parentOffset - offset;
       path.push(node, index, start + offset);
