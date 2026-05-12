@@ -3,6 +3,7 @@ export * from './lib/document';
 // Entities
 export { Fragment } from './lib/entities/Fragment';
 export { Node } from './lib/entities/Node';
+export { TextNode } from './lib/entities/TextNode';
 
 // Interfaces
 export type { Edge } from './lib/interfaces/Edge';
