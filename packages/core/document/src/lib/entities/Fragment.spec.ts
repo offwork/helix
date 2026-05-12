@@ -1,4 +1,5 @@
 import { Mark } from '../value-objects/Mark';
+import { MarkType } from '../value-objects/MarkType';
 import { NodeType } from '../value-objects/NodeType';
 import { Fragment } from './Fragment';
 import { Node } from './Node';
@@ -6,8 +7,10 @@ import { Node } from './Node';
 const mockSchema = {} as never;
 const spec = { attrs: {} };
 
-function createMarks(...types: string[]): Mark<Record<string, unknown>>[] {
-  return types.map((type) => new Mark(type, {}));
+const createMarkType = (name: string) => new MarkType(name, {}, {});
+
+function createMarks(...types: string[]): Mark[] {
+  return types.map((type) => new Mark(createMarkType(type), {}));
 }
 
 describe('Fragment', () => {

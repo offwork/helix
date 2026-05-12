@@ -1,4 +1,5 @@
 import { MarkSpec } from '../interfaces/SchemaSpec';
+import { Mark } from './Mark';
 import { MarkType } from './MarkType';
 
 const mockSchema = {} as never;
@@ -86,6 +87,63 @@ describe('MarkType', () => {
       expect(() => markType1.equals(null as never)).toThrow(
         'MarkType equals parameter cannot be null'
       );
+    });
+  });
+
+  describe('create', () => {
+    it('given no attrrs, creates Mark with empty attrs', () => {
+      const boldMarkType = new MarkType('bold', mockSchema, spec);
+      const newMark = boldMarkType.create();
+
+      expect(newMark).toEqual(new Mark(boldMarkType, {}));
+    });
+
+    it('given attrs, creates Mark with given attrs', () => {
+      const boldMarkType = new MarkType('bold', mockSchema, spec);
+      const newMark = boldMarkType.create({ color: 'red' });
+
+      expect(newMark).toEqual(new Mark(boldMarkType, { color: 'red' }));
+    });
+  });
+
+  describe('isInSet', () => {
+    it('given mark of this type in set, returns the mark', () => {
+      const boldMarkType = new MarkType('bold', mockSchema, spec);
+      const mark1 = new Mark(boldMarkType, { color: 'red' });
+      const mark2 = new Mark(boldMarkType, { color: 'blue' });
+      const set = [mark1, mark2];
+
+      expect(boldMarkType.isInSet(set)).toBe(mark1);
+    });
+
+    it('given no mark of this type in set, returns undefined', () => {
+      const boldMarkType = new MarkType('bold', mockSchema, spec);
+      const italicMarkType = new MarkType('italic', mockSchema, spec);
+      const mark1 = new Mark(italicMarkType, { color: 'red' });
+      const set = [mark1];
+
+      expect(boldMarkType.isInSet(set)).toBeUndefined();
+    });
+  });
+
+  describe('removeFromSet', () => {
+    it('given mark of this type in set, returns new set without the mark', () => {
+      const boldMarkType = new MarkType('bold', mockSchema, spec);
+      const italicMarkType = new MarkType('italic', mockSchema, spec);
+      const mark1 = new Mark(boldMarkType, { color: 'red' });
+      const mark2 = new Mark(italicMarkType, { color: 'blue' });
+      const set = [mark1, mark2];
+
+      expect(boldMarkType.removeFromSet(set)).toEqual([mark2]);
+    });
+
+    it('given no mark of this type in set, returns returns same reference', () => {
+      const boldMarkType = new MarkType('bold', mockSchema, spec);
+      const italicMarkType = new MarkType('italic', mockSchema, spec);
+      const mark1 = new Mark(italicMarkType, { color: 'red' });
+      const set = [mark1];
+
+      expect(boldMarkType.removeFromSet(set)).toBe(set);
     });
   });
 });

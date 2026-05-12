@@ -1,172 +1,213 @@
+import { MarkSpec } from '../interfaces/SchemaSpec';
 import { Mark } from './Mark';
+import { MarkType } from './MarkType';
 
-function createMark<TAttrs extends Record<string, unknown>>(
-  type: string,
-  attrs: TAttrs
-): Mark<TAttrs> {
-  return new Mark(type, attrs);
-}
+const createMarkType = (name: string, schema: unknown, spec: MarkSpec) =>
+  new MarkType(name, schema, spec);
+const boldMarkType = createMarkType('bold', {}, {});
+const italicMarkType = createMarkType('italic', {}, {});
 
-describe('Mark Value Object', () => {
-  describe('Construction', () => {
-    it('should create mark with type and attrs', () => {
-      const mark = createMark('bold', { color: 'purple' });
+const createMark = (type: MarkType, attrs: Record<string, unknown>) =>
+  new Mark(type, attrs);
 
-      expect(mark.type).toBe('bold');
+describe('Mark', () => {
+  describe('constructor', () => {
+    it('given valid MarkType and attrs, creates Mark instance', () => {
+      const mark = createMark(boldMarkType, { color: 'purple' });
+
+      expect(mark).toBeInstanceOf(Mark);
+    });
+
+    it('given valid MarkType and attrs, stores type', () => {
+      const mark = createMark(boldMarkType, { color: 'purple' });
+
+      expect(mark.type).toBe(boldMarkType);
+    });
+
+    it('given valid MarkType and attrs, stores attrs', () => {
+      const mark = createMark(boldMarkType, { color: 'purple' });
+
       expect(mark.attrs).toEqual({ color: 'purple' });
     });
 
-    it('should throw when type is null', () => {
+    it('given null type, throws error', () => {
       expect(() => createMark(null as never, {})).toThrow(
-        'Type must be a string'
+        'Type must be a MarkType instance'
       );
     });
 
-    it('should throw when type is undefined', () => {
+    it('given undefined type, throws error', () => {
       expect(() => createMark(undefined as never, {})).toThrow(
-        'Type must be a string'
+        'Type must be a MarkType instance'
       );
     });
 
-    it('should throw when attrs is null', () => {
-      expect(() => createMark('bold', null as never)).toThrow(
+    it('given null attrs, throws error', () => {
+      expect(() => createMark(boldMarkType, null as never)).toThrow(
         'Attrs must be an object'
       );
     });
 
-    it('should throw when attrs is undefined', () => {
-      expect(() => createMark('bold', undefined as never)).toThrow(
+    it('given undefined attrs, throws error', () => {
+      expect(() => createMark(boldMarkType, undefined as never)).toThrow(
         'Attrs must be an object'
       );
     });
   });
 
-  describe('Equality', () => {
-    it('should return true for marks with same type and attrs', () => {
-      const mark = createMark('bold', { color: 'purple' });
-      const mark2 = createMark('bold', { color: 'purple' });
+  describe('equals', () => {
+    it('given same type and attrs, returns true', () => {
+      const mark = createMark(boldMarkType, { color: 'purple' });
+      const mark2 = createMark(boldMarkType, { color: 'purple' });
 
       expect(mark.equals(mark2)).toBe(true);
     });
 
-    it('should throw when comparing with null', () => {
+    it('given null, throws error', () => {
       expect(() =>
-        createMark('bold', { color: 'purple' }).equals(null as never)
-      ).toThrow('Mark cannot be null or undefined');
+        createMark(boldMarkType, { color: 'purple' }).equals(null as never)
+      ).toThrow('Mark cannot be null');
     });
 
-    it('should throw when comparing with undefined', () => {
+    it('given undefined, throws error', () => {
       expect(() =>
-        createMark('bold', { color: 'purple' }).equals(undefined as never)
-      ).toThrow('Mark cannot be null or undefined');
+        createMark(boldMarkType, { color: 'purple' }).equals(undefined as never)
+      ).toThrow('Mark cannot be undefined');
     });
 
-    it('should return false for different types', () => {
-      const mark = createMark('bold', { color: 'purple' });
-      const mark2 = createMark('italic', { color: 'red' });
+    it('given different type, returns false', () => {
+      const mark = createMark(boldMarkType, { color: 'purple' });
+      const mark2 = createMark(italicMarkType, { color: 'purple' });
       expect(mark.equals(mark2)).toBe(false);
     });
 
-    it('should return false for different attrs', () => {
-      const mark = createMark('bold', { color: 'purple' });
-      const mark2 = createMark('bold', { color: 'blue' });
+    it('given different attrs, returns false', () => {
+      const mark = createMark(boldMarkType, { color: 'purple' });
+      const mark2 = createMark(boldMarkType, { color: 'red' });
       expect(mark.equals(mark2)).toBe(false);
     });
 
-    it('should return true for self comparison', () => {
-      const mark = createMark('bold', { color: 'purple' });
+    it('given self comparison, returns true', () => {
+      const mark = createMark(boldMarkType, { color: 'purple' });
       expect(mark.equals(mark)).toBe(true);
-    });
-
-    it('should handle empty attrs equality', () => {
-      expect(createMark('', {}).equals(createMark('', {}))).toBe(true);
-    });
-  });
-
-  describe('Merge', () => {
-    it('should return new mark with merged attrs for same type', () => {
-      const mark1 = createMark('link', { href: 'example.com' });
-      const mark2 = createMark('link', { title: 'Example' });
-
-      const merged = mark1.merge(mark2);
-
-      expect(merged).not.toBeNull();
-      expect(merged?.type).toBe('link');
-      expect(merged?.attrs).toEqual({ href: 'example.com', title: 'Example' });
-    });
-
-    it('should return null for different types', () => {
-      const mark1 = createMark('bold', {});
-      const mark2 = createMark('italic', {});
-
-      expect(mark1.merge(mark2)).toBeNull();
-    });
-
-    it('should override attrs with same keys', () => {
-      const mark1 = createMark('link', { href: 'old.com', title: 'Old' });
-      const mark2 = createMark('link', { href: 'new.com' });
-
-      const merged = mark1.merge(mark2);
-
-      expect(merged).not.toBeNull();
-      expect(merged?.attrs).toEqual({ href: 'new.com', title: 'Old' });
-    });
-
-    it('should throw when merging with null', () => {
-      const mark = createMark('bold', {});
-      expect(() => mark.merge(null as never)).toThrow(
-        'Mark cannot be null or undefined'
-      );
-    });
-
-    it('should throw when merging with undefined', () => {
-      const mark = createMark('bold', {});
-      expect(() => mark.merge(undefined as never)).toThrow(
-        'Mark cannot be null or undefined'
-      );
     });
   });
 
   describe('isInSet', () => {
     it('given mark is in set, returns true', () => {
-      const mark = createMark('bold', { color: 'purple' });
-      const set = [createMark('italic', { color: 'purple' }), mark];
+      const mark = createMark(boldMarkType, { color: 'purple' });
+      const set = [createMark(italicMarkType, { color: 'purple' }), mark];
 
       expect(mark.isInSet(set)).toBe(true);
     });
 
     it('given null set, throws error', () => {
-      const mark = createMark('bold', { color: 'purple' });
+      const mark = createMark(boldMarkType, { color: 'purple' });
       expect(() => mark.isInSet(null as never)).toThrow(
-        'Mark isInSet set cannot be null or undefined'
+        'Mark isInSet set cannot be null'
+      );
+    });
+
+    it('given undefined set, throws error', () => {
+      const mark = createMark(boldMarkType, { color: 'purple' });
+      expect(() => mark.isInSet(undefined as never)).toThrow(
+        'Mark isInSet set cannot be undefined'
       );
     });
   });
 
   describe('removeFromSet', () => {
     it('given mark is in set, returns new set without the mark', () => {
-      const mark = createMark('bold', { color: 'purple' });
-      const set = [createMark('italic', { color: 'purple' }), mark];
+      const mark = createMark(boldMarkType, { color: 'purple' });
+      const set = [createMark(italicMarkType, { color: 'purple' }), mark];
 
       const newSet = mark.removeFromSet(set);
 
-      expect(newSet).toEqual([createMark('italic', { color: 'purple' })]);
+      expect(newSet).toEqual([createMark(italicMarkType, { color: 'purple' })]);
     });
 
     it('given mark is not in set, returns same reference', () => {
-      const mark = createMark('bold', { color: 'purple' });
-      const set = [createMark('italic', { color: 'purple' })];
+      const mark = createMark(boldMarkType, { color: 'purple' });
+      const set = [createMark(italicMarkType, { color: 'purple' })];
 
       const newSet = mark.removeFromSet(set);
 
       expect(newSet).toBe(set);
     });
 
-    it('given null or undefined set, throws error', () => {
-      const mark = createMark('bold', { color: 'purple' });
+    it('given null set, throws error', () => {
+      const mark = createMark(boldMarkType, { color: 'purple' });
       expect(() => mark.removeFromSet(null as never)).toThrow(
-        'Mark removeFromSet set cannot be null or undefined'
+        'Mark removeFromSet set cannot be null'
       );
+    });
+
+    it('given undefined set, throws error', () => {
+      const mark = createMark(boldMarkType, { color: 'purple' });
+      expect(() => mark.removeFromSet(undefined as never)).toThrow(
+        'Mark removeFromSet set cannot be undefined'
+      );
+    });
+  });
+
+  describe('addToSet', () => {
+    it('given mark already in set, returns same reference', () => {
+      const mark = createMark(boldMarkType, { color: 'purple' });
+      const set = [mark];
+
+      const newSet = mark.addToSet(set);
+
+      expect(newSet).toBe(set);
+    });
+
+    it('given empty set, returns set with this mark', () => {
+      const mark = createMark(boldMarkType, { color: 'purple' });
+      const set: Mark[] = [];
+
+      const newSet = mark.addToSet(set);
+
+      expect(newSet).toEqual([mark]);
+    });
+
+    it('given mark with lower rank, insert before existing mark', () => {
+      const mark1 = createMark(createMarkType('strong', {}, {}), {});
+      const mark2 = createMark(createMarkType('em', {}, {}), {});
+      mark1.type.rank = 1;
+      mark2.type.rank = 2;
+
+      const set = [mark2];
+
+      const newSet = mark1.addToSet(set);
+
+      expect(newSet).toEqual([mark1, mark2]);
+    });
+
+    it('given mark excluded by existing mark, returns same reference', () => {
+      const mark1 = createMark(createMarkType('strong', {}, {}), {});
+      const mark2 = createMark(createMarkType('em', {}, {}), {});
+      mark1.type.rank = 1;
+      mark2.type.rank = 2;
+      mark2.type.excluded = [mark1.type];
+
+      const set = [mark2];
+
+      const newSet = mark1.addToSet(set);
+
+      expect(newSet).toBe(set);
+    });
+
+    it('given mark that excludes existing mark, returns set without existing mark', () => {
+      const mark1 = createMark(createMarkType('strong', {}, {}), {});
+      const mark2 = createMark(createMarkType('em', {}, {}), {});
+      mark1.type.rank = 1;
+      mark2.type.rank = 2;
+      mark1.type.excluded = [mark2.type];
+
+      const set = [mark2];
+
+      const newSet = mark1.addToSet(set);
+
+      expect(newSet).toEqual([mark1]);
     });
   });
 });
