@@ -1,91 +1,79 @@
-export class Mark<
-  TAttrs extends Record<string, unknown> = Record<string, unknown>
-> {
-  readonly type: string;
-  readonly attrs: TAttrs;
-  constructor(type: string, attrs: TAttrs) {
-    if (typeof type !== 'string') throw new Error('Type must be a string');
+import { deepEqual } from '../utils/deep-equal';
+import { MarkType } from './MarkType';
+
+export class Mark {
+  readonly type: MarkType;
+  readonly attrs: Record<string, unknown>;
+  static readonly none: readonly Mark[] = [];
+
+  constructor(type: MarkType, attrs: Record<string, unknown>) {
+    if (!(type instanceof MarkType))
+      throw new Error('Type must be a MarkType instance');
     if (typeof attrs !== 'object' || attrs === null || Array.isArray(attrs))
       throw new Error('Attrs must be an object');
 
-    this.attrs = { ...attrs } as TAttrs;
+    this.attrs = { ...attrs };
     this.type = type;
   }
 
-  /**
-   * Compares this mark with another mark for equality.
-   *
-   * Two marks are considered equal if they have the same type and
-   * equivalent attributes (shallow comparison).
-   *
-   * @param other - The mark to compare with
-   * @returns true if marks are equal, false otherwise
-   *
-   * @remarks
-   * Currently supports flat attributes only. Nested objects are compared
-   * by reference, not deep equality. Deep equality support is planned for
-   * future milestones.
-   *
-   * @example
-   * ```typescript
-   * const mark1 = new Mark('bold', { color: 'red' });
-   * const mark2 = new Mark('bold', { color: 'red' });
-   * mark1.equals(mark2); // true
-   * ```
-   */
-  equals(other: Mark<TAttrs>): boolean {
+  equals(other: Mark): boolean {
     if (!this.validateMark(other)) return false;
 
-    const thisKeys = Object.keys(this.attrs as object);
-    const otherKeys = Object.keys(other.attrs as object);
-
-    if (thisKeys.length !== otherKeys.length) {
-      return false;
-    }
-
-    return thisKeys.every((key) => {
-      return (
-        this.attrs[key as keyof TAttrs] === other.attrs[key as keyof TAttrs]
-      );
-    });
+    return deepEqual(this.attrs, other.attrs);
   }
 
-  merge<TOther extends Record<string, unknown>>(
-    other: Mark<TOther>
-  ): Mark<TAttrs & TOther> | null {
-    if (!this.validateMark(other)) return null;
-
-    const attrs = { ...this.attrs, ...other.attrs };
-
-    return new Mark(other.type, attrs);
-  }
-
-  private validateMark(other: Mark<Record<string, unknown>>): boolean {
-    if (other === null || other === undefined)
-      throw new Error('Mark cannot be null or undefined');
-
-    return this.type === other.type;
-  }
-
-  isInSet(set: readonly Mark<TAttrs>[]): boolean {
+  isInSet(set: readonly Mark[]): boolean {
     if (set === null || set === undefined) {
-      throw new Error('Mark isInSet set cannot be null or undefined');
+      throw new Error(`Mark isInSet set cannot be ${set}`);
     }
 
     return set.some((mark) => this.equals(mark));
   }
 
-  removeFromSet(set: readonly Mark<TAttrs>[]): readonly Mark<TAttrs>[] {
+  removeFromSet(set: readonly Mark[]): readonly Mark[] {
     if (set === null || set === undefined) {
-      throw new Error('Mark removeFromSet set cannot be null or undefined');
+      throw new Error(`Mark removeFromSet set cannot be ${set}`);
     }
 
     for (let i = 0; i < set.length; i++) {
       if (this.equals(set[i])) {
-        return [...set.slice(0, i), ...set.slice(i + 1)];
+        return set.slice(0, i).concat(set.slice(i + 1));
       }
     }
 
     return set;
+  }
+
+  addToSet(set: readonly Mark[]): readonly Mark[] {
+    if (set.length === 0) return [this];
+
+    let copy: Mark[] | null = null;
+
+    for (let i = 0; i < set.length; i++) {
+      if (this.equals(set[i])) return set;
+      else if (this.type.excludes(set[i].type)) {
+        if (!copy) copy = set.slice(0, i) as Mark[];
+      } else if (set[i].type.excludes(this.type)) {
+        return set;
+      } else if (set[i].type.rank > this.type.rank) {
+        if (!copy) copy = set.slice(0, i) as Mark[];
+        copy.push(this);
+        copy.push(...(set.slice(i) as Mark[]));
+        return copy;
+      } else if (copy) {
+        copy.push(set[i]);
+      }
+    }
+
+    if (!copy) copy = set.slice() as Mark[];
+    copy.push(this);
+    return copy;
+  }
+
+  private validateMark(other: Mark): boolean {
+    if (other === null || other === undefined)
+      throw new Error(`Mark cannot be ${other}`);
+
+    return this.type === other.type;
   }
 }
