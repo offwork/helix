@@ -665,5 +665,52 @@ describe('ContentMatch', () => {
 
       expect(match.findWrapping(targetType)).toEqual([outerType, innerType]);
     });
+
+    it('given same target called twice, returns cached result', () => {
+      const paragraph = createMockNodeType('paragraph');
+      const match = ContentMatch.parse('paragraph', { paragraph });
+
+      const first = match.findWrapping(paragraph);
+      const second = match.findWrapping(paragraph);
+
+      expect(first).toBe(second);
+    });
+  });
+
+  describe('parse()', () => {
+    it('given empty string, returns ContentMatch.empty', () => {
+      const result = ContentMatch.parse('', {});
+      expect(result).toBe(ContentMatch.empty);
+    });
+
+    it('given unknown node type, throws SyntaxError', () => {
+      expect(() =>
+        ContentMatch.parse('unknownNode', {})
+      ).toThrowErrorMatchingInlineSnapshot(
+        `"ContentMatch parse error: No node type or group 'unknownNode' found"`
+      );
+    });
+
+    it('given single node name, returns matching ContentMatch', () => {
+      const nodeTypes = {
+        paragraph: createMockNodeType('paragraph'),
+      };
+
+      const result = ContentMatch.parse('paragraph', nodeTypes);
+
+      expect(result).toBeInstanceOf(ContentMatch);
+    });
+
+    it('given sequence, returns match that accepts nodes in order', () => {
+      const paragraph = createMockNodeType('paragraph');
+      const heading = createMockNodeType('heading');
+      const nodeTypes = { paragraph, heading };
+
+      const result = ContentMatch.parse('paragraph heading', nodeTypes);
+
+      expect(result.matchType(paragraph)?.matchType(heading)?.validEnd).toBe(
+        true
+      );
+    });
   });
 });

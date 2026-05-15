@@ -1,6 +1,7 @@
 export interface NodeSpec {
   attrs?: Record<string, AttributeSpec>;
   inline?: boolean;
+  group?: string;
   marks?: string;
   leaf?: boolean;
   text?: boolean;

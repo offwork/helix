@@ -136,6 +136,12 @@ export class NodeType {
     return false;
   }
 
+  isInGroup(name: string): boolean {
+    if (!this.spec.group) return false;
+
+    return this.spec.group.split(' ').includes(name);
+  }
+
   validContent(content: Fragment<Node>): boolean {
     if (content === null)
       throw new Error('NodeType validContent parameter cannot be null');
