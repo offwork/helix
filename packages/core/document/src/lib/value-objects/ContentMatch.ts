@@ -1,6 +1,13 @@
 import { Fragment } from '../entities/Fragment';
 import { Node } from '../entities/Node';
 import { Edge } from '../interfaces/Edge';
+import {
+  checkForDeadEnds,
+  dfa,
+  nfa,
+  parseExpr,
+  TokenStream,
+} from '../utils/content-match-parser';
 import { NodeType } from './NodeType';
 
 type Active = {
@@ -9,6 +16,8 @@ type Active = {
   via: Active | null;
 };
 export class ContentMatch {
+  readonly wrapCache: (NodeType | NodeType[] | null)[] = [];
+
   private static _empty: ContentMatch;
 
   constructor(
@@ -23,6 +32,19 @@ export class ContentMatch {
       ContentMatch._empty = new ContentMatch(true, []);
     }
     return ContentMatch._empty;
+  }
+
+  static parse(
+    string: string,
+    nodeTypes: { readonly [name: string]: NodeType }
+  ): ContentMatch {
+    const stream = new TokenStream(string, nodeTypes);
+    if (stream.next == null) return ContentMatch.empty;
+    const expr = parseExpr(stream);
+    if (stream.next) stream.err('Unexpected trailing text');
+    const match = dfa(nfa(expr));
+    checkForDeadEnds(match, stream);
+    return match;
   }
 
   get edgeCount(): number {
@@ -181,6 +203,15 @@ export class ContentMatch {
   }
 
   findWrapping(target: NodeType): NodeType[] | null {
+    for (let i = 0; i < this.wrapCache.length; i += 2)
+      if (this.wrapCache[i] === target)
+        return this.wrapCache[i + 1] as NodeType[] | null;
+    const computed = this.computeWrapping(target);
+    this.wrapCache.push(target, computed);
+    return computed;
+  }
+
+  private computeWrapping(target: NodeType): NodeType[] | null {
     if (target === null) {
       throw new Error('ContentMatch findWrapping parameter cannot be null');
     }
