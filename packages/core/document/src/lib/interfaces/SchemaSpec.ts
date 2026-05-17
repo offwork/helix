@@ -1,4 +1,11 @@
+export interface SchemaSpec {
+  nodes: Record<string, NodeSpec>;
+  marks?: Record<string, MarkSpec>;
+  topNode?: string;
+}
+
 export interface NodeSpec {
+  content?: string;
   attrs?: Record<string, AttributeSpec>;
   inline?: boolean;
   group?: string;
@@ -9,6 +16,8 @@ export interface NodeSpec {
 
 export interface MarkSpec {
   attrs?: Record<string, unknown>;
+  excludes?: string;
+  group?: string;
 }
 
 export interface AttributeSpec {

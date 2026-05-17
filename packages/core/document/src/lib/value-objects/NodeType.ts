@@ -14,6 +14,7 @@ export class NodeType {
 
   contentMatch: ContentMatch | null = null;
   inlineContent: boolean | null = null;
+  markSet: readonly MarkType[] | null = null;
 
   constructor(name: string, schema: unknown, spec: NodeSpec) {
     this.validateParameter('name', name);
