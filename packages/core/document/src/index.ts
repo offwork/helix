@@ -14,7 +14,7 @@ export type {
 } from './lib/interfaces/SchemaSpec';
 
 // Sevices
-export { SchemaService } from './lib/services/SchemaService';
+export { Schema } from './lib/services/Schema';
 
 // Value Objects
 export { Attribute } from './lib/value-objects/Attribute';

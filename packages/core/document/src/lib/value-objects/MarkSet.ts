@@ -2,9 +2,9 @@ import { Mark } from './Mark';
 
 export class MarkSet {
   private static readonly _empty: MarkSet = new MarkSet([]);
-  private readonly marks: readonly Mark<Record<string, unknown>>[];
+  private readonly marks: readonly Mark[];
 
-  private constructor(marks: Mark<Record<string, unknown>>[]) {
+  private constructor(marks: readonly Mark[]) {
     this.marks = [...marks];
   }
 
@@ -12,7 +12,7 @@ export class MarkSet {
     return MarkSet._empty;
   }
 
-  static from(marks: Mark<Record<string, unknown>>[]): MarkSet {
+  static from(marks: Mark[]): MarkSet {
     if (marks.length === 0) return MarkSet._empty;
 
     MarkSet.validateMarks(marks);
@@ -24,7 +24,7 @@ export class MarkSet {
     return this.marks.length;
   }
 
-  add(mark: Mark<Record<string, unknown>>): MarkSet {
+  add(mark: Mark): MarkSet {
     if (this.hasMark(mark)) {
       return this;
     }
@@ -32,7 +32,7 @@ export class MarkSet {
     return new MarkSet([...this.marks, mark]);
   }
 
-  remove(mark: Mark<Record<string, unknown>>): MarkSet {
+  remove(mark: Mark): MarkSet {
     if (!this.hasMark(mark)) {
       return this;
     }
@@ -43,7 +43,7 @@ export class MarkSet {
     return new MarkSet(newMarks);
   }
 
-  contains(mark: Mark<Record<string, unknown>>): boolean {
+  contains(mark: Mark): boolean {
     return this.hasMark(mark);
   }
 
@@ -63,7 +63,7 @@ export class MarkSet {
     }
   }
 
-  private hasMark(mark: Mark<Record<string, unknown>>): boolean {
+  private hasMark(mark: Mark): boolean {
     return this.marks.some((existingMark) => existingMark.type === mark.type);
   }
 }
