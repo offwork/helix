@@ -1,4 +1,3 @@
-// import { deepEqual } from '../utils/deep-equal';
 import { Node } from './Node';
 
 export class Fragment<TNode extends Node> {
@@ -106,17 +105,6 @@ export class Fragment<TNode extends Node> {
         const end = pos + child.nodeSize;
         if (end > from) {
           if (pos < from || end > to) {
-            /* if (child.type.isText) {
-              child = child.cut(
-                Math.max(0, from - pos),
-                Math.min(child.text?.length ?? 0, to - pos)
-              ) as TNode;
-            } else {
-              child = child.cut(
-                Math.max(0, from - pos - 1),
-                Math.min(child.content.size, to - pos - 1)
-              ) as TNode;
-            } */
             child = child.cut(
               Math.max(0, from - pos - 1),
               Math.min(child.content.size, to - pos - 1)
@@ -134,24 +122,13 @@ export class Fragment<TNode extends Node> {
   append(other: Fragment<TNode>): Fragment<TNode> {
     if (!other.size) return this;
     if (!this.size) return other;
-    /* if (this.lastChild?.type === other.firstChild?.type) {
-      const last = this.lastChild;
-      const first = other.firstChild;
-      if (last && first && last.type.isText && first.type.isText && deepEqual(last.marks, first.marks)) {
-        const merged = new Node(
-          last.type,
-          last.attrs,
-          Fragment.empty(),
-          last.marks,
-          `${last.text}${first.text}`
-        ) as TNode;
-        return Fragment.from([
-          ...this.content.slice(0, -1),
-          merged,
-          ...other.content.slice(1),
-        ]);
-      }
-    } */
+
     return Fragment.from([...this.content, ...other.content]);
+  }
+
+  maybeChild(index: number): TNode | null {
+    if (index < 0 || index >= this.content.length) return null;
+
+    return this.content[index];
   }
 }

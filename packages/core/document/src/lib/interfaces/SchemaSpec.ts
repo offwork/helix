@@ -5,6 +5,7 @@ export interface SchemaSpec {
 }
 
 export interface NodeSpec {
+  atom?: boolean;
   content?: string;
   attrs?: Record<string, AttributeSpec>;
   inline?: boolean;

@@ -210,4 +210,42 @@ describe('Mark', () => {
       expect(newSet).toEqual([mark1]);
     });
   });
+
+  describe('sameSet()', () => {
+    it('given equal sets, returns true', () => {
+      const marks1 = [
+        createMark(boldMarkType, { color: 'purple' }),
+        createMark(italicMarkType, { color: 'purple' }),
+      ];
+      const marks2 = [
+        createMark(boldMarkType, { color: 'purple' }),
+        createMark(italicMarkType, { color: 'purple' }),
+      ];
+
+      expect(Mark.sameSet(marks1, marks2)).toBe(true);
+    });
+
+    it('given sets of different length, returns false', () => {
+      const marks1 = [createMark(boldMarkType, { color: 'purple' })];
+      const marks2 = [
+        createMark(boldMarkType, { color: 'purple' }),
+        createMark(italicMarkType, { color: 'purple' }),
+      ];
+
+      expect(Mark.sameSet(marks1, marks2)).toBe(false);
+    });
+
+    it('given sets same length but different marks, returns false', () => {
+      const marks1 = [
+        createMark(boldMarkType, { color: 'purple' }),
+        createMark(italicMarkType, { color: 'purple' }),
+      ];
+      const marks2 = [
+        createMark(italicMarkType, { color: 'blue' }),
+        createMark(italicMarkType, { color: 'purple' }),
+      ];
+
+      expect(Mark.sameSet(marks1, marks2)).toBe(false);
+    });
+  });
 });

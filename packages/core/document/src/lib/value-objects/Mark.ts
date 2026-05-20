@@ -16,6 +16,17 @@ export class Mark {
     this.type = type;
   }
 
+
+  static sameSet(a: readonly Mark[], b: readonly Mark[]): boolean {
+    if (a.length !== b.length) return false;
+
+    for (let i = 0; i < a.length; i++) {
+      if (!a[i].equals(b[i])) return false;
+    }
+
+    return true;
+  }
+
   equals(other: Mark): boolean {
     if (!this.validateMark(other)) return false;
 

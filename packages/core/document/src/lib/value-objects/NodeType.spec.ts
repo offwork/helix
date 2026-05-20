@@ -413,6 +413,35 @@ describe('NodeType', () => {
     });
   });
 
+  describe('isTextblock()', () => {
+    it('given block node with inlineContent true, returns true', () => {
+      const mockSchema = {} as never;
+      const spec: NodeSpec = { attrs: {} };
+      const nodeType = new NodeType('paragraph', mockSchema, spec);
+      nodeType.inlineContent = true;
+
+      expect(nodeType.isTextblock).toBe(true);
+    });
+  });
+
+  describe('isAtom()', () => {
+    it('given leaf node, returns true', () => {
+      const mockSchema = {} as never;
+      const spec: NodeSpec = { attrs: {}, leaf: true };
+      const nodeType = new NodeType('image', mockSchema, spec);
+
+      expect(nodeType.isAtom).toBe(true);
+    });
+
+    it('given non-leaf node with atom spec true, returns true', () => {
+      const mockSchema = {} as never;
+      const spec: NodeSpec = { attrs: {}, atom: true };
+      const nodeType = new NodeType('image', mockSchema, spec);
+
+      expect(nodeType.isAtom).toBe(true);
+    });
+  });
+
   describe('createAndFill()', () => {
     it('given text node type, throws error', () => {
       const mockSchema = {} as never;
