@@ -1,6 +1,8 @@
 import { deepEqual } from '../utils/deep-equal';
+import { ContentMatch } from '../value-objects/ContentMatch';
 import { Mark } from '../value-objects/Mark';
 import { NodeType } from '../value-objects/NodeType';
+import { ResolvedPos } from '../value-objects/ResolvedPos';
 import { Fragment } from './Fragment';
 
 export class Node<TAttrs = Record<string, unknown>> {
@@ -8,14 +10,12 @@ export class Node<TAttrs = Record<string, unknown>> {
   readonly attrs: TAttrs;
   readonly content: Fragment<Node>;
   readonly marks: Mark[];
-  // readonly text: string | undefined;
 
   constructor(
     type: NodeType,
     attrs: TAttrs,
     content?: Fragment<Node>,
-    marks?: Mark[],
-    /* text?: string */
+    marks?: Mark[]
   ) {
     if (type === null) {
       throw new Error('Node type cannot be null');
@@ -33,27 +33,14 @@ export class Node<TAttrs = Record<string, unknown>> {
       throw new Error('Node attrs cannot be undefined');
     }
 
-    /* if (content === null) {
-      throw new Error('Node content cannot be null');
-    } */
-
     if (marks === null) {
       throw new Error('Node marks cannot be null');
     }
-
-    /* if (text === null) {
-      throw new Error('Node text cannot be null');
-    } */
-
-    /* if (typeof text === 'string' && text.trim() === '') {
-      throw new Error('Node text cannot be empty');
-    } */
 
     this.type = type;
     this.attrs = attrs;
     this.content = content || Fragment.empty<Node>();
     this.marks = marks || [];
-    // this.text = text;
   }
 
   get childCount(): number {
@@ -65,11 +52,43 @@ export class Node<TAttrs = Record<string, unknown>> {
       return 1;
     }
 
-    /* if (this.type.isText && this.text) {
-      return this.text.length;
-    } */
-
     return 2 + this.content.size;
+  }
+
+  get firstChild(): Node | undefined {
+    return this.content.firstChild;
+  }
+
+  get lastChild(): Node | undefined {
+    return this.content.lastChild;
+  }
+
+  get isBlock(): boolean {
+    return this.type.isBlock;
+  }
+
+  get isInline(): boolean {
+    return this.type.isInline;
+  }
+
+  get isText(): boolean {
+    return this.type.isText;
+  }
+
+  get isLeaf(): boolean {
+    return this.type.isLeaf;
+  }
+
+  get isAtom(): boolean {
+    return this.type.isAtom;
+  }
+
+  get isTextblock(): boolean {
+    return this.type.isTextblock;
+  }
+
+  get inlineContent(): boolean | null {
+    return this.type.inlineContent;
   }
 
   equals(other: Node): boolean {
@@ -77,8 +96,6 @@ export class Node<TAttrs = Record<string, unknown>> {
 
     if (other === undefined)
       throw new Error('Node equals parameter cannot be undefined');
-
-    // if (this.text !== other.text) return false;
 
     return (
       this === other ||
@@ -97,26 +114,81 @@ export class Node<TAttrs = Record<string, unknown>> {
   }
 
   cut(from: number, to: number = this.content.size): Node<TAttrs> {
-    /* if (this.type.isText) {
-      if (from === 0 && to === this.text?.length) return this;
-      return new Node(
-        this.type,
-        this.attrs,
-        this.content,
-        this.marks,
-        this.text?.slice(from, to)
-      );
-    } */
-
     if (from === 0 && to === this.content.size) return this;
     return this.copy(this.content.cut(from, to));
   }
 
-  private sameMarkup(other: Node): boolean {
+  child(index: number): Node {
+    return this.content.child(index);
+  }
+
+  maybeChild(index: number): Node | null {
+    return this.content.maybeChild(index);
+  }
+
+  mark(marks: Mark[]): Node<TAttrs> {
+    if (marks === this.marks) return this;
+    return new Node(this.type, this.attrs, this.content, marks);
+  }
+
+  sameMarkup(other: Node): boolean {
+    return this.hasMarkup(other.type, other.attrs, other.marks);
+  }
+
+  hasMarkup(
+    type: NodeType,
+    attrs?: Record<string, unknown>,
+    marks?: readonly Mark[]
+  ): boolean {
     return (
-      this.type === other.type &&
-      deepEqual(this.attrs, other.attrs) &&
-      deepEqual(this.marks, other.marks)
+      this.type === type &&
+      deepEqual(this.attrs, attrs ?? {}) &&
+      Mark.sameSet(this.marks, marks ?? Mark.none)
     );
+  }
+
+  forEach(callback: (node: Node, offset: number, index: number) => void): void {
+    let offset = 0;
+    this.content.forEach((child, index) => {
+      callback(child, offset, index);
+      offset += child.nodeSize;
+    });
+  }
+
+  contentMatchAt(index: number): ContentMatch {
+    const match = this.type.contentMatch?.matchFragment(this.content, 0, index);
+
+    if (!match) {
+      throw new Error('Called contentMatchAt on a node with invalid content');
+    }
+
+    return match;
+  }
+
+  resolveNoCache(pos: number): ResolvedPos {
+    return ResolvedPos.resolve(this as Node, pos);
+  }
+
+  nodeAt(pos: number): Node | null {
+    for (let node: Node | null = this as Node; ; ) {
+      const { index, offset } = node.content.findIndex(pos);
+      node = node.content.maybeChild(index);
+      if (!node) return null;
+      if (offset === pos || node.type.isText) return node;
+      pos -= offset + 1;
+    }
+  }
+
+  childAfter(pos: number): { node: Node | null; index: number; offset: number } {
+    const { index, offset } = this.content.findIndex(pos);
+    return {
+      node: this.content.maybeChild(index),
+      index,
+      offset,
+    };
+  }
+
+  childBefore(pos: number): { node: Node | null; index: number; offset: number } {
+    return pos == 0 ? { node: null, index: 0, offset: 0 } : this.childAfter(pos - 1);
   }
 }

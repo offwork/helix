@@ -88,6 +88,14 @@ export class NodeType {
     return !this.isBlock;
   }
 
+  get isTextblock(): boolean {
+    return this.isBlock && this.inlineContent === true;
+  }
+
+  get isAtom(): boolean {
+    return this.isLeaf || this.spec.atom === true;
+  }
+
   create(
     attrs?: Record<string, unknown>,
     content?: Fragment<Node> | Node[],

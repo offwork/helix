@@ -52,7 +52,7 @@ export class TextNode extends Node {
     return new TextNode(this.type, this.attrs, text, this.marks);
   }
 
-  mark(marks: Mark[]): TextNode {
+  override mark(marks: Mark[]): TextNode {
     if (this.marks === marks) {
       return this;
     }

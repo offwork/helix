@@ -1,17 +1,9 @@
-// import { Mark } from '../value-objects/Mark';
-// import { MarkType } from '../value-objects/MarkType';
 import { NodeType } from '../value-objects/NodeType';
 import { Fragment } from './Fragment';
 import { Node } from './Node';
 
 const mockSchema = {} as never;
 const spec = { attrs: {} };
-
-// const createMarkType = (name: string) => new MarkType(name, {}, {});
-
-/* function createMarks(...types: string[]): Mark[] {
-  return types.map((type) => new Mark(createMarkType(type), {}));
-} */
 
 describe('Fragment', () => {
   describe('creation', () => {
@@ -267,16 +259,6 @@ describe('Fragment', () => {
     });
   });
 
-  /* describe('size', () => {
-    it('given text node, returns sum of nodeSize values', () => {
-      const textType = new NodeType('text', {}, { text: true });
-      const node = new Node(textType, {}, undefined, undefined, 'Hello World');
-      const fragment = Fragment.from([node]);
-
-      expect(fragment.size).toBe(11);
-    });
-  }); */
-
   describe('childCount', () => {
     it('returns 0 for empty fragment', () => {
       const fragment = Fragment.empty<Node>();
@@ -469,17 +451,6 @@ describe('Fragment', () => {
       expect(result.child(0)).toBe(node1);
     });
 
-    /* it('given range cutting into text node, returns trimmed text node', () => {
-      const textType = new NodeType('text', mockSchema, { text: true });
-      const node = new Node(textType, {}, undefined, undefined, 'Hello World');
-      const fragment = Fragment.from([node]);
-
-      const result = fragment.cut(6, 11);
-
-      expect(result.childCount).toBe(1);
-      expect(result.child(0).text).toBe('World');
-    }); */
-
     it('given range cutting into non-text node, returns trimmed node', () => {
       const child1 = new Node(new NodeType('paragraph', mockSchema, spec), {});
       const child2 = new Node(new NodeType('paragraph', mockSchema, spec), {});
@@ -536,50 +507,30 @@ describe('Fragment', () => {
         true
       );
     });
+  });
 
-    /* it('given last child of this and first child of other are text nodes with same marks, merges them into single node', () => {
-      const textType = new NodeType('text', mockSchema, { text: true });
-      const node1 = new Node(textType, {}, undefined, undefined, 'Hello ');
-      const node2 = new Node(textType, {}, undefined, undefined, 'World');
+  describe('maybeChild()', () => {
+    it('given valid index, returns child node', () => {
+      const node1 = new Node(new NodeType('paragraph', mockSchema, spec), {
+        text: 'First',
+      });
+      const node2 = new Node(new NodeType('paragraph', mockSchema, spec), {
+        text: 'Second',
+      });
 
-      const fragment1 = Fragment.from([node1]);
-      const fragment2 = Fragment.from([node2]);
+      const fragment = Fragment.from([node1, node2]);
 
-      const result = fragment1.append(fragment2);
-      const expected = Fragment.from([
-        new Node(textType, {}, undefined, undefined, 'Hello World'),
-      ]);
+      expect(fragment.maybeChild(0)).toBe(node1);
+    });
 
-      expect(expected.equals(result)).toBe(true);
-    }); */
+    it('given invalid index, returns null', () => {
+      const node1 = new Node(new NodeType('paragraph', mockSchema, spec), {
+        text: 'First',
+      });
 
-    /* it('given last child of this and first child of other are text nodes with different marks, keeps them separate', () => {
-      const textType = new NodeType('text', mockSchema, { text: true });
-      const node1 = new Node(
-        textType,
-        {},
-        undefined,
-        createMarks('bold'),
-        'Hello '
-      );
-      const node2 = new Node(
-        textType,
-        {},
-        undefined,
-        createMarks('italic'),
-        'World'
-      );
+      const fragment = Fragment.from([node1]);
 
-      const fragment1 = Fragment.from([node1]);
-      const fragment2 = Fragment.from([node2]);
-
-      const result = fragment1.append(fragment2);
-      const expected = Fragment.from([
-        new Node(textType, {}, undefined, createMarks('bold'), 'Hello '),
-        new Node(textType, {}, undefined, createMarks('italic'), 'World'),
-      ]);
-
-      expect(expected.equals(result)).toBe(true);
-    }); */
+      expect(fragment.maybeChild(-1)).toBeNull();
+    });
   });
 });

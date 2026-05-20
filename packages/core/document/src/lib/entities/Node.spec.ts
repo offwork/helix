@@ -1,12 +1,24 @@
 import { Node } from './Node';
 import { NodeType } from '../value-objects/NodeType';
 import { Fragment } from './Fragment';
+import { MarkSpec } from '../interfaces/SchemaSpec';
+import { MarkType } from '../value-objects/MarkType';
+import { Mark } from '../value-objects/Mark';
+import { ContentMatch } from '../value-objects/ContentMatch';
+import { ResolvedPos } from '../value-objects/ResolvedPos';
 
 const mockSchema = {} as never;
 const spec = { attrs: {} };
 const type = new NodeType('paragraph', mockSchema, spec);
 const mockChildNode = new Node(type, { attrs: {}, text: true });
 const mockContent = Fragment.from<Node>([mockChildNode]);
+
+const createMarkType = (name: string, schema: unknown, spec: MarkSpec) =>
+  new MarkType(name, schema, spec);
+const boldMarkType = createMarkType('bold', {}, {});
+const italicMarkType = createMarkType('italic', {}, {});
+const createMark = (type: MarkType, attrs: Record<string, unknown>) =>
+  new Mark(type, attrs);
 
 describe('Node', () => {
   describe('constructor', () => {
@@ -34,12 +46,6 @@ describe('Node', () => {
       );
     });
 
-    /* it('given null content, throws error', () => {
-      expect(() => new Node(type, {}, null as never)).toThrow(
-        'Node content cannot be null'
-      );
-    }); */
-
     it('given null marks, throws error', () => {
       const childNode = new Node(type, {});
       const mockContent = Fragment.from<Node>([childNode]);
@@ -48,24 +54,6 @@ describe('Node', () => {
         'Node marks cannot be null'
       );
     });
-
-    /* it('given null text, throws error', () => {
-      const childNode = new Node(type, {});
-      const mockContent = Fragment.from<Node>([childNode]);
-
-      expect(() => new Node(type, {}, mockContent, [], null as never)).toThrow(
-        'Node text cannot be null'
-      );
-    }); */
-
-    /* it('given empty text, throws error', () => {
-      const childNode = new Node(type, {});
-      const mockContent = Fragment.from<Node>([childNode]);
-
-      expect(() => new Node(type, {}, mockContent, [], '')).toThrow(
-        'Node text cannot be empty'
-      );
-    }); */
   });
 
   describe('childCount', () => {
@@ -89,17 +77,6 @@ describe('Node', () => {
 
       expect(node.nodeSize).toBe(1);
     });
-
-    /* it('given text node, returns text.length', () => {
-      const textType = new NodeType('text', mockSchema, { text: true });
-      const childNode = new Node(type, {});
-      const mockContent = Fragment.from<Node>([childNode]);
-
-      const text = 'Hello';
-      const node = new Node(textType, {}, mockContent, [], text);
-
-      expect(node.nodeSize).toBe(text.length);
-    }); */
 
     it('given container node, returns 2 + content.size', () => {
       const paragraphType = new NodeType('paragraph', mockSchema, spec);
@@ -129,70 +106,9 @@ describe('Node', () => {
 
       expect(node1.equals(node2)).toBe(true);
     });
-
-    /* it('given text nodes with different text, returns false', () => {
-      const node1 = new Node(
-        type,
-        { level: 1, visible: true },
-        mockContent,
-        [],
-        'Hello'
-      );
-      const node2 = new Node(
-        type,
-        { level: 1, visible: true },
-        mockContent,
-        [],
-        'World'
-      );
-
-      expect(node1.equals(node2)).toBe(false);
-    }); */
-
-    /* it('given null, throws error', () => {
-      const node = new Node(
-        type,
-        { level: 1, visible: true },
-        mockContent,
-        [],
-        'Hello'
-      );
-
-      expect(() => node.equals(null as never)).toThrow(
-        'Node equals parameter cannot be null'
-      );
-    }); */
-
-    /* it('given undefined, throws error', () => {
-      const node = new Node(
-        type,
-        { level: 1, visible: true },
-        mockContent,
-        [],
-        'Hello'
-      );
-
-      expect(() => node.equals(undefined as never)).toThrow(
-        'Node equals parameter cannot be undefined'
-      );
-    }); */
   });
 
   describe('copy', () => {
-    /* it('given same content, returns same node', () => {
-      const node = new Node(
-        type,
-        { level: 1, visible: true },
-        mockContent,
-        [],
-        'Hello'
-      );
-
-      const copy = node.copy(mockContent);
-
-      expect(copy).toBe(node);
-    }); */
-
     it('given different content, returns new node with same type/attrs/marks/', () => {
       const node = new Node(type, { level: 1, visible: true }, mockContent, []);
 
@@ -217,22 +133,6 @@ describe('Node', () => {
       expect(cut).toBe(node);
     });
 
-    /* it('given text node full range, returns this', () => {
-      const textType = new NodeType('text', mockSchema, { text: true });
-      const node = new Node(textType, {}, undefined, undefined, 'Hello');
-
-      expect(node.cut(0, 5)).toBe(node);
-    }); */
-
-    /* it('given text node partial range, returns trimmed text node', () => {
-      const textType = new NodeType('text', mockSchema, { text: true });
-      const node = new Node(textType, {}, undefined, undefined, 'Hello World');
-
-      const result = node.cut(6, 11);
-
-      expect(result.text).toBe('World');
-    }); */
-
     it('given partial range, returns new node with cut content', () => {
       const child1 = new Node(new NodeType('paragraph', mockSchema, spec), {});
       const child2 = new Node(new NodeType('paragraph', mockSchema, spec), {});
@@ -248,6 +148,354 @@ describe('Node', () => {
 
       expect(result).not.toBe(node);
       expect(result.content.childCount).toBe(1);
+    });
+  });
+
+  describe('child', () => {
+    it('given valid index, returns child node', () => {
+      const child1 = new Node(new NodeType('paragraph', mockSchema, spec), {});
+      const child2 = new Node(new NodeType('paragraph', mockSchema, spec), {});
+      const content = Fragment.from([child1, child2]);
+      const node = new Node(
+        new NodeType('paragraph', mockSchema, spec),
+        {},
+        content,
+        []
+      );
+
+      expect(node.child(0)).toBe(child1);
+    });
+  });
+
+  describe('maybeChild', () => {
+    it('given valid index, returns child node', () => {
+      const child1 = new Node(new NodeType('paragraph', mockSchema, spec), {});
+      const child2 = new Node(new NodeType('paragraph', mockSchema, spec), {});
+      const content = Fragment.from([child1, child2]);
+      const node = new Node(
+        new NodeType('paragraph', mockSchema, spec),
+        {},
+        content,
+        []
+      );
+
+      expect(node.maybeChild(0)).toBe(child1);
+    });
+
+    it('given invalid index, returns null', () => {
+      const child1 = new Node(new NodeType('paragraph', mockSchema, spec), {});
+      const child2 = new Node(new NodeType('paragraph', mockSchema, spec), {});
+      const content = Fragment.from([child1, child2]);
+      const node = new Node(
+        new NodeType('paragraph', mockSchema, spec),
+        {},
+        content,
+        []
+      );
+
+      expect(node.maybeChild(2)).toBeNull();
+    });
+  });
+
+  describe('firstChild', () => {
+    it('given non-empty content, returns first child', () => {
+      const child1 = new Node(new NodeType('paragraph', mockSchema, spec), {});
+      const child2 = new Node(new NodeType('paragraph', mockSchema, spec), {});
+      const content = Fragment.from([child1, child2]);
+      const node = new Node(
+        new NodeType('paragraph', mockSchema, spec),
+        {},
+        content,
+        []
+      );
+
+      expect(node.firstChild).toBe(child1);
+    });
+  });
+
+  describe('lastChild', () => {
+    it('given non-empty content, returns last child', () => {
+      const child1 = new Node(new NodeType('paragraph', mockSchema, spec), {});
+      const child2 = new Node(new NodeType('paragraph', mockSchema, spec), {});
+      const content = Fragment.from([child1, child2]);
+      const node = new Node(
+        new NodeType('paragraph', mockSchema, spec),
+        {},
+        content,
+        []
+      );
+
+      expect(node.lastChild).toBe(child2);
+    });
+  });
+
+  describe('mark', () => {
+    it('given same maerks reference, returns same reference', () => {
+      const marks = [createMark(boldMarkType, { color: 'purple' })];
+      const node = new Node(type, {}, mockContent, marks);
+
+      const newNode = node.mark(marks);
+
+      expect(newNode).toBe(node);
+    });
+
+    it('given different marks, returns new node updating marks', () => {
+      const marks = [createMark(boldMarkType, { color: 'purple' })];
+      const node = new Node(type, {}, mockContent, marks);
+
+      const newMarks = [createMark(italicMarkType, { color: 'red' })];
+      const newNode = node.mark(newMarks);
+
+      expect(newNode).not.toBe(node);
+    });
+  });
+
+  describe('hasMarkup', () => {
+    it('given matching type/attrs/marks, returns true', () => {
+      const marks = [createMark(boldMarkType, { color: 'purple' })];
+      const node = new Node(type, { level: 1 }, mockContent, marks);
+
+      expect(node.hasMarkup(type, { level: 1 }, marks)).toBe(true);
+    });
+
+    it('given non-matching type, returns false', () => {
+      const marks = [createMark(boldMarkType, { color: 'purple' })];
+      const node = new Node(type, { level: 1 }, mockContent, marks);
+
+      const otherType = new NodeType('heading', mockSchema, spec);
+
+      expect(node.hasMarkup(otherType, { level: 1 }, marks)).toBe(false);
+    });
+  });
+
+  describe('forEach', () => {
+    it('given non-empty content, calls callback with each child node/offset/index', () => {
+      const child1 = new Node(new NodeType('paragraph', mockSchema, spec), {});
+      const child2 = new Node(new NodeType('paragraph', mockSchema, spec), {});
+      const content = Fragment.from([child1, child2]);
+      const node = new Node(
+        new NodeType('paragraph', mockSchema, spec),
+        {},
+        content,
+        []
+      );
+
+      const callback = jest.fn();
+
+      node.forEach(callback);
+
+      expect(callback).toHaveBeenCalledWith(child1, 0, 0);
+      expect(callback).toHaveBeenCalledWith(child2, child1.nodeSize, 1);
+    });
+  });
+
+  describe('contentMatchAt', () => {
+    it('given valid index, returns ContentMatch for content at index', () => {
+      const nodeType = new NodeType('paragraph', mockSchema, spec);
+      nodeType.contentMatch = ContentMatch.parse('paragraph', {
+        paragraph: nodeType,
+      });
+
+      const child1 = new Node(nodeType, {});
+      const child2 = new Node(nodeType, {});
+      const content = Fragment.from([child1, child2]);
+      const node = new Node(nodeType, {}, content, []);
+
+      const match = node.contentMatchAt(1);
+
+      expect(match).toBeInstanceOf(ContentMatch);
+    });
+
+    it('given index that fails to find content match, throws error', () => {
+      const child1 = new Node(new NodeType('paragraph', mockSchema, spec), {});
+      const content = Fragment.from([child1]);
+      const node = new Node(
+        new NodeType('paragraph', mockSchema, spec),
+        {},
+        content,
+        []
+      );
+
+      expect(() => node.contentMatchAt(1)).toThrow(
+        'Called contentMatchAt on a node with invalid content'
+      );
+    });
+  });
+
+  describe('resolveNoCache', () => {
+    it('given valid pos, returns ResolvedPos', () => {
+      const child1 = new Node(new NodeType('paragraph', mockSchema, spec), {});
+      const child2 = new Node(new NodeType('paragraph', mockSchema, spec), {});
+      const content = Fragment.from([child1, child2]);
+      const node = new Node(
+        new NodeType('paragraph', mockSchema, spec),
+        {},
+        content,
+        []
+      );
+
+      const resolvedPos = node.resolveNoCache(1);
+
+      expect(resolvedPos).toBeInstanceOf(ResolvedPos);
+    });
+  });
+
+  describe('nodeAt', () => {
+    it('given pos beyond content, returns null', () => {
+      const child1 = new Node(new NodeType('paragraph', mockSchema, spec), {});
+      const content = Fragment.from([child1]);
+      const node = new Node(
+        new NodeType('paragraph', mockSchema, spec),
+        {},
+        content,
+        []
+      );
+
+      expect(node.nodeAt(node.content.size)).toBeNull();
+    });
+
+    it('given valid pos, returns node at position', () => {
+      const child1 = new Node(new NodeType('paragraph', mockSchema, spec), {});
+      const child2 = new Node(new NodeType('paragraph', mockSchema, spec), {});
+      const content = Fragment.from([child1, child2]);
+      const node = new Node(
+        new NodeType('paragraph', mockSchema, spec),
+        {},
+        content,
+        []
+      );
+
+      expect(node.nodeAt(2)).toBe(child2);
+    });
+  });
+
+  describe('childAfter', () => {
+    it('given pos 0, returns first child with index 0 and offset 0', () => {
+      const child = new Node(new NodeType('paragraph', mockSchema, spec), {});
+      const node = new Node(
+        new NodeType('paragraph', mockSchema, spec),
+        {},
+        Fragment.from([child]),
+        []
+      );
+
+      const result = node.childAfter(0);
+
+      expect(result).toEqual({ node: child, index: 0, offset: 0 });
+    });
+
+    it('given pos at end of content, returns null node with index of last child and offset of last child end', () => {
+      const child = new Node(new NodeType('paragraph', mockSchema, spec), {});
+      const node = new Node(
+        new NodeType('paragraph', mockSchema, spec),
+        {},
+        Fragment.from([child]),
+        []
+      );
+
+      const result = node.childAfter(node.content.size);
+
+      expect(result).toEqual({ node: null, index: 1, offset: child.nodeSize });
+    });
+  });
+
+  describe('childBefore', () => {
+    it('given pos 0, returns null node with index 0 and offset 0', () => {
+      const child = new Node(new NodeType('paragraph', mockSchema, spec), {});
+      const node = new Node(
+        new NodeType('paragraph', mockSchema, spec),
+        {},
+        Fragment.from([child]),
+        []
+      );
+
+      const result = node.childBefore(0);
+
+      expect(result).toEqual({ node: null, index: 0, offset: 0 });
+    });
+
+    it('given pos at boundary, returns previous child with index of previous child and offset of previous child start', () => {
+      const child1 = new Node(new NodeType('paragraph', mockSchema, spec), {});
+      const child2 = new Node(new NodeType('paragraph', mockSchema, spec), {});
+      const node = new Node(
+        new NodeType('paragraph', mockSchema, spec),
+        {},
+        Fragment.from([child1, child2]),
+        []
+      );
+
+      const result = node.childBefore(child1.nodeSize);
+
+      expect(result).toEqual({ node: child1, index: 0, offset: 0 });
+    });
+  });
+
+  describe('type delegates getter', () => {
+    it('given block node, isBlock returns true', () => {
+      const blockType = new NodeType('paragraph', mockSchema, spec);
+      const node = new Node(blockType, {}, mockContent, []);
+
+      expect(node.isBlock).toBe(true);
+    });
+
+    it('given inline node, isInline returns true', () => {
+      const node = new Node(
+        new NodeType('span', mockSchema, { inline: true }),
+        {},
+        mockContent,
+        []
+      );
+
+      expect(node.isInline).toBe(true);
+    });
+
+    it('given text node, isText returns true', () => {
+      const node = new Node(
+        new NodeType('text', mockSchema, { inline: true, text: true }),
+        {},
+        mockContent,
+        []
+      );
+
+      expect(node.isText).toBe(true);
+    });
+
+    it('given leaf node, isLeaf returns true', () => {
+      const node = new Node(
+        new NodeType('image', mockSchema, { leaf: true }),
+        {},
+        mockContent,
+        []
+      );
+
+      expect(node.isLeaf).toBe(true);
+    });
+
+    it('given atom node, isAtom returns true', () => {
+      const node = new Node(
+        new NodeType('mention', mockSchema, { atom: true }),
+        {},
+        mockContent,
+        []
+      );
+
+      expect(node.isAtom).toBe(true);
+    });
+
+    it('given textblock node, isTextblock returns true', () => {
+      const nodeType = new NodeType('p', mockSchema, spec);
+      nodeType.inlineContent = true;
+      const node = new Node(nodeType, {}, mockContent, []);
+
+      expect(node.isTextblock).toBe(true);
+    });
+
+    it('given node with inlineContent set, inlineContent returns value', () => {
+      const nodeType = new NodeType('p', mockSchema, spec);
+      nodeType.inlineContent = true;
+      const node = new Node(nodeType, {}, mockContent, []);
+
+      expect(node.inlineContent).toBe(true);
     });
   });
 });
