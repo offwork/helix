@@ -40,8 +40,15 @@ export class Fragment<TNode extends Node> {
     return this.content[index];
   }
 
-  forEach(callback: (node: TNode, index: number) => void): void {
-    this.content.forEach(callback);
+  forEach(
+    callback: (node: TNode, offset: number, index: number) => void
+  ): void {
+    let offset = 0;
+    for (let i = 0; i < this.content.length; i++) {
+      const node = this.content[i];
+      callback(node, offset, i);
+      offset += node.nodeSize;
+    }
   }
 
   slice(from: number, to: number): Fragment<TNode> {
@@ -123,12 +130,120 @@ export class Fragment<TNode extends Node> {
     if (!other.size) return this;
     if (!this.size) return other;
 
-    return Fragment.from([...this.content, ...other.content]);
+    const last = this.lastChild;
+    const first = other.firstChild;
+    if (!last || !first)
+      return Fragment.from([...this.content, ...other.content]);
+    const content = this.content.slice() as TNode[];
+
+    let i = 0;
+    if (last.isText && first.isText && last.sameMarkup(first)) {
+      const lastText = last as unknown as {
+        text: string;
+        withText: (t: string) => TNode;
+      };
+      const firstText = first as unknown as { text: string };
+      content[content.length - 1] = lastText.withText(
+        lastText.text + firstText.text
+      );
+      i = 1;
+    }
+
+    for (; i < other.content.length; i++) content.push(other.content[i]);
+    return Fragment.from(content);
   }
 
   maybeChild(index: number): TNode | null {
     if (index < 0 || index >= this.content.length) return null;
 
     return this.content[index];
+  }
+
+  nodesBetween(
+    from: number,
+    to: number,
+    callback: (
+      node: TNode,
+      start: number,
+      parent: TNode | null,
+      index: number
+    ) => boolean | void,
+    nodeStart = 0,
+    parent?: TNode
+  ): void {
+    this.forEach((child, offset, index) => {
+      const end = offset + child.nodeSize;
+      if (end > from && offset < to) {
+        const start = nodeStart + offset;
+        if (
+          callback(child, start, parent ?? null, index) !== false &&
+          child.content.size
+        ) {
+          child.content.nodesBetween(
+            Math.max(0, from - offset - 1),
+            Math.min(child.content.size, to - offset - 1),
+            callback as never,
+            nodeStart + offset + 1,
+            child as TNode
+          );
+        }
+      }
+    });
+  }
+
+  descendants(
+    callback: (
+      node: TNode,
+      pos: number,
+      parent: TNode | null,
+      index: number
+    ) => boolean | void
+  ): void {
+    this.nodesBetween(0, this.size, callback as never);
+  }
+
+  textBetween(
+    from: number,
+    to: number,
+    blockSeparator?: string | null,
+    leafText?: string | null | ((leafNode: TNode) => string)
+  ): string {
+    let text = '',
+      first = true;
+    this.nodesBetween(from, to, (node, pos) => {
+      if (node.isText) {
+        text += (node as unknown as { text: string }).text.slice(
+          Math.max(from, pos) - pos,
+          to - pos
+        );
+      } else if (node.isLeaf && leafText) {
+        text += typeof leafText === 'function' ? leafText(node) : leafText;
+      }
+      if (node.isBlock && blockSeparator) {
+        if (first) first = false;
+        else text += blockSeparator;
+      }
+    });
+    return text;
+  }
+
+  replaceChild(index: number, node: TNode): Fragment<TNode> {
+    const current = this.content[index];
+    if (current === node) return this;
+    const copy = this.content.slice() as TNode[];
+    copy[index] = node;
+    return Fragment.from(copy);
+  }
+
+  addToStart(node: TNode): Fragment<TNode> {
+    return Fragment.from([node, ...this.content]);
+  }
+
+  addToEnd(node: TNode): Fragment<TNode> {
+    return Fragment.from([...this.content, node]);
+  }
+
+  toString(): string {
+    return `<${this.content.join(',')}>`;
   }
 }

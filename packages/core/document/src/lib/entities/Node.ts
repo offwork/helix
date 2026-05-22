@@ -148,11 +148,7 @@ export class Node<TAttrs = Record<string, unknown>> {
   }
 
   forEach(callback: (node: Node, offset: number, index: number) => void): void {
-    let offset = 0;
-    this.content.forEach((child, index) => {
-      callback(child, offset, index);
-      offset += child.nodeSize;
-    });
+    this.content.forEach(callback);
   }
 
   contentMatchAt(index: number): ContentMatch {
@@ -179,7 +175,11 @@ export class Node<TAttrs = Record<string, unknown>> {
     }
   }
 
-  childAfter(pos: number): { node: Node | null; index: number; offset: number } {
+  childAfter(pos: number): {
+    node: Node | null;
+    index: number;
+    offset: number;
+  } {
     const { index, offset } = this.content.findIndex(pos);
     return {
       node: this.content.maybeChild(index),
@@ -188,7 +188,17 @@ export class Node<TAttrs = Record<string, unknown>> {
     };
   }
 
-  childBefore(pos: number): { node: Node | null; index: number; offset: number } {
-    return pos == 0 ? { node: null, index: 0, offset: 0 } : this.childAfter(pos - 1);
+  childBefore(pos: number): {
+    node: Node | null;
+    index: number;
+    offset: number;
+  } {
+    return pos == 0
+      ? { node: null, index: 0, offset: 0 }
+      : this.childAfter(pos - 1);
+  }
+
+  toString(): string {
+    return this.type.name;
   }
 }

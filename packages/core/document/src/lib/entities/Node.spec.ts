@@ -498,4 +498,13 @@ describe('Node', () => {
       expect(node.inlineContent).toBe(true);
     });
   });
+
+  describe('toString', () => {
+    // Node.spec.ts
+    it('given a node, returns string representation', () => {
+      const node = new Node(new NodeType('paragraph', mockSchema, spec), {});
+
+      expect(node.toString()).toBe('paragraph');
+    });
+  });
 });
