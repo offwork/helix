@@ -1,6 +1,7 @@
 import { NodeType } from '../value-objects/NodeType';
 import { Fragment } from './Fragment';
 import { Node } from './Node';
+import { TextNode } from './TextNode';
 
 const mockSchema = {} as never;
 const spec = { attrs: {} };
@@ -129,23 +130,6 @@ describe('Fragment', () => {
       expect(visited).toEqual([node1, node2, node3]);
     });
 
-    it('passes index to callback', () => {
-      const node1 = new Node(new NodeType('paragraph', mockSchema, spec), {
-        text: 'First',
-      });
-      const node2 = new Node(new NodeType('paragraph', mockSchema, spec), {
-        text: 'Second',
-      });
-      const fragment = Fragment.from([node1, node2]);
-
-      const indces: number[] = [];
-      fragment.forEach((node, index) => {
-        indces.push(index);
-      });
-
-      expect(indces).toEqual([0, 1]);
-    });
-
     it('does nothing for empty fragment', () => {
       const fragment = Fragment.empty<Node>();
 
@@ -155,6 +139,21 @@ describe('Fragment', () => {
       });
 
       expect(visited).toEqual([]);
+    });
+
+    it('given non-empty content, calls callback with node offset and index', () => {
+      const node1 = new Node(new NodeType('paragraph', mockSchema, spec), {
+        text: 'First',
+      });
+      const node2 = new Node(new NodeType('paragraph', mockSchema, spec), {
+        text: 'Second',
+      });
+      const content = Fragment.from([node1, node2]);
+
+      const callback = jest.fn();
+      content.forEach(callback);
+
+      expect(callback).toHaveBeenCalledWith(node1, 0, 0);
     });
   });
 
@@ -507,6 +506,19 @@ describe('Fragment', () => {
         true
       );
     });
+
+    it('given two fragments ending and starting with same-markup text nodes, merges them', () => {
+      const textType = new NodeType('text', mockSchema, { text: true });
+      const text1 = new TextNode(textType, {}, 'Hello');
+      const text2 = new TextNode(textType, {}, ' World');
+
+      const frag1 = Fragment.from([text1]);
+      const frag2 = Fragment.from([text2]);
+
+      const result = frag1.append(frag2);
+
+      expect(result.childCount).toBe(1);
+    });
   });
 
   describe('maybeChild()', () => {
@@ -531,6 +543,168 @@ describe('Fragment', () => {
       const fragment = Fragment.from([node1]);
 
       expect(fragment.maybeChild(-1)).toBeNull();
+    });
+  });
+
+  describe('nodesBetween()', () => {
+    it('given range covering all children, visits all nodes', () => {
+      const node1 = new Node(new NodeType('paragraph', mockSchema, spec), {
+        text: 'First',
+      });
+      const node2 = new Node(new NodeType('paragraph', mockSchema, spec), {
+        text: 'Second',
+      });
+
+      const fragment = Fragment.from([node1, node2]);
+
+      const visited: Node[] = [];
+      fragment.nodesBetween(0, fragment.size, (node) => {
+        visited.push(node);
+      });
+
+      expect(visited).toEqual([node1, node2]);
+    });
+
+    it("given callback returning false, does not descend into that node's children", () => {
+      const child1 = new Node(new NodeType('paragraph', mockSchema, spec), {
+        text: 'Child 1',
+      });
+      const child2 = new Node(new NodeType('paragraph', mockSchema, spec), {
+        text: 'Child 2',
+      });
+      const parent = new Node(
+        new NodeType('paragraph', mockSchema, spec),
+        {},
+        Fragment.from([child1, child2]),
+        []
+      );
+      const fragment = Fragment.from([parent]);
+
+      const visited: Node[] = [];
+      fragment.nodesBetween(0, fragment.size, (node) => {
+        visited.push(node);
+        return false;
+      });
+
+      expect(visited).toEqual([parent]);
+    });
+  });
+
+  describe('descendants()', () => {
+    it('given non-empty fragment, visits all descendant nodes', () => {
+      const child1 = new Node(new NodeType('paragraph', mockSchema, spec), {
+        text: 'Child 1',
+      });
+      const child2 = new Node(new NodeType('paragraph', mockSchema, spec), {
+        text: 'Child 2',
+      });
+      const parent = new Node(
+        new NodeType('paragraph', mockSchema, spec),
+        {},
+        Fragment.from([child1, child2]),
+        []
+      );
+      const fragment = Fragment.from([parent]);
+
+      const visited: Node[] = [];
+      fragment.descendants((node) => {
+        visited.push(node);
+      });
+
+      expect(visited).toEqual([parent, child1, child2]);
+    });
+  });
+
+  describe('textBetween()', () => {
+    it('given text nodes in range, returns concatenated text', () => {
+      const textNode1 = new TextNode(
+        new NodeType('text', mockSchema, { text: true }),
+        {},
+        'Hello'
+      );
+      const textNode2 = new TextNode(
+        new NodeType('text', mockSchema, { text: true }),
+        {},
+        'World'
+      );
+      const fragment = Fragment.from([textNode1, textNode2]);
+
+      const result = fragment.textBetween(0, fragment.size);
+
+      expect(result).toBe('HelloWorld');
+    });
+
+    it('given block separator, inserts separator between blocks', () => {
+      const textType = new NodeType('text', mockSchema, { text: true });
+      const paraType = new NodeType('paragraph', mockSchema, spec);
+
+      const text1 = new TextNode(textType, {}, 'Hello');
+      const text2 = new TextNode(textType, {}, 'World');
+
+      const para1 = new Node(paraType, {}, Fragment.from([text1]), []);
+      const para2 = new Node(paraType, {}, Fragment.from([text2]), []);
+
+      const fragment = Fragment.from([para1, para2]);
+
+      expect(fragment.textBetween(0, fragment.size, '\n')).toBe('Hello\nWorld');
+    });
+
+    it('given leaf node with leafText, includes leaf text', () => {
+      const imageType = new NodeType('image', mockSchema, { leaf: true });
+      const fragment = Fragment.from([new Node(imageType, {})]);
+
+      expect(fragment.textBetween(0, fragment.size, null, '[image]')).toBe(
+        '[image]'
+      );
+    });
+  });
+
+  describe('replaceChild()', () => {
+    it('given valid index and new node, returns new fragment with replaced child', () => {
+      const node1 = new Node(new NodeType('paragraph', mockSchema, spec), {});
+      const node2 = new Node(new NodeType('paragraph', mockSchema, spec), {});
+      const newNode = new Node(new NodeType('heading', mockSchema, spec), {});
+
+      const fragment = Fragment.from([node1, node2]);
+      const result = fragment.replaceChild(0, newNode);
+
+      expect(result.child(0)).toBe(newNode);
+    });
+
+    it('given same node at index, returns same reference', () => {
+      const node1 = new Node(new NodeType('paragraph', mockSchema, spec), {});
+      const fragment = Fragment.from([node1]);
+
+      expect(fragment.replaceChild(0, node1)).toBe(fragment);
+    });
+  });
+
+  describe('addToStart', () => {
+    it('given a node, returns new fragment with node prepended', () => {
+      const node1 = new Node(new NodeType('paragraph', mockSchema, spec), {});
+      const node2 = new Node(new NodeType('paragraph', mockSchema, spec), {});
+      const fragment = Fragment.from([node2]);
+
+      expect(fragment.addToStart(node1).child(0)).toBe(node1);
+    });
+  });
+
+  describe('addToEnd', () => {
+    it('given a node, returns new fragment with node appended', () => {
+      const node1 = new Node(new NodeType('paragraph', mockSchema, spec), {});
+      const node2 = new Node(new NodeType('paragraph', mockSchema, spec), {});
+      const fragment = Fragment.from([node1]);
+
+      expect(fragment.addToEnd(node2).child(1)).toBe(node2);
+    });
+  });
+
+  describe('toString', () => {
+    it('given non-empty fragment, returns string representation', () => {
+      const node = new Node(new NodeType('paragraph', mockSchema, spec), {});
+      const fragment = Fragment.from([node]);
+
+      expect(fragment.toString()).toBe(`<${node}>`);
     });
   });
 });

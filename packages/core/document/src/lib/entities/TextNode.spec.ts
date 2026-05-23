@@ -159,4 +159,14 @@ describe('TextNode', () => {
       expect(textNode1.equals(textNode2)).toBe(false);
     });
   });
+
+  describe('toString', () => {
+    // TextNode.spec.ts
+    it('given a text node, returns string representation', () => {
+      const nodeType = new NodeType('text', mockSchema, { attrs: {} });
+      const textNode = new TextNode(nodeType, {}, 'hello');
+
+      expect(textNode.toString()).toBe('"hello"');
+    });
+  });
 });

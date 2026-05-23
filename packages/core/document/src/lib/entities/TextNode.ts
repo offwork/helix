@@ -33,11 +33,28 @@ export class TextNode extends Node {
       return this;
     }
 
-    return new TextNode(this.type, this.attrs, this.textBetween(from, to), this.marks);
+    return new TextNode(
+      this.type,
+      this.attrs,
+      this.textBetween(from, to),
+      this.marks
+    );
   }
 
   get textContent(): string {
     return this.text;
+  }
+
+  override toString(): string {
+    return `"${this.text}"`;
+  }
+
+  override mark(marks: Mark[]): TextNode {
+    if (this.marks === marks) {
+      return this;
+    }
+
+    return new TextNode(this.type, this.attrs, this.text, marks);
   }
 
   textBetween(from: number, to: number): string {
@@ -50,13 +67,5 @@ export class TextNode extends Node {
     }
 
     return new TextNode(this.type, this.attrs, text, this.marks);
-  }
-
-  override mark(marks: Mark[]): TextNode {
-    if (this.marks === marks) {
-      return this;
-    }
-
-    return new TextNode(this.type, this.attrs, this.text, marks);
   }
 }
