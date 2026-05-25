@@ -1,38 +1,12 @@
 import { ContentMatch } from './ContentMatch';
-import { NodeType } from './NodeType';
-import { Node } from '../entities/Node';
 import { Fragment } from '../entities/Fragment';
-import { Edge } from '../interfaces/Edge';
-
-// Test Helpers
-function createMockNodeType(
-  name = 'paragraph',
-  options: { inline?: boolean } = {}
-): NodeType {
-  return new NodeType(
-    name,
-    {},
-    { attrs: { content: { default: 'text*' } }, inline: options.inline }
-  );
-}
-
-function createMockContentMatch(
-  validEnd = true,
-  edges: Edge[] = []
-): ContentMatch {
-  return new ContentMatch(validEnd, edges);
-}
-
-function createMockNode(type?: NodeType): Node<Record<string, unknown>> {
-  const nodeType = type || createMockNodeType();
-  return new Node(nodeType, {});
-}
-
-function createMockFragment(
-  nodes: Node<Record<string, unknown>>[] = []
-): Fragment<Node<Record<string, unknown>>> {
-  return nodes.length === 0 ? Fragment.empty() : Fragment.from(nodes);
-}
+import {
+  createMockNodeType,
+  createMockContentMatch,
+  createMockNode,
+  createMockFragment,
+  textType,
+} from '../../testing';
 
 describe('ContentMatch', () => {
   describe('constructor and validation', () => {
@@ -423,11 +397,10 @@ describe('ContentMatch', () => {
     });
 
     it('skips text type and returns first non-text type', () => {
-      const realTextType = new NodeType('text', {}, { attrs: {}, text: true });
       const paragraphType = createMockNodeType('paragraph');
       const nextMatch = new ContentMatch(true, []);
       const edges = [
-        { type: realTextType, next: nextMatch },
+        { type: textType, next: nextMatch },
         { type: paragraphType, next: nextMatch },
       ];
       const match = new ContentMatch(false, edges);
@@ -461,7 +434,7 @@ describe('ContentMatch', () => {
   describe('fillBefore(after, toEnd, startIndex)', () => {
     it('given matching fragment, returns empty fragment', () => {
       const paragraphType = createMockNodeType('paragraph');
-      const mockFragment = createMockFragment([new Node(paragraphType, {})]);
+      const mockFragment = createMockFragment([createMockNode(paragraphType)]);
       const nextMatch = new ContentMatch(true, []);
       const match = createMockContentMatch(false, [
         { type: paragraphType, next: nextMatch },
@@ -486,7 +459,7 @@ describe('ContentMatch', () => {
       ]);
 
       const result = match1.fillBefore(
-        Fragment.from([new Node(paragraphType, {})]),
+        createMockFragment([createMockNode(paragraphType)]),
         false
       );
 
@@ -503,7 +476,7 @@ describe('ContentMatch', () => {
         { type: headingType, next: finalMatch },
       ]);
 
-      const result = match.fillBefore(Fragment.empty(), true);
+      const result = match.fillBefore(createMockFragment(), true);
 
       expect(result).toBeInstanceOf(Fragment);
       expect(result?.childCount).toBe(1);
@@ -517,7 +490,7 @@ describe('ContentMatch', () => {
         { type: headingType, next: deadEnd },
       ]);
 
-      const result = match.fillBefore(Fragment.empty(), true);
+      const result = match.fillBefore(createMockFragment(), true);
 
       expect(result).toBeNull();
     });
@@ -542,7 +515,7 @@ describe('ContentMatch', () => {
         { type: headingType, next: match2 },
       ]);
 
-      const result = match1.fillBefore(Fragment.empty(), true);
+      const result = match1.fillBefore(createMockFragment(), true);
 
       expect(result).toBeInstanceOf(Fragment);
       expect(result?.childCount).toBe(2);
@@ -560,8 +533,8 @@ describe('ContentMatch', () => {
       ]);
 
       const fragment = createMockFragment([
-        new Node(headingType, {}),
-        new Node(paragraphType, {}),
+        createMockNode(headingType),
+        createMockNode(paragraphType),
       ]);
 
       const result = start.fillBefore(fragment, false, 1);
@@ -582,7 +555,7 @@ describe('ContentMatch', () => {
         { type: paragraphType, next: validEnd },
       ]);
 
-      const result = start.fillBefore(Fragment.empty(), true);
+      const result = start.fillBefore(createMockFragment(), true);
 
       expect(result).toBeInstanceOf(Fragment);
       expect(result?.childCount).toBe(1);

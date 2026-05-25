@@ -42,46 +42,39 @@ export class NodeType {
   }
 
   allowsMarkType(markType: MarkType): boolean {
-    if (markType === null) {
-      throw new Error('NodeType allowsMarkType parameter cannot be null');
+    return this.markSet === null || this.markSet.indexOf(markType) > -1;
+  }
+
+  allowsMarks(marks: Mark[]): boolean {
+    if (this.markSet === null) return true;
+    return marks.every(
+      (mark) => this.markSet && this.markSet.indexOf(mark.type) > -1
+    );
+  }
+
+  allowedMarks(marks: readonly Mark[]): readonly Mark[] {
+    if (this.markSet === null) return marks;
+    let copy: Mark[] | null = null;
+    for (let i = 0; i < marks.length; i++) {
+      if (this.markSet.indexOf(marks[i].type) > -1) {
+        if (copy) copy.push(marks[i] as Mark);
+      } else {
+        if (!copy) copy = marks.slice(0, i) as Mark[];
+      }
     }
-
-    if (!(markType instanceof MarkType)) {
-      throw new Error('NodeType allowsMarkType parameter must be MarkType');
-    }
-
-    const marks = this.spec.marks;
-
-    // marks tanımsız → inline ise tümüne izin, değilse hiçbirine
-    if (marks === undefined) {
-      return this.spec.inline === true;
-    }
-
-    // "_" → tüm marklara izin
-    if (marks === '_') {
-      return true;
-    }
-
-    // "" → hiçbir marka izin yok
-    if (marks === '') {
-      return false;
-    }
-
-    // "bold italic link" → listedekilere izin
-    const allowedMarks = marks.split(' ');
-    return allowedMarks.includes(markType.name);
+    return !copy ? marks : copy.length ? copy : Mark.none;
   }
 
   get isLeaf(): boolean {
-    return this.spec.leaf === true;
+    return this.contentMatch === ContentMatch.empty;
   }
 
   get isText(): boolean {
-    return this.spec.text === true;
+    return this.name === 'text';
   }
 
   get isBlock(): boolean {
-    return !(this.spec.text || this.spec.inline);
+    return !(this.name === 'text' || this.spec.inline);
   }
 
   get isInline(): boolean {
@@ -94,6 +87,10 @@ export class NodeType {
 
   get isAtom(): boolean {
     return this.isLeaf || this.spec.atom === true;
+  }
+
+  get whitespace(): 'normal' | 'pre' {
+    return this.spec.code ? 'pre' : this.spec.whitespace || 'normal';
   }
 
   create(
@@ -160,7 +157,30 @@ export class NodeType {
 
     const result = this.contentMatch?.matchFragment(content);
     if (!result || !result.validEnd) return false;
+
+    for (let i = 0; i < content.childCount; i++) {
+      if (!this.allowsMarks(content.child(i).marks)) return false
+    }
+
     return true;
+  }
+
+  createChecked(attrs?: Record<string, unknown>, content?: Fragment<Node> | Node[], marks?: Mark[]): Node {
+    const node = this.create(attrs, content, marks);
+    this.checkContent(node.content);
+    return node;
+  }
+
+  compatibleContent(other: NodeType): boolean {
+    return this === other || this.contentMatch?.compatible(other.contentMatch ?? ContentMatch.empty) === true;
+  }
+
+  private checkContent(content: Fragment<Node>): void {
+    if (!this.validContent(content)) {
+      throw new RangeError(
+        `Invalid content for node ${this.name}: ${content.toString()}`
+      );
+    }
   }
 
   private validateParameter(paramName: string, paramValue: unknown): void {

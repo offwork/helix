@@ -1,12 +1,6 @@
 import { Mark } from './Mark';
 import { MarkSet } from './MarkSet';
-import { MarkType } from './MarkType';
-
-const createMarkType = (name: string) => new MarkType(name, {}, {});
-
-function createMarks(...types: string[]): Mark[] {
-  return types.map((type) => new Mark(createMarkType(type), {}));
-}
+import { createMarkType, createMarks } from '../../testing';
 
 describe('MarkSet Value Object', () => {
   describe('Construction', () => {
@@ -47,7 +41,7 @@ describe('MarkSet Value Object', () => {
       const marks = createMarks('strong', 'italic');
 
       const markSet = MarkSet.from(marks);
-      marks.push(new Mark(createMarkType('pre'), {}));
+      marks.push(new Mark(createMarkType('pre', {}, {}), {}));
 
       expect(markSet.size).toBe(2);
     });
@@ -73,7 +67,7 @@ describe('MarkSet Value Object', () => {
     it('add, given empty markset, returns new markset with mark', () => {
       const markSet = MarkSet.empty();
 
-      const result = markSet.add(new Mark(createMarkType('bold'), {}));
+      const result = markSet.add(new Mark(createMarkType('bold', {}, {}), {}));
 
       expect(result).toBeInstanceOf(MarkSet);
     });
@@ -83,13 +77,15 @@ describe('MarkSet Value Object', () => {
 
       const markSet = MarkSet.from([mark1, mark2]);
 
-      const result = markSet.add(new Mark(createMarkType('underline'), {}));
+      const result = markSet.add(
+        new Mark(createMarkType('underline', {}, {}), {})
+      );
 
       expect(result).toBeInstanceOf(MarkSet);
     });
 
     it('add, given mark with same type exists, returns same instance', () => {
-      const strongMarkType = createMarkType('strong');
+      const strongMarkType = createMarkType('strong', {}, {});
       const mark1 = new Mark(strongMarkType, { color: 'red' });
       const mark2 = new Mark(strongMarkType, { color: 'blue' });
 
@@ -105,7 +101,7 @@ describe('MarkSet Value Object', () => {
 
       const markSet = MarkSet.from([mark1, mark2]);
 
-      markSet.add(new Mark(createMarkType('underline'), {}));
+      markSet.add(new Mark(createMarkType('underline', {}, {}), {}));
 
       expect(markSet.size).toBe(2);
     });
@@ -123,21 +119,25 @@ describe('MarkSet Value Object', () => {
       const [markStrong, markItalic] = createMarks('strong', 'italic');
       const markSet = MarkSet.from([markStrong, markItalic]);
 
-      expect(markSet.contains(new Mark(createMarkType('underline'), {}))).toBe(false);
+      expect(
+        markSet.contains(new Mark(createMarkType('underline', {}, {}), {}))
+      ).toBe(false);
     });
 
     it('contains, given empty markset, returns false', () => {
       const markSet = MarkSet.empty();
 
-      expect(markSet.contains(new Mark(createMarkType('strong'), { color: 'red' }))).toBe(
-        false
-      );
+      expect(
+        markSet.contains(
+          new Mark(createMarkType('strong', {}, {}), { color: 'red' })
+        )
+      ).toBe(false);
     });
   });
 
   describe('remove() method', () => {
     it('remove, given mark exists, returns new markset without mark', () => {
-      const mark = new Mark(createMarkType('strong'), { color: 'red' });
+      const mark = new Mark(createMarkType('strong', {}, {}), { color: 'red' });
       const markSet = MarkSet.from([mark]);
 
       const result = markSet.remove(mark);
@@ -148,7 +148,7 @@ describe('MarkSet Value Object', () => {
 
     it('remove, given mark does not exist, returns same instance', () => {
       const [markStrong, markItalic] = createMarks('strong', 'italic');
-      const markUnderline = new Mark(createMarkType('underline'), {});
+      const markUnderline = new Mark(createMarkType('underline', {}, {}), {});
 
       const markSet = MarkSet.from([markStrong, markItalic]);
 
@@ -158,7 +158,7 @@ describe('MarkSet Value Object', () => {
     });
 
     it('remove, given empty markset, returns same instance', () => {
-      const mark = new Mark(createMarkType('strong'), { color: 'red' });
+      const mark = new Mark(createMarkType('strong', {}, {}), { color: 'red' });
       const markSet = MarkSet.empty();
 
       const result = markSet.remove(mark);

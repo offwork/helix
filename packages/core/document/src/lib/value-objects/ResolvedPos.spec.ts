@@ -1,12 +1,9 @@
 import { Fragment } from '../entities/Fragment';
 import { Node } from '../entities/Node';
-import { NodeType } from './NodeType';
 import { ResolvedPos } from './ResolvedPos';
+import { createMockNode } from '../../testing';
 
 const path: (Node | number)[] = [];
-
-const createMockNode = (name = 'paragraph'): Node =>
-  new Node(new NodeType(name, {} as never, { attrs: {} }), {});
 
 describe('ResolvedPos', () => {
   describe('constructor', () => {
@@ -392,24 +389,6 @@ describe('ResolvedPos', () => {
       expect(resolvedPos?.nodeAfter).toBeNull();
     });
 
-    /* it('given pos inside text node, returns remaining text node', () => {
-      const textNode = new Node(
-        new NodeType('text', {} as never, { attrs: {}, text: true }),
-        {},
-        undefined,
-        [],
-        'hello'
-      );
-      const rootNode = new Node(
-        createMockNode().type,
-        {},
-        Fragment.from([textNode])
-      );
-      const resolvedPos = ResolvedPos.resolve(rootNode, 2);
-
-      expect(resolvedPos?.nodeAfter?.text).toBe('llo');
-    }); */
-
     it('given pos between nodes, returns full next node', () => {
       const firstNode = createMockNode();
       const secondNode = createMockNode();
@@ -436,23 +415,5 @@ describe('ResolvedPos', () => {
 
       expect(resolvedPos?.nodeBefore).toBeNull();
     });
-
-    /* it('given pos inside text node, returns preceding text node', () => {
-      const textNode = new Node(
-        new NodeType('text', {} as never, { attrs: {}, text: true }),
-        {},
-        undefined,
-        [],
-        'hello'
-      );
-      const rootNode = new Node(
-        createMockNode().type,
-        {},
-        Fragment.from([textNode])
-      );
-      const resolvedPos = ResolvedPos.resolve(rootNode, 2);
-
-      expect(resolvedPos?.nodeBefore?.text).toBe('he');
-    }); */
   });
 });
