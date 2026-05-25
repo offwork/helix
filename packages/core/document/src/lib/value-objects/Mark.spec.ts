@@ -1,14 +1,10 @@
-import { MarkSpec } from '../interfaces/SchemaSpec';
 import { Mark } from './Mark';
-import { MarkType } from './MarkType';
-
-const createMarkType = (name: string, schema: unknown, spec: MarkSpec) =>
-  new MarkType(name, schema, spec);
-const boldMarkType = createMarkType('bold', {}, {});
-const italicMarkType = createMarkType('italic', {}, {});
-
-const createMark = (type: MarkType, attrs: Record<string, unknown>) =>
-  new Mark(type, attrs);
+import {
+  createMarkType,
+  boldMarkType,
+  italicMarkType,
+  createMark,
+} from '../../testing';
 
 describe('Mark', () => {
   describe('constructor', () => {

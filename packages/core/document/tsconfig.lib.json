@@ -17,6 +17,7 @@
   "exclude": [
     "jest.config.ts",
     "jest.config.cts",
+    "src/testing/**/*",
     "src/**/*.spec.ts",
     "src/**/*.test.ts"
   ]

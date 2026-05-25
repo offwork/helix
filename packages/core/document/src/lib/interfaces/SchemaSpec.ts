@@ -6,13 +6,13 @@ export interface SchemaSpec {
 
 export interface NodeSpec {
   atom?: boolean;
-  content?: string;
   attrs?: Record<string, AttributeSpec>;
-  inline?: boolean;
+  code?: boolean;
+  content?: string;
   group?: string;
+  inline?: boolean;
   marks?: string;
-  leaf?: boolean;
-  text?: boolean;
+  whitespace?: 'normal' | 'pre';
 }
 
 export interface MarkSpec {

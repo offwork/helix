@@ -1,33 +1,18 @@
 import { Node } from '../entities/Node';
-import { MarkSpec, NodeSpec } from '../interfaces/SchemaSpec';
 import { ContentMatch } from '../value-objects/ContentMatch';
 import { Mark } from '../value-objects/Mark';
 import { MarkType } from '../value-objects/MarkType';
 import { NodeType } from '../value-objects/NodeType';
 import { Schema } from './Schema';
-
-function createNodeSpec(extra?: Record<string, NodeSpec>): Record<string, NodeSpec> {
-  return {
-    doc: { content: 'paragraph+' },
-    text: { text: true },
-    paragraph: { attrs: {} },
-    heading: { attrs: {} },
-    ...extra,
-  };
-}
-
-function createMarkSpec(extra?: Record<string, MarkSpec>): Record<string, MarkSpec> {
-  return {
-    strong: { attrs: {} },
-    em: { attrs: {} },
-    ...extra,
-  };
-}
+import { createSchemaSpec, createMarkSpec } from '../../testing';
 
 describe('Schema', () => {
   describe('constructor', () => {
     it('given valid nodes and marks specs, creates Schema instance', () => {
-      const schema = new Schema({ nodes: createNodeSpec(), marks: createMarkSpec() });
+      const schema = new Schema({
+        nodes: createSchemaSpec(),
+        marks: createMarkSpec(),
+      });
 
       expect(schema).toBeInstanceOf(Schema);
     });
@@ -46,7 +31,7 @@ describe('Schema', () => {
 
     it('given null marks spec, throws "Schema marks spec cannot be null"', () => {
       expect(
-        () => new Schema({ nodes: createNodeSpec(), marks: null as never })
+        () => new Schema({ nodes: createSchemaSpec(), marks: null as never })
       ).toThrow('Schema marks spec cannot be null');
     });
 
@@ -63,7 +48,7 @@ describe('Schema', () => {
       expect(
         () =>
           new Schema({
-            nodes: { text: { text: true }, paragraph: {} },
+            nodes: { text: {  }, paragraph: {} },
           })
       ).toThrow("Every schema needs a 'doc' type");
     });
@@ -74,7 +59,7 @@ describe('Schema', () => {
           new Schema({
             nodes: {
               doc: { content: 'paragraph+' },
-              text: { text: true },
+              text: { },
               strong: {},
             },
             marks: { strong: {} },
@@ -83,14 +68,17 @@ describe('Schema', () => {
     });
 
     it('given node with content expression, sets contentMatch', () => {
-      const schema = new Schema({ nodes: createNodeSpec(), marks: createMarkSpec() });
+      const schema = new Schema({
+        nodes: createSchemaSpec(),
+        marks: createMarkSpec(),
+      });
 
       expect(schema.nodes.doc.contentMatch).toBeInstanceOf(ContentMatch);
     });
 
     it('given inline node, inlineContent is true', () => {
       const schema = new Schema({
-        nodes: createNodeSpec({ span: { inline: true, content: 'text*' } }),
+        nodes: createSchemaSpec({ span: { inline: true, content: 'text*' } }),
         marks: createMarkSpec(),
       });
 
@@ -99,7 +87,7 @@ describe('Schema', () => {
 
     it(`given node with marks "", markSet is empty array`, () => {
       const schema = new Schema({
-        nodes: createNodeSpec({ span: { content: 'text*', marks: '' } }),
+        nodes: createSchemaSpec({ span: { content: 'text*', marks: '' } }),
         marks: createMarkSpec(),
       });
 
@@ -108,7 +96,7 @@ describe('Schema', () => {
 
     it('given marks in order, rank reflects insertion order', () => {
       const schema = new Schema({
-        nodes: createNodeSpec(),
+        nodes: createSchemaSpec(),
         marks: {
           em: { attrs: {} },
           strong: { attrs: {} },
@@ -120,7 +108,7 @@ describe('Schema', () => {
 
     it('given marks with no excludes spec, excluded contains self', () => {
       const schema = new Schema({
-        nodes: createNodeSpec(),
+        nodes: createSchemaSpec(),
         marks: {
           em: { attrs: {} },
           strong: { attrs: {} },
@@ -132,22 +120,28 @@ describe('Schema', () => {
 
     it(`given marks with excludes "", excludes is empty array`, () => {
       const schema = new Schema({
-        nodes: createNodeSpec(),
-        marks: createMarkSpec({ em: { attrs: {}, excludes: '' }, strong: { attrs: {}, excludes: '' } }),
+        nodes: createSchemaSpec(),
+        marks: createMarkSpec({
+          em: { attrs: {}, excludes: '' },
+          strong: { attrs: {}, excludes: '' },
+        }),
       });
 
       expect(schema.marks.em.excluded).toEqual([]);
     });
 
     it('given no topNode in spec, topNodeType is doc NodeType', () => {
-      const schema = new Schema({ nodes: createNodeSpec(), marks: createMarkSpec() });
+      const schema = new Schema({
+        nodes: createSchemaSpec(),
+        marks: createMarkSpec(),
+      });
 
       expect(schema.topNodeType).toBe(schema.nodes.doc);
     });
 
     it('given topNode in spec, topNodeType is that NodeType', () => {
       const schema = new Schema({
-        nodes: createNodeSpec(),
+        nodes: createSchemaSpec(),
         marks: createMarkSpec(),
         topNode: 'paragraph',
       });
@@ -158,7 +152,10 @@ describe('Schema', () => {
 
   describe('text()', () => {
     it('given a string to text(), returns TextNode', () => {
-      const schema = new Schema({ nodes: createNodeSpec(), marks: createMarkSpec() });
+      const schema = new Schema({
+        nodes: createSchemaSpec(),
+        marks: createMarkSpec(),
+      });
       const textNode = schema.text('hello');
 
       expect(textNode).toBeInstanceOf(Node);
@@ -167,14 +164,20 @@ describe('Schema', () => {
 
   describe('node()', () => {
     it('given a string type to node(), returns Node of that type', () => {
-      const schema = new Schema({ nodes: createNodeSpec(), marks: createMarkSpec() });
+      const schema = new Schema({
+        nodes: createSchemaSpec(),
+        marks: createMarkSpec(),
+      });
       const headingNode = schema.node('heading');
 
       expect(headingNode.type).toBe(schema.nodes.heading);
     });
 
     it('given unknown string type to node(), throws', () => {
-      const schema = new Schema({ nodes: createNodeSpec(), marks: createMarkSpec() });
+      const schema = new Schema({
+        nodes: createSchemaSpec(),
+        marks: createMarkSpec(),
+      });
 
       expect(() => schema.node('unknown')).toThrow(
         'Unknown node type: "unknown"'
@@ -184,14 +187,20 @@ describe('Schema', () => {
 
   describe('mark()', () => {
     it('given a string type to mark(), returns Mark', () => {
-      const schema = new Schema({ nodes: createNodeSpec(), marks: createMarkSpec() });
+      const schema = new Schema({
+        nodes: createSchemaSpec(),
+        marks: createMarkSpec(),
+      });
       const strongMark = schema.mark('strong');
 
       expect(strongMark).toBeInstanceOf(Mark);
     });
 
     it('given unknown string type to mark(), throws', () => {
-      const schema = new Schema({ nodes: createNodeSpec(), marks: createMarkSpec() });
+      const schema = new Schema({
+        nodes: createSchemaSpec(),
+        marks: createMarkSpec(),
+      });
 
       expect(() => schema.mark('unknown')).toThrow(
         'Unknown mark type: "unknown"'
@@ -201,7 +210,10 @@ describe('Schema', () => {
 
   describe('nodes property', () => {
     it('given valid nodes spec, contains NodeType instance for each spec', () => {
-      const schema = new Schema({ nodes: createNodeSpec(), marks: createMarkSpec() });
+      const schema = new Schema({
+        nodes: createSchemaSpec(),
+        marks: createMarkSpec(),
+      });
 
       expect(schema.nodes.paragraph).toBeInstanceOf(NodeType);
       expect(schema.nodes.heading).toBeInstanceOf(NodeType);
@@ -213,7 +225,10 @@ describe('Schema', () => {
 
   describe('marks property', () => {
     test('given valid marks spec, contains MarkType instance for each spec', () => {
-      const schema = new Schema({ nodes: createNodeSpec(), marks: createMarkSpec() });
+      const schema = new Schema({
+        nodes: createSchemaSpec(),
+        marks: createMarkSpec(),
+      });
 
       expect(schema.marks.strong).toBeInstanceOf(MarkType);
       expect(schema.marks.em).toBeInstanceOf(MarkType);
