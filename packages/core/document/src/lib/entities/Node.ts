@@ -201,4 +201,24 @@ export class Node<TAttrs = Record<string, unknown>> {
   toString(): string {
     return this.type.name;
   }
+
+  canReplace(
+    from: number,
+    to: number,
+    replacement: Fragment<Node> = Fragment.empty<Node>(),
+    start = 0,
+    end = replacement.childCount
+  ): boolean {
+    const one = this.contentMatchAt(from).matchFragment(
+      replacement,
+      start,
+      end
+    );
+    const two = one && one.matchFragment(this.content, to);
+    if (!two || !two.validEnd) return false;
+    for (let i = start; i < end; i++) {
+      if (!this.type.allowsMarks(replacement.child(i).marks)) return false;
+    }
+    return true;
+  }
 }

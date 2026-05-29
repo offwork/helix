@@ -13,7 +13,7 @@ export class TextNode extends Node {
   ) {
     super(type, attrs, undefined, marks);
 
-    if ((typeof text === 'string' && text.trim() === '') || text === null) {
+    if (!text) {
       throw new RangeError('Node text cannot be empty');
     }
 

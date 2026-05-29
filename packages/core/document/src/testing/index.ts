@@ -14,17 +14,51 @@ export const defaultNodeSpec: NodeSpec = { attrs: {} };
 export const defaultMarkSpec: MarkSpec = { attrs: {} };
 
 // — NodeType instances
-export const paragraphType = new NodeType('paragraph', defaultMockSchema, defaultNodeSpec);
-export const textType = new NodeType('text', defaultMockSchema, defaultNodeSpec);
-export const imageType = new NodeType('image', defaultMockSchema, defaultNodeSpec);
-export const headingType = new NodeType('heading', defaultMockSchema, defaultNodeSpec);
-export const spanType = new NodeType('span', defaultMockSchema, { attrs: {}, inline: true });
-export const mentionType = new NodeType('span', defaultMockSchema, { attrs: {}, atom: true });
+export const paragraphType = new NodeType(
+  'paragraph',
+  defaultMockSchema,
+  defaultNodeSpec
+);
+export const textType = new NodeType(
+  'text',
+  defaultMockSchema,
+  defaultNodeSpec
+);
+export const imageType = new NodeType(
+  'image',
+  defaultMockSchema,
+  defaultNodeSpec
+);
+export const headingType = new NodeType(
+  'heading',
+  defaultMockSchema,
+  defaultNodeSpec
+);
+export const spanType = new NodeType('span', defaultMockSchema, {
+  attrs: {},
+  inline: true,
+});
+export const mentionType = new NodeType('span', defaultMockSchema, {
+  attrs: {},
+  atom: true,
+});
 
 // — MarkType instances
-export const boldMarkType = new MarkType('bold', defaultMockSchema, defaultMarkSpec);
-export const italicMarkType = new MarkType('italic', defaultMockSchema, defaultMarkSpec);
-export const linkMarkType = new MarkType('link', defaultMockSchema, defaultMarkSpec);
+export const boldMarkType = new MarkType(
+  'bold',
+  defaultMockSchema,
+  defaultMarkSpec
+);
+export const italicMarkType = new MarkType(
+  'italic',
+  defaultMockSchema,
+  defaultMarkSpec
+);
+export const linkMarkType = new MarkType(
+  'link',
+  defaultMockSchema,
+  defaultMarkSpec
+);
 
 // — Shared Node setup
 export const mockChildNode = new Node(paragraphType, { attrs: {} });
@@ -43,7 +77,7 @@ export function createSchemaSpec(
 ): Record<string, NodeSpec> {
   return {
     doc: { content: 'paragraph+' },
-    text: {  },
+    text: {},
     paragraph: { attrs: {} },
     heading: { attrs: {} },
     ...extra,
@@ -96,7 +130,9 @@ export function createMockContentMatch(
   return new ContentMatch(validEnd, edges);
 }
 
-export function createMockNode(nameOrType: string | NodeType = 'paragraph'): Node {
+export function createMockNode(
+  nameOrType: string | NodeType = 'paragraph'
+): Node {
   const nodeType =
     typeof nameOrType === 'string'
       ? new NodeType(nameOrType, {}, { attrs: {} })
@@ -106,4 +142,10 @@ export function createMockNode(nameOrType: string | NodeType = 'paragraph'): Nod
 
 export function createMockFragment(nodes: Node[] = []): Fragment<Node> {
   return nodes.length === 0 ? Fragment.empty() : Fragment.from(nodes);
+}
+
+export function createSelfRefNodeType(name: string): NodeType {
+  const type = new NodeType(name, defaultMockSchema, {});
+  type.contentMatch = ContentMatch.parse(`${name}*`, { [name]: type });
+  return type;
 }

@@ -1,6 +1,7 @@
 import { Fragment } from '../entities/Fragment';
 import { Node } from '../entities/Node';
 import { Slice } from './Slice';
+import { ContentMatch } from './ContentMatch';
 import {
   createMockNode,
   paragraphType,
@@ -8,8 +9,8 @@ import {
   emptyContent,
   nonEmptyContent,
   createMockNodeType,
+  createSelfRefNodeType,
 } from '../../testing';
-import { ContentMatch } from './ContentMatch';
 
 describe('Slice Value Object', () => {
   describe('constructor', () => {
@@ -183,6 +184,74 @@ describe('Slice Value Object', () => {
 
       expect(slice.openStart).toBe(0);
       expect(slice.openEnd).toBe(0);
+    });
+  });
+
+  describe('insertAt()', () => {
+    it('given valid pos and fragment, returns new Slice with fragment inserted', () => {
+      const node1 = new Node(paragraphType, {});
+      const node2 = new Node(paragraphType, {});
+      const inserted = new Node(paragraphType, {});
+      const slice = new Slice(Fragment.from([node1, node2]), 0, 0);
+
+      const result = slice.insertAt(2, Fragment.from([inserted]));
+
+      expect(result).not.toBeNull();
+      expect(result?.content.childCount).toBe(3);
+      expect(result?.content.child(1)).toBe(inserted);
+    });
+
+    it('given openStart offset, preserves openStart and openEnd on result', () => {
+      const innerType = createSelfRefNodeType('inner');
+      const inner1 = new Node(innerType, {});
+      const inner2 = new Node(innerType, {});
+      const outer = new Node(
+        innerType,
+        {},
+        Fragment.from([inner1, inner2]),
+        []
+      );
+      const slice = new Slice(Fragment.from([outer]), 1, 1);
+      const inserted = new Node(innerType, {});
+
+      const result = slice.insertAt(2, Fragment.from([inserted]));
+
+      expect(result).not.toBeNull();
+      expect(result?.openStart).toBe(1);
+      expect(result?.openEnd).toBe(1);
+    });
+  });
+
+  describe('removeBetween()', () => {
+    it('given valid range, returns new Slice with range removed', () => {
+      const node1 = new Node(paragraphType, {});
+      const node2 = new Node(paragraphType, {});
+      const node3 = new Node(paragraphType, {});
+      const slice = new Slice(Fragment.from([node1, node2, node3]), 0, 0);
+
+      const result = slice.removeBetween(2, 4);
+
+      expect(result.content.childCount).toBe(2);
+      expect(result.content.child(0)).toBe(node1);
+      expect(result.content.child(1)).toBe(node3);
+    });
+
+    it('given openStart offset, preserves openStart and openEnd on result', () => {
+      const innerType = createSelfRefNodeType('inner');
+      const inner1 = new Node(innerType, {});
+      const inner2 = new Node(innerType, {});
+      const outer = new Node(
+        innerType,
+        {},
+        Fragment.from([inner1, inner2]),
+        []
+      );
+      const slice = new Slice(Fragment.from([outer]), 1, 1);
+
+      const result = slice.removeBetween(0, 2);
+
+      expect(result.openStart).toBe(1);
+      expect(result.openEnd).toBe(1);
     });
   });
 });

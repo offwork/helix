@@ -434,4 +434,61 @@ describe('Node', () => {
       expect(node.toString()).toBe('paragraph');
     });
   });
+
+  describe('canReplace', () => {
+    it('given valid replacement matching content, returns true', () => {
+      const nodeType = new NodeType('doc', defaultMockSchema, defaultNodeSpec);
+      nodeType.contentMatch = ContentMatch.parse('paragraph', {
+        paragraph: paragraphType,
+      });
+
+      const child = new Node(paragraphType, {});
+      const node = new Node(nodeType, {}, Fragment.from([child]), []);
+      const replacement = Fragment.from([new Node(paragraphType, {})]);
+
+      expect(node.canReplace(0, 1, replacement)).toBe(true);
+    });
+
+    it('given replacement that breaks content model, returns false', () => {
+      const nodeType = new NodeType('doc', defaultMockSchema, defaultNodeSpec);
+      nodeType.contentMatch = ContentMatch.parse('paragraph', {
+        paragraph: paragraphType,
+      });
+
+      const child = new Node(paragraphType, {});
+      const node = new Node(nodeType, {}, Fragment.from([child]), []);
+      const replacement = Fragment.from([new Node(headingType, {})]);
+
+      expect(node.canReplace(0, 1, replacement)).toBe(false);
+    });
+
+    it('given empty replacement and valid range, returns true', () => {
+      const nodeType = new NodeType('doc', defaultMockSchema, defaultNodeSpec);
+      nodeType.contentMatch = ContentMatch.parse('paragraph*', {
+        paragraph: paragraphType,
+      });
+
+      const child = new Node(paragraphType, {});
+      const node = new Node(nodeType, {}, Fragment.from([child]), []);
+
+      expect(node.canReplace(0, 1)).toBe(true);
+    });
+
+    it('given replacement with disallowed marks, returns false', () => {
+      const nodeType = new NodeType('doc', defaultMockSchema, defaultNodeSpec);
+      nodeType.contentMatch = ContentMatch.parse('paragraph', {
+        paragraph: paragraphType,
+      });
+      nodeType.markSet = [];
+
+      const child = new Node(paragraphType, {});
+      const node = new Node(nodeType, {}, Fragment.from([child]), []);
+      const markedNode = new Node(paragraphType, {}, undefined, [
+        createMark(boldMarkType, {}),
+      ]);
+      const replacement = Fragment.from([markedNode]);
+
+      expect(node.canReplace(0, 1, replacement)).toBe(false);
+    });
+  });
 });

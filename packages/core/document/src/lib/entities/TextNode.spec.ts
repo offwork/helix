@@ -35,6 +35,12 @@ describe('TextNode', () => {
         'Node text cannot be empty'
       );
     });
+
+    it('given whitespace-only text, creates TextNode', () => {
+      const textNode = new TextNode(textType, {}, ' ');
+
+      expect(textNode.text).toBe(' ');
+    });
   });
 
   describe('nodeSize', () => {

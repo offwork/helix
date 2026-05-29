@@ -469,6 +469,15 @@ describe('Fragment', () => {
       expect(result.child(0).content.childCount).toBe(1);
       expect(result.child(0).content.child(0)).toBe(child1);
     });
+
+    it('given range cutting into a text node, returns trimmed text node', () => {
+      const text = new TextNode(textType, {}, 'helloworld');
+      const fragment = Fragment.from([text]);
+
+      const result = fragment.cut(2, 7);
+
+      expect((result.child(0) as TextNode).text).toBe('llowo');
+    });
   });
 
   describe('append', () => {
