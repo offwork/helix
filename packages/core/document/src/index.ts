@@ -1,5 +1,8 @@
 export * from './lib/document';
 
+// Errors
+export { ReplaceError } from './lib/errors/ReplaceError';
+
 // Entities
 export { Fragment } from './lib/entities/Fragment';
 export { Node } from './lib/entities/Node';

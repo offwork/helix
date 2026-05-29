@@ -11,6 +11,7 @@ export interface NodeSpec {
   content?: string;
   group?: string;
   inline?: boolean;
+  isolating?: boolean;
   marks?: string;
   whitespace?: 'normal' | 'pre';
 }

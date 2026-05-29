@@ -175,7 +175,7 @@ export class NodeType {
     return this === other || this.contentMatch?.compatible(other.contentMatch ?? ContentMatch.empty) === true;
   }
 
-  private checkContent(content: Fragment<Node>): void {
+  checkContent(content: Fragment<Node>): void {
     if (!this.validContent(content)) {
       throw new RangeError(
         `Invalid content for node ${this.name}: ${content.toString()}`
