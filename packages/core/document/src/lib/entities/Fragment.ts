@@ -112,10 +112,20 @@ export class Fragment<TNode extends Node> {
         const end = pos + child.nodeSize;
         if (end > from) {
           if (pos < from || end > to) {
-            child = child.cut(
-              Math.max(0, from - pos - 1),
-              Math.min(child.content.size, to - pos - 1)
-            ) as TNode;
+            if (child.isText) {
+              child = child.cut(
+                Math.max(0, from - pos),
+                Math.min(
+                  (child as unknown as { text: string }).text.length,
+                  to - pos
+                )
+              ) as TNode;
+            } else {
+              child = child.cut(
+                Math.max(0, from - pos - 1),
+                Math.min(child.content.size, to - pos - 1)
+              ) as TNode;
+            }
           }
           result.push(child);
         }

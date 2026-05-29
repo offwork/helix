@@ -1,6 +1,6 @@
 import { Fragment } from '../entities/Fragment';
 import { Node } from '../entities/Node';
-
+import { insertInto, removeRange } from '../utils/replace';
 export class Slice {
   static readonly empty = new Slice(Fragment.empty<Node>(), 0, 0);
 
@@ -44,6 +44,19 @@ export class Slice {
 
   toString(): string {
     return `${this.content.toString()}(${this.openStart},${this.openEnd})`;
+  }
+
+  insertAt(pos: number, fragment: Fragment<Node>): Slice | null {
+    const content = insertInto(this.content, pos + this.openStart, fragment);
+    return content && new Slice(content, this.openStart, this.openEnd);
+  }
+
+  removeBetween(from: number, to: number): Slice {
+    return new Slice(
+      removeRange(this.content, from + this.openStart, to + this.openStart),
+      this.openStart,
+      this.openEnd
+    );
   }
 
   private static validateParameters(
