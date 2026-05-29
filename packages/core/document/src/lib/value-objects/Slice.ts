@@ -12,16 +12,38 @@ export class Slice {
     Slice.validateParameters(content, openStart, openEnd);
   }
 
+  static maxOpen(fragment: Fragment<Node>, openIsolating = true): Slice {
+    let openStart = 0,
+      openEnd = 0;
+    for (
+      let n = fragment.firstChild;
+      n && !n.isLeaf && (openIsolating || !n.type.spec.isolating);
+      n = n.firstChild
+    )
+      openStart++;
+    for (
+      let n = fragment.lastChild;
+      n && !n.isLeaf && (openIsolating || !n.type.spec.isolating);
+      n = n.lastChild
+    )
+      openEnd++;
+    return new Slice(fragment, openStart, openEnd);
+  }
+
+  get size(): number {
+    return this.content.size - this.openStart - this.openEnd;
+  }
+
   equals(other: Slice): boolean {
     return (
-      this.content === other.content &&
+      this.content.equals(other.content) &&
       this.openStart === other.openStart &&
       this.openEnd === other.openEnd
     );
   }
 
-  get size(): number {
-    return this.content.size;
+  toString(): string {
+    return `${this.content.toString()}(${this.openStart},${this.openEnd})`;
   }
 
   private static validateParameters(
