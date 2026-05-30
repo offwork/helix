@@ -1,8 +1,12 @@
+import { Attrs } from '../utils/attrs';
 import { deepEqual } from '../utils/deep-equal';
+import { replace } from '../utils/replace';
 import { ContentMatch } from '../value-objects/ContentMatch';
 import { Mark } from '../value-objects/Mark';
+import { MarkType } from '../value-objects/MarkType';
 import { NodeType } from '../value-objects/NodeType';
 import { ResolvedPos } from '../value-objects/ResolvedPos';
+import { Slice } from '../value-objects/Slice';
 import { Fragment } from './Fragment';
 
 export class Node<TAttrs = Record<string, unknown>> {
@@ -220,5 +224,91 @@ export class Node<TAttrs = Record<string, unknown>> {
       if (!this.type.allowsMarks(replacement.child(i).marks)) return false;
     }
     return true;
+  }
+
+  nodesBetween(
+    from: number,
+    to: number,
+    callback: (
+      node: Node,
+      pos: number,
+      parent: Node | null,
+      index: number
+    ) => void | boolean,
+    startPos = 0
+  ): void {
+    this.content.nodesBetween(from, to, callback, startPos, this as Node);
+  }
+
+  rangeHasMark(from: number, to: number, type: Mark | MarkType): boolean {
+    let found = false;
+    if (to > from) {
+      this.nodesBetween(from, to, (node) => {
+        if (type.isInSet(node.marks)) found = true;
+        return !found;
+      });
+    }
+    return found;
+  }
+
+  canReplaceWith(
+    from: number,
+    to: number,
+    type: NodeType,
+    marks?: readonly Mark[]
+  ): boolean {
+    if (marks && !this.type.allowsMarks(marks)) return false;
+    const start = this.contentMatchAt(from).matchType(type);
+    const end = start && start.matchFragment(this.content, to);
+    return end ? end.validEnd : false;
+  }
+
+  canAppend(other: Node): boolean {
+    if (other.content.size) {
+      return this.canReplace(this.childCount, this.childCount, other.content);
+    }
+    return this.type.compatibleContent(other.type);
+  }
+
+  check(): void {
+    this.type.checkContent(this.content);
+    this.type.checkAttrs(this.attrs as Attrs);
+    let copy: readonly Mark[] = Mark.none;
+    for (let i = 0; i < this.marks.length; i++) {
+      const mark = this.marks[i];
+      mark.type.checkAttrs(mark.attrs);
+      copy = mark.addToSet(copy);
+    }
+    if (!Mark.sameSet(copy, this.marks)) {
+      throw new RangeError(
+        `Invalid collection of marks for node ${
+          this.type.name
+        }: ${this.marks.map((m) => m.type.name)}`
+      );
+    }
+    this.content.forEach((node) => node.check());
+  }
+
+  resolve(pos: number): ResolvedPos {
+    return this.resolveNoCache(pos);
+  }
+
+  replace(from: number, to: number, slice: Slice): Node {
+    return replace(this.resolve(from), this.resolve(to), slice);
+  }
+
+  slice(
+    from: number,
+    to: number = this.content.size,
+    includeParents = false
+  ): Slice {
+    if (from === to) return Slice.empty;
+    const $from = this.resolve(from);
+    const $to = this.resolve(to);
+    const depth = includeParents ? 0 : $from.sharedDepth(to);
+    const start = $from.start(depth);
+    const node = $from.node(depth);
+    const content = node.content.cut($from.pos - start, $to.pos - start);
+    return new Slice(content, $from.depth - depth, $to.depth - depth);
   }
 }

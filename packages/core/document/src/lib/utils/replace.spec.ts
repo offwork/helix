@@ -1,8 +1,35 @@
 import { Fragment } from '../entities/Fragment';
 import { Node } from '../entities/Node';
 import { TextNode } from '../entities/TextNode';
-import { removeRange, insertInto } from './replace';
-import { createSelfRefNodeType, paragraphType, textType } from '../../testing';
+import { ReplaceError } from '../errors/ReplaceError';
+import { ResolvedPos } from '../value-objects/ResolvedPos';
+import { NodeType } from '../value-objects/NodeType';
+import { ContentMatch } from '../value-objects/ContentMatch';
+import { Slice } from '../value-objects/Slice';
+import {
+  removeRange,
+  insertInto,
+  addNode,
+  checkJoin,
+  joinable,
+  close,
+  addRange,
+  replaceTwoWay,
+  replaceThreeWay,
+  prepareSliceForReplace,
+  replaceOuter,
+  replace,
+} from './replace';
+import {
+  boldMarkType,
+  createMark,
+  createSelfRefNodeType,
+  defaultMockSchema,
+  defaultNodeSpec,
+  headingType,
+  paragraphType,
+  textType,
+} from '../../testing';
 
 describe('removeRange', () => {
   describe('given flat range at child boundary', () => {
@@ -151,6 +178,291 @@ describe('insertInto', () => {
       );
 
       expect(result).toBeNull();
+    });
+  });
+
+  describe('addNode', () => {
+    it('given non-text node, pushes to target', () => {
+      const target: Node[] = [];
+      const node = new Node(paragraphType, {});
+
+      addNode(node, target);
+
+      expect(target).toHaveLength(1);
+    });
+
+    it('given text node with same markup as last, merges into last', () => {
+      const text1 = new TextNode(textType, {}, 'hello');
+      const text2 = new TextNode(textType, {}, ' world');
+      const target: Node[] = [text1];
+
+      addNode(text2, target);
+
+      expect(target).toHaveLength(1);
+      expect((target[0] as TextNode).text).toBe('hello world');
+    });
+
+    it('given text node with different markup, pushes to target', () => {
+      const mark = createMark(boldMarkType, {});
+      const text1 = new TextNode(textType, {}, 'hello');
+      const text2 = new TextNode(textType, {}, ' world', [mark]);
+      const target: Node[] = [text1];
+
+      addNode(text2, target);
+
+      expect(target).toHaveLength(2);
+    });
+  });
+  describe('checkJoin', () => {
+    it('given compatible nodes, does not throw', () => {
+      const node1 = new Node(paragraphType, {});
+      const node2 = new Node(paragraphType, {});
+
+      expect(() => checkJoin(node1, node2)).not.toThrow();
+    });
+
+    it('given incompatible nodes, throws ReplaceError', () => {
+      const node1 = new Node(paragraphType, {});
+      const node2 = new Node(headingType, {});
+
+      expect(() => checkJoin(node1, node2)).toThrow(ReplaceError);
+    });
+  });
+
+  describe('joinable', () => {
+    it('given compatible nodes at depth, returns node', () => {
+      const child = new Node(paragraphType, {});
+      const root = new Node(paragraphType, {}, Fragment.from([child]), []);
+      const $before = ResolvedPos.resolve(root, 1);
+      const $after = ResolvedPos.resolve(root, 1);
+
+      expect(joinable($before, $after, 0)).toBe(root);
+    });
+
+    it('given incompatible nodes at depth, throws ReplaceError', () => {
+      const child1 = new Node(paragraphType, {});
+      const child2 = new Node(headingType, {});
+      const root1 = new Node(paragraphType, {}, Fragment.from([child1]), []);
+      const root2 = new Node(headingType, {}, Fragment.from([child2]), []);
+      const $before = ResolvedPos.resolve(root1, 0);
+      const $after = ResolvedPos.resolve(root2, 0);
+
+      expect(() => joinable($before, $after, 0)).toThrow(ReplaceError);
+    });
+  });
+
+  describe('close', () => {
+    it('given valid content, returns node copy with content', () => {
+      const nodeType = new NodeType('doc', defaultMockSchema, defaultNodeSpec);
+      nodeType.contentMatch = ContentMatch.parse('paragraph', {
+        paragraph: paragraphType,
+      });
+
+      const child = new Node(paragraphType, {});
+      const content = Fragment.from([child]);
+      const node = new Node(nodeType, {}, Fragment.empty(), []);
+
+      const result = close(node, content);
+
+      expect(result.content).toBe(content);
+    });
+
+    it('given invalid content, throws RangeError', () => {
+      const nodeType = new NodeType('doc', defaultMockSchema, defaultNodeSpec);
+      nodeType.contentMatch = ContentMatch.parse('paragraph', {
+        paragraph: paragraphType,
+      });
+
+      const node = new Node(nodeType, {}, Fragment.empty(), []);
+
+      expect(() =>
+        close(node, Fragment.from([new Node(headingType, {})]))
+      ).toThrow(RangeError);
+    });
+  });
+
+  describe('addRange', () => {
+    it('given null start and null end, does nothing', () => {
+      const target: Node[] = [];
+
+      addRange(null, null, 0, target);
+
+      expect(target).toHaveLength(0);
+    });
+
+    it('given start and end at same depth, adds nodes between', () => {
+      const child1 = new Node(paragraphType, {});
+      const child2 = new Node(paragraphType, {});
+      const root = new Node(
+        paragraphType,
+        {},
+        Fragment.from([child1, child2]),
+        []
+      );
+      const $start = ResolvedPos.resolve(root, 0);
+      const $end = ResolvedPos.resolve(root, root.content.size);
+      const target: Node[] = [];
+
+      addRange($start, $end, 0, target);
+
+      expect(target).toHaveLength(2);
+    });
+  });
+
+  describe('replaceTwoWay', () => {
+    it('given from and to in middle, returns surrounding nodes', () => {
+      const child1 = new Node(paragraphType, {});
+      const child2 = new Node(paragraphType, {});
+      const child3 = new Node(paragraphType, {});
+      const root = new Node(
+        paragraphType,
+        {},
+        Fragment.from([child1, child2, child3]),
+        []
+      );
+      const $from = ResolvedPos.resolve(root, child1.nodeSize);
+      const $to = ResolvedPos.resolve(root, child1.nodeSize + child2.nodeSize);
+
+      const result = replaceTwoWay($from, $to, 0);
+
+      expect(result.childCount).toBe(2);
+    });
+  });
+
+  describe('replaceThreeWay', () => {
+    it('given flat range with slice content, returns merged fragment', () => {
+      const child1 = new Node(paragraphType, {});
+      const child2 = new Node(paragraphType, {});
+      const child3 = new Node(paragraphType, {});
+      const root = new Node(
+        paragraphType,
+        {},
+        Fragment.from([child1, child2, child3]),
+        []
+      );
+      const $from = ResolvedPos.resolve(root, 0);
+      const $to = ResolvedPos.resolve(root, root.content.size);
+      const $start = ResolvedPos.resolve(root, 0);
+      const $end = ResolvedPos.resolve(root, root.content.size);
+
+      const result = replaceThreeWay($from, $start, $end, $to, 0);
+
+      expect(result.childCount).toBe(3);
+    });
+  });
+
+  describe('prepareSliceForReplace', () => {
+    it('given slice with openStart 0, returns start and end resolved positions', () => {
+      const child = new Node(paragraphType, {});
+      const root = new Node(paragraphType, {}, Fragment.from([child]), []);
+      const $along = ResolvedPos.resolve(root, 0);
+      const slice = new Slice(Fragment.from([child]), 0, 0);
+
+      const result = prepareSliceForReplace(slice, $along);
+
+      expect(result.start).toBeInstanceOf(ResolvedPos);
+      expect(result.end).toBeInstanceOf(ResolvedPos);
+    });
+  });
+
+  describe('replaceOuter', () => {
+    it('given empty slice, returns node with replaceTwoWay content', () => {
+      const child1 = new Node(paragraphType, {});
+      const child2 = new Node(paragraphType, {});
+      const nodeType = new NodeType('doc', defaultMockSchema, defaultNodeSpec);
+      nodeType.contentMatch = ContentMatch.parse('paragraph*', {
+        paragraph: paragraphType,
+      });
+      const root = new Node(nodeType, {}, Fragment.from([child1, child2]), []);
+      const $from = ResolvedPos.resolve(root, child1.nodeSize);
+      const $to = ResolvedPos.resolve(root, child1.nodeSize);
+
+      const result = replaceOuter($from, $to, Slice.empty, 0);
+
+      expect(result.childCount).toBe(2);
+    });
+
+    it('given flat slice, returns node with slice content inserted', () => {
+      const child1 = new Node(paragraphType, {});
+      const child2 = new Node(paragraphType, {});
+      const nodeType = new NodeType('doc', defaultMockSchema, defaultNodeSpec);
+      nodeType.contentMatch = ContentMatch.parse('paragraph*', {
+        paragraph: paragraphType,
+      });
+      const root = new Node(nodeType, {}, Fragment.from([child1, child2]), []);
+      const $from = ResolvedPos.resolve(root, 0);
+      const $to = ResolvedPos.resolve(root, child1.nodeSize);
+      const inserted = new Node(paragraphType, {});
+      const slice = new Slice(Fragment.from([inserted]), 0, 0);
+
+      const result = replaceOuter($from, $to, slice, 0);
+
+      expect(result.childCount).toBe(2);
+    });
+
+    it('given slice with openStart, uses replaceThreeWay', () => {
+      const innerType = createSelfRefNodeType('inner');
+      const inner1 = new Node(innerType, {});
+      const inner2 = new Node(innerType, {});
+      const outer = new Node(
+        innerType,
+        {},
+        Fragment.from([inner1, inner2]),
+        []
+      );
+      const root = new Node(innerType, {}, Fragment.from([outer]), []);
+      const $from = ResolvedPos.resolve(root, 1);
+      const $to = ResolvedPos.resolve(root, root.content.size - 1);
+      const slice = new Slice(Fragment.from([new Node(innerType, {})]), 1, 1);
+
+      const result = replaceOuter($from, $to, slice, 0);
+
+      expect(result).toBeInstanceOf(Node);
+    });
+  });
+
+  describe('replace', () => {
+    it('given valid slice, returns replaced node', () => {
+      const nodeType = new NodeType('doc', defaultMockSchema, defaultNodeSpec);
+      nodeType.contentMatch = ContentMatch.parse('paragraph*', {
+        paragraph: paragraphType,
+      });
+      const child = new Node(paragraphType, {});
+      const root = new Node(nodeType, {}, Fragment.from([child]), []);
+      const $from = ResolvedPos.resolve(root, 0);
+      const $to = ResolvedPos.resolve(root, child.nodeSize);
+
+      const result = replace($from, $to, Slice.empty);
+
+      expect(result).toBeInstanceOf(Node);
+    });
+
+    it('given slice openStart deeper than from depth, throws ReplaceError', () => {
+      const nodeType = new NodeType('doc', defaultMockSchema, defaultNodeSpec);
+      nodeType.contentMatch = ContentMatch.parse('paragraph*', {
+        paragraph: paragraphType,
+      });
+      const child = new Node(paragraphType, {});
+      const root = new Node(nodeType, {}, Fragment.from([child]), []);
+      const $from = ResolvedPos.resolve(root, 0);
+      const $to = ResolvedPos.resolve(root, child.nodeSize);
+      const slice = new Slice(Fragment.from([child]), 2, 2);
+
+      expect(() => replace($from, $to, slice)).toThrow(ReplaceError);
+    });
+
+    it('given inconsistent open depths, throws ReplaceError', () => {
+      const nodeType = new NodeType('doc', defaultMockSchema, defaultNodeSpec);
+      nodeType.contentMatch = ContentMatch.parse('paragraph*', {
+        paragraph: paragraphType,
+      });
+      const child = new Node(paragraphType, {});
+      const root = new Node(nodeType, {}, Fragment.from([child]), []);
+      const $from = ResolvedPos.resolve(root, 0);
+      const $to = ResolvedPos.resolve(root, child.nodeSize);
+      const slice = new Slice(Fragment.from([child]), 0, 1);
+
+      expect(() => replace($from, $to, slice)).toThrow(ReplaceError);
     });
   });
 });

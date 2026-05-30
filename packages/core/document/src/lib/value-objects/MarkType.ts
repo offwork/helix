@@ -1,10 +1,13 @@
 import { MarkSpec } from '../interfaces/SchemaSpec';
+import { Attrs, checkAttrs } from '../utils/attrs';
+import { Attribute } from './Attribute';
 import { Mark } from './Mark';
 
 export class MarkType {
   readonly name: string;
   readonly schema: unknown;
   readonly spec: MarkSpec;
+  readonly attrs: Record<string, Attribute>;
   excluded: readonly MarkType[] = [];
   rank = 0;
 
@@ -16,6 +19,13 @@ export class MarkType {
     this.name = name;
     this.schema = schema;
     this.spec = spec;
+    this.attrs = {};
+
+    if (spec.attrs) {
+      for (const [attrName, attrSpec] of Object.entries(spec.attrs)) {
+        this.attrs[attrName] = new Attribute(attrSpec as never);
+      }
+    }
   }
 
   create(attrs?: Record<string, unknown>): Mark {
@@ -43,9 +53,13 @@ export class MarkType {
 
     return this.name === other.name;
   }
-  
+
   excludes(other: MarkType): boolean {
     return this.excluded.indexOf(other) > -1;
+  }
+
+  checkAttrs(attrs: Attrs): void {
+    checkAttrs(this.attrs, attrs, 'mark', this.name);
   }
 
   private validateParameter(paramName: string, paramValue: unknown): void {
