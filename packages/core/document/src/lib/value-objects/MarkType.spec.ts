@@ -155,4 +155,38 @@ describe('MarkType', () => {
       expect(boldMarkType.removeFromSet(set)).toBe(set);
     });
   });
+
+  describe('checkAttrs', () => {
+    it('given attrs with no extra keys, returns void', () => {
+      const markType = createMarkType('strong', defaultMockSchema, {
+        attrs: { color: { default: 'black' } },
+      });
+      expect(() => markType.checkAttrs({ color: 'red' })).not.toThrow();
+    });
+
+    it('given unsupported attr key, throws RangeError', () => {
+      const markType = createMarkType('strong', defaultMockSchema, {
+        attrs: { color: { default: 'black' } },
+      });
+      expect(() => markType.checkAttrs({ color: 'red', unknown: 'x' })).toThrow(
+        RangeError
+      );
+    });
+
+    it('given attr with validate fn that throws, propagates the error', () => {
+      const markType = createMarkType('strong', defaultMockSchema, {
+        attrs: {
+          color: {
+            default: 'black',
+            validate: (v: unknown) => {
+              if (typeof v !== 'string')
+                throw new RangeError('color must be string');
+            },
+          },
+        },
+      });
+
+      expect(() => markType.checkAttrs({ color: 42 })).toThrow(RangeError);
+    });
+  });
 });

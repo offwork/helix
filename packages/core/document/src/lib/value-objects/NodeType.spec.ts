@@ -664,4 +664,48 @@ describe('NodeType', () => {
       expect(nodeType.whitespace).toBe('pre');
     });
   });
+
+  describe('checkAttrs', () => {
+    it('given attrs with no extra keys, returns void', () => {
+      const nodeType = createMockNodeType(
+        'paragraph',
+        defaultMockSchema,
+        createNodeSpec({ attrs: { level: { default: 1 } } })
+      );
+
+      expect(() => nodeType.checkAttrs({ level: 1 })).not.toThrow();
+    });
+
+    it('given unsupported attr key, throws RangeError', () => {
+      const nodeType = createMockNodeType(
+        'paragraph',
+        defaultMockSchema,
+        createNodeSpec({ attrs: { level: { default: 1 } } })
+      );
+
+      expect(() => nodeType.checkAttrs({ level: 1, unknown: 'x' })).toThrow(
+        RangeError
+      );
+    });
+
+    it('given attr with validate fn that throws, propagates the error', () => {
+      const nodeType = createMockNodeType(
+        'paragraph',
+        defaultMockSchema,
+        createNodeSpec({
+          attrs: {
+            level: {
+              default: 1,
+              validate: (v: unknown) => {
+                if (typeof v !== 'number')
+                  throw new RangeError('level must be number');
+              },
+            },
+          },
+        })
+      );
+
+      expect(() => nodeType.checkAttrs({ level: 'bad' })).toThrow(RangeError);
+    });
+  });
 });

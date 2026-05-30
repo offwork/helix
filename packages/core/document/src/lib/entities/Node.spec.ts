@@ -3,6 +3,9 @@ import { NodeType } from '../value-objects/NodeType';
 import { Fragment } from './Fragment';
 import { ContentMatch } from '../value-objects/ContentMatch';
 import { ResolvedPos } from '../value-objects/ResolvedPos';
+import { TextNode } from './TextNode';
+import { Slice } from '../value-objects/Slice';
+import { ReplaceError } from '../errors/ReplaceError';
 import {
   defaultMockSchema,
   defaultNodeSpec,
@@ -489,6 +492,260 @@ describe('Node', () => {
       const replacement = Fragment.from([markedNode]);
 
       expect(node.canReplace(0, 1, replacement)).toBe(false);
+    });
+  });
+
+  describe('nodesBetween', () => {
+    it('given range covering all children, visits all nodes with startPos', () => {
+      const child1 = new Node(paragraphType, {});
+      const child2 = new Node(paragraphType, {});
+      const content = Fragment.from([child1, child2]);
+      const node = new Node(paragraphType, {}, content, []);
+
+      const visited: { node: Node; pos: number }[] = [];
+      node.nodesBetween(0, content.size, (n, pos) => {
+        visited.push({ node: n, pos });
+      });
+
+      expect(visited[0]).toEqual({ node: child1, pos: 0 });
+    });
+
+    it('given startPos provided, offsets visited node positions', () => {
+      const child1 = new Node(paragraphType, {});
+      const content = Fragment.from([child1]);
+      const node = new Node(paragraphType, {}, content, []);
+
+      const visited: number[] = [];
+      node.nodesBetween(
+        0,
+        content.size,
+        (n, pos) => {
+          visited.push(pos);
+        },
+        10
+      );
+
+      expect(visited[0]).toBe(10);
+    });
+  });
+
+  describe('rangeHasMark', () => {
+    it('given to equals from, returns false', () => {
+      const node = new Node(paragraphType, {}, Fragment.empty(), []);
+
+      expect(node.rangeHasMark(1, 1, boldMarkType)).toBe(false);
+    });
+
+    it('given mark present in range, returns true', () => {
+      const mark = createMark(boldMarkType, {});
+      const text = new TextNode(textType, {}, 'hello', [mark]);
+      const node = new Node(paragraphType, {}, Fragment.from([text]), []);
+
+      expect(node.rangeHasMark(0, text.nodeSize, boldMarkType)).toBe(true);
+    });
+
+    it('given mark not present in range, returns false', () => {
+      const text = new TextNode(textType, {}, 'hello', []);
+      const node = new Node(paragraphType, {}, Fragment.from([text]), []);
+
+      expect(node.rangeHasMark(0, text.nodeSize, boldMarkType)).toBe(false);
+    });
+  });
+
+  describe('canReplaceWith', () => {
+    it('given type matching content, returns true', () => {
+      const nodeType = new NodeType('doc', defaultMockSchema, defaultNodeSpec);
+      nodeType.contentMatch = ContentMatch.parse('paragraph', {
+        paragraph: paragraphType,
+      });
+
+      const child = new Node(paragraphType, {});
+      const node = new Node(nodeType, {}, Fragment.from([child]), []);
+
+      expect(node.canReplaceWith(0, 1, paragraphType)).toBe(true);
+    });
+
+    it('given type not matching content, returns false', () => {
+      const nodeType = new NodeType('doc', defaultMockSchema, defaultNodeSpec);
+      nodeType.contentMatch = ContentMatch.parse('paragraph', {
+        paragraph: paragraphType,
+      });
+
+      const child = new Node(paragraphType, {});
+      const node = new Node(nodeType, {}, Fragment.from([child]), []);
+
+      expect(node.canReplaceWith(0, 1, headingType)).toBe(false);
+    });
+
+    it('given marks not allowed by node type, returns false', () => {
+      const nodeType = new NodeType('doc', defaultMockSchema, defaultNodeSpec);
+      nodeType.contentMatch = ContentMatch.parse('paragraph', {
+        paragraph: paragraphType,
+      });
+      nodeType.markSet = [];
+
+      const child = new Node(paragraphType, {});
+      const node = new Node(nodeType, {}, Fragment.from([child]), []);
+
+      expect(
+        node.canReplaceWith(0, 1, paragraphType, [createMark(boldMarkType, {})])
+      ).toBe(false);
+    });
+  });
+
+  describe('canAppend', () => {
+    it('given other with compatible non-empty content, returns true', () => {
+      const nodeType = new NodeType('doc', defaultMockSchema, defaultNodeSpec);
+      nodeType.contentMatch = ContentMatch.parse('paragraph*', {
+        paragraph: paragraphType,
+      });
+
+      const child = new Node(paragraphType, {});
+      const node = new Node(nodeType, {}, Fragment.from([child]), []);
+      const other = new Node(
+        nodeType,
+        {},
+        Fragment.from([new Node(paragraphType, {})]),
+        []
+      );
+
+      expect(node.canAppend(other)).toBe(true);
+    });
+
+    it('given other content not allowed by content model, returns false', () => {
+      const nodeType = new NodeType('doc', defaultMockSchema, defaultNodeSpec);
+      nodeType.contentMatch = ContentMatch.parse('paragraph*', {
+        paragraph: paragraphType,
+      });
+
+      const node = new Node(nodeType, {}, Fragment.empty(), []);
+      const other = new Node(nodeType, {}, Fragment.empty(), []);
+
+      expect(node.canAppend(other)).toBe(true);
+    });
+  });
+
+  describe('check', () => {
+    it('given valid node, does not throw', () => {
+      const nodeType = new NodeType('doc', defaultMockSchema, defaultNodeSpec);
+      nodeType.contentMatch = ContentMatch.empty;
+
+      const node = new Node(nodeType, {}, Fragment.empty(), []);
+
+      expect(() => node.check()).not.toThrow();
+    });
+
+    it('given node with invalid content, throws RangeError', () => {
+      const nodeType = new NodeType('doc', defaultMockSchema, defaultNodeSpec);
+      nodeType.contentMatch = ContentMatch.parse('paragraph', {
+        paragraph: paragraphType,
+      });
+
+      const node = new Node(
+        nodeType,
+        {},
+        Fragment.from([new Node(headingType, {})]),
+        []
+      );
+
+      expect(() => node.check()).toThrow(RangeError);
+    });
+
+    it('given node with invalid mark set order, throws RangeError', () => {
+      const mark1 = createMark(boldMarkType, {});
+      const mark2 = createMark(italicMarkType, {});
+      boldMarkType.rank = 2;
+      italicMarkType.rank = 1;
+
+      const node = new Node(paragraphType, {}, Fragment.empty(), [
+        mark1,
+        mark2,
+      ]);
+
+      expect(() => node.check()).toThrow(RangeError);
+    });
+  });
+
+  describe('resolve', () => {
+    it('given valid pos, returns ResolvedPos', () => {
+      const child = new Node(paragraphType, {});
+      const node = new Node(paragraphType, {}, Fragment.from([child]), []);
+
+      expect(node.resolve(1)).toBeInstanceOf(ResolvedPos);
+    });
+  });
+
+  describe('replace', () => {
+    it('given valid slice, returns new node with replaced content', () => {
+      const nodeType = new NodeType('doc', defaultMockSchema, defaultNodeSpec);
+      nodeType.contentMatch = ContentMatch.parse('paragraph*', {
+        paragraph: paragraphType,
+      });
+      const child1 = new Node(paragraphType, {});
+      const child2 = new Node(paragraphType, {});
+      const root = new Node(nodeType, {}, Fragment.from([child1, child2]), []);
+      const inserted = new Node(paragraphType, {});
+      const slice = new Slice(Fragment.from([inserted]), 0, 0);
+
+      const result = root.replace(0, child1.nodeSize, slice);
+
+      expect(result.childCount).toBe(2);
+    });
+
+    it('given invalid slice, throws ReplaceError', () => {
+      const nodeType = new NodeType('doc', defaultMockSchema, defaultNodeSpec);
+      nodeType.contentMatch = ContentMatch.parse('paragraph*', {
+        paragraph: paragraphType,
+      });
+      const child = new Node(paragraphType, {});
+      const root = new Node(nodeType, {}, Fragment.from([child]), []);
+      const slice = new Slice(Fragment.from([child]), 2, 2);
+
+      expect(() => root.replace(0, child.nodeSize, slice)).toThrow(
+        ReplaceError
+      );
+    });
+  });
+
+  describe('slice', () => {
+    it('given from equals to, returns Slice.empty', () => {
+      const child = new Node(paragraphType, {});
+      const nodeType = new NodeType('doc', defaultMockSchema, defaultNodeSpec);
+      nodeType.contentMatch = ContentMatch.parse('paragraph*', {
+        paragraph: paragraphType,
+      });
+      const root = new Node(nodeType, {}, Fragment.from([child]), []);
+
+      expect(root.slice(0, 0)).toBe(Slice.empty);
+    });
+
+    it('given valid range, returns slice with correct content', () => {
+      const child1 = new Node(paragraphType, {});
+      const child2 = new Node(paragraphType, {});
+      const nodeType = new NodeType('doc', defaultMockSchema, defaultNodeSpec);
+      nodeType.contentMatch = ContentMatch.parse('paragraph*', {
+        paragraph: paragraphType,
+      });
+      const root = new Node(nodeType, {}, Fragment.from([child1, child2]), []);
+
+      const result = root.slice(0, child1.nodeSize);
+
+      expect(result).toBeInstanceOf(Slice);
+      expect(result.content.childCount).toBe(1);
+    });
+
+    it('given includeParents true, returns slice with depth 0', () => {
+      const child = new Node(paragraphType, {});
+      const nodeType = new NodeType('doc', defaultMockSchema, defaultNodeSpec);
+      nodeType.contentMatch = ContentMatch.parse('paragraph*', {
+        paragraph: paragraphType,
+      });
+      const root = new Node(nodeType, {}, Fragment.from([child]), []);
+
+      const result = root.slice(0, child.nodeSize, true);
+
+      expect(result.openStart).toBe(0);
+      expect(result.openEnd).toBe(0);
     });
   });
 });

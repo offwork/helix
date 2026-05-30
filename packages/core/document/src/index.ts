@@ -19,6 +19,10 @@ export type {
 // Sevices
 export { Schema } from './lib/services/Schema';
 
+// Utils
+export { checkAttrs } from './lib/utils/attrs';
+export type { Attrs } from './lib/utils/attrs';
+
 // Value Objects
 export { Attribute } from './lib/value-objects/Attribute';
 export { ContentMatch } from './lib/value-objects/ContentMatch';

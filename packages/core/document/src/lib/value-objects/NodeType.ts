@@ -1,6 +1,7 @@
 import { Fragment } from '../entities/Fragment';
 import { Node } from '../entities/Node';
 import { NodeSpec } from '../interfaces/SchemaSpec';
+import { Attrs, checkAttrs } from '../utils/attrs';
 import { Attribute } from './Attribute';
 import { ContentMatch } from './ContentMatch';
 import { Mark } from './Mark';
@@ -45,7 +46,7 @@ export class NodeType {
     return this.markSet === null || this.markSet.indexOf(markType) > -1;
   }
 
-  allowsMarks(marks: Mark[]): boolean {
+  allowsMarks(marks: readonly Mark[]): boolean {
     if (this.markSet === null) return true;
     return marks.every(
       (mark) => this.markSet && this.markSet.indexOf(mark.type) > -1
@@ -108,6 +109,10 @@ export class NodeType {
     return new Node(this, attrs || {}, nodes, marks || []);
   }
 
+  checkAttrs(attrs: Attrs): void {
+    checkAttrs(this.attrs, attrs, 'node', this.name);
+  }
+
   createAndFill(
     attrs?: Record<string, unknown>,
     content?: Fragment<Node> | Node[],
@@ -159,20 +164,29 @@ export class NodeType {
     if (!result || !result.validEnd) return false;
 
     for (let i = 0; i < content.childCount; i++) {
-      if (!this.allowsMarks(content.child(i).marks)) return false
+      if (!this.allowsMarks(content.child(i).marks)) return false;
     }
 
     return true;
   }
 
-  createChecked(attrs?: Record<string, unknown>, content?: Fragment<Node> | Node[], marks?: Mark[]): Node {
+  createChecked(
+    attrs?: Record<string, unknown>,
+    content?: Fragment<Node> | Node[],
+    marks?: Mark[]
+  ): Node {
     const node = this.create(attrs, content, marks);
     this.checkContent(node.content);
     return node;
   }
 
   compatibleContent(other: NodeType): boolean {
-    return this === other || this.contentMatch?.compatible(other.contentMatch ?? ContentMatch.empty) === true;
+    return (
+      this === other ||
+      this.contentMatch?.compatible(
+        other.contentMatch ?? ContentMatch.empty
+      ) === true
+    );
   }
 
   checkContent(content: Fragment<Node>): void {
