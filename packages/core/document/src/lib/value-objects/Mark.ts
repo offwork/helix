@@ -16,7 +16,6 @@ export class Mark {
     this.type = type;
   }
 
-
   static sameSet(a: readonly Mark[], b: readonly Mark[]): boolean {
     if (a.length !== b.length) return false;
 

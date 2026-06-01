@@ -51,6 +51,10 @@ export class ContentMatch {
     return this.edges.length;
   }
 
+  get inlineContent() {
+    return this.edges.length != 0 && this.edges[0].type.isInline;
+  }
+
   edge(index: number): Edge {
     if (index < 0) {
       throw new Error('ContentMatch edge index cannot be negative');
@@ -96,7 +100,6 @@ export class ContentMatch {
       throw new Error('ContentMatch matchFragment invalid range');
     }
 
-    // Empty fragment always returns current match
     if (fragment.size === 0) return this;
 
     // eslint-disable-next-line @typescript-eslint/no-this-alias
@@ -109,7 +112,6 @@ export class ContentMatch {
       index++;
     }
 
-    // If we reached a valid end, return the match. Otherwise, return null
     return current;
   }
 

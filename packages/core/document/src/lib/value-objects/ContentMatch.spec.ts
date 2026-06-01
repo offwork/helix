@@ -686,4 +686,29 @@ describe('ContentMatch', () => {
       );
     });
   });
+
+  describe('inlineContent', () => {
+    it('given no edges, returns false', () => {
+      const match = new ContentMatch(true, []);
+      expect(match.inlineContent).toBe(false);
+    });
+
+    it('given first edge with inline type, returns true', () => {
+      const inlineType = createMockNodeType('text');
+      const match = new ContentMatch(false, [
+        { type: inlineType, next: createMockContentMatch() },
+      ]);
+      expect(match.inlineContent).toBe(true);
+    });
+
+    it('given first edge with block type, returns false', () => {
+      const match = new ContentMatch(false, [
+        {
+          type: createMockNodeType('paragraph'),
+          next: createMockContentMatch(),
+        },
+      ]);
+      expect(match.inlineContent).toBe(false);
+    });
+  });
 });
