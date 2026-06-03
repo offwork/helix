@@ -4,7 +4,10 @@ export * from './lib/document';
 export { ReplaceError } from './lib/errors/ReplaceError';
 
 // Entities
+export type { IFragment } from './lib/entities/IFragment';
 export { Fragment } from './lib/entities/Fragment';
+export { empty, from } from './lib/entities/FragmentFactory';
+export type { INode } from './lib/entities/INode';
 export { Node } from './lib/entities/Node';
 export { TextNode } from './lib/entities/TextNode';
 

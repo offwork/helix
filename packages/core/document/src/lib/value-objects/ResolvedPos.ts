@@ -30,18 +30,18 @@ export class ResolvedPos {
   get nodeAfter(): Node | null {
     if (this.index() === this.parent.childCount) return null;
     const child = this.parent.content.child(this.index());
-    return this.textOffset ? child.cut(this.textOffset) : child;
+    return (this.textOffset ? child.cut(this.textOffset) : child) as Node;
   }
 
   get nodeBefore(): Node | null {
     const parent = this.parent;
     if (this.textOffset > 0) {
       const child = parent.content.child(this.index());
-      return child.cut(0, this.textOffset);
+      return child.cut(0, this.textOffset) as Node;
     }
 
     if (this.index() == 0) return null;
-    return parent.content.child(this.index() - 1);
+    return parent.content.child(this.index() - 1) as Node;
   }
 
   static resolve(doc: Node, pos: number): ResolvedPos {
@@ -58,7 +58,7 @@ export class ResolvedPos {
       const rem = parentOffset - offset;
       path.push(node, index, start + offset);
       if (!rem) break;
-      node = node.content.child(index);
+      node = node.content.child(index) as Node;
       if (node.type.isText) break;
       parentOffset = rem - 1;
       start += offset + 1;

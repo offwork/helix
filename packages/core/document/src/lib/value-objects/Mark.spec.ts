@@ -28,13 +28,13 @@ describe('Mark', () => {
 
     it('given null type, throws error', () => {
       expect(() => createMark(null as never, {})).toThrow(
-        'Type must be a MarkType instance'
+        'type coannot be null or undefined'
       );
     });
 
     it('given undefined type, throws error', () => {
       expect(() => createMark(undefined as never, {})).toThrow(
-        'Type must be a MarkType instance'
+        'type coannot be null or undefined'
       );
     });
 

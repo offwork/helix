@@ -1,5 +1,4 @@
 import { Fragment } from '../entities/Fragment';
-import { Node } from '../entities/Node';
 import { Edge } from '../interfaces/Edge';
 import {
   checkForDeadEnds,
@@ -86,7 +85,7 @@ export class ContentMatch {
   }
 
   matchFragment(
-    fragment: Fragment<Node>,
+    fragment: Fragment,
     start = 0,
     end?: number
   ): ContentMatch | null {
@@ -169,10 +168,10 @@ export class ContentMatch {
   }
 
   fillBefore(
-    after: Fragment<Node>,
+    after: Fragment,
     toEnd = false,
     startIndex = 0
-  ): Fragment<Node> | null {
+  ): Fragment | null {
     if (after === null) {
       throw new Error('ContentMatch fillBefore after parameter cannot be null');
     }
@@ -182,7 +181,7 @@ export class ContentMatch {
     const search = (
       match: ContentMatch,
       types: NodeType[]
-    ): Fragment<Node> | null => {
+    ): Fragment | null => {
       const finished = match.matchFragment(after, startIndex);
       if (finished && (!toEnd || finished.validEnd)) {
         return Fragment.from(types.map((tp) => tp.create()));

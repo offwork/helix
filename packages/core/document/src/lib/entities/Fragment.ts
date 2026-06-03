@@ -1,18 +1,19 @@
-import { Node } from './Node';
+import type { IFragment } from './IFragment';
+import type { INode } from './INode';
 
-export class Fragment<TNode extends Node> {
-  private readonly content: readonly TNode[];
+export class Fragment implements IFragment {
+  private readonly content: readonly INode[];
 
-  private constructor(content: readonly TNode[]) {
+  private constructor(content: readonly INode[]) {
     this.content = content;
   }
 
-  static empty<TNode extends Node>(): Fragment<TNode> {
-    return new Fragment<TNode>([]);
+  static empty(): Fragment {
+    return new Fragment([]);
   }
 
-  static from<TNode extends Node>(nodes: readonly TNode[]): Fragment<TNode> {
-    return new Fragment<TNode>([...nodes]); // Defensive copy
+  static from(nodes: readonly INode[]): Fragment {
+    return new Fragment([...nodes]); // Defensive copy
   }
 
   get childCount(): number {
@@ -23,15 +24,15 @@ export class Fragment<TNode extends Node> {
     return this.content.reduce((sum, node) => (sum += node.nodeSize), 0);
   }
 
-  get firstChild(): TNode | undefined {
+  get firstChild(): INode | undefined {
     return this.content[0];
   }
 
-  get lastChild(): TNode | undefined {
+  get lastChild(): INode | undefined {
     return this.content[this.content.length - 1];
   }
 
-  child(index: number): TNode {
+  child(index: number): INode {
     if (index < 0 || index >= this.content.length) {
       throw new Error(
         `Index out of bounds: ${index} (size: ${this.content.length})`
@@ -41,7 +42,7 @@ export class Fragment<TNode extends Node> {
   }
 
   forEach(
-    callback: (node: TNode, offset: number, index: number) => void
+    callback: (node: INode, offset: number, index: number) => void
   ): void {
     let offset = 0;
     for (let i = 0; i < this.content.length; i++) {
@@ -51,27 +52,27 @@ export class Fragment<TNode extends Node> {
     }
   }
 
-  slice(from: number, to: number): Fragment<TNode> {
+  slice(from: number, to: number): Fragment {
     if (from < 0 || to > this.content.length || from > to) {
       throw new Error(
         `Invalid slice range: [${from}, ${to}) (size: ${this.content.length})`
       );
     }
 
-    return new Fragment<TNode>(this.content.slice(from, to));
+    return new Fragment(this.content.slice(from, to));
   }
 
-  equals(other: Fragment<TNode>): boolean {
+  equals(other: IFragment): boolean {
     if (other === null)
       throw new Error('Fragment equals parameter cannot be null');
 
     if (other === undefined)
       throw new Error('Fragment equals parameter cannot be undefined');
 
-    if (this.content.length !== other.content.length) return false;
+    if (this.content.length !== other.childCount) return false;
 
     return this.content.every((node, index) =>
-      node.equals(other.content[index])
+      node.equals(other.child(index))
     );
   }
 
@@ -100,11 +101,11 @@ export class Fragment<TNode extends Node> {
     return { index: i, offset: curPos };
   }
 
-  cut(from: number, to: number = this.size): Fragment<TNode> {
+  cut(from: number, to: number = this.size): Fragment {
     if (from === 0 && to === this.size) return this;
-    if (from === to) return Fragment.empty<TNode>();
+    if (from === to) return Fragment.empty();
 
-    const result: TNode[] = [];
+    const result: INode[] = [];
 
     if (to > from) {
       for (let i = 0, pos = 0; pos < to; i++) {
@@ -119,12 +120,12 @@ export class Fragment<TNode extends Node> {
                   (child as unknown as { text: string }).text.length,
                   to - pos
                 )
-              ) as TNode;
+              ) as INode;
             } else {
               child = child.cut(
                 Math.max(0, from - pos - 1),
                 Math.min(child.content.size, to - pos - 1)
-              ) as TNode;
+              ) as INode;
             }
           }
           result.push(child);
@@ -136,7 +137,7 @@ export class Fragment<TNode extends Node> {
     return Fragment.from(result);
   }
 
-  append(other: Fragment<TNode>): Fragment<TNode> {
+  append(other: Fragment): Fragment {
     if (!other.size) return this;
     if (!this.size) return other;
 
@@ -144,13 +145,13 @@ export class Fragment<TNode extends Node> {
     const first = other.firstChild;
     if (!last || !first)
       return Fragment.from([...this.content, ...other.content]);
-    const content = this.content.slice() as TNode[];
+    const content = this.content.slice() as INode[];
 
     let i = 0;
     if (last.isText && first.isText && last.sameMarkup(first)) {
       const lastText = last as unknown as {
         text: string;
-        withText: (t: string) => TNode;
+        withText: (t: string) => INode;
       };
       const firstText = first as unknown as { text: string };
       content[content.length - 1] = lastText.withText(
@@ -163,7 +164,7 @@ export class Fragment<TNode extends Node> {
     return Fragment.from(content);
   }
 
-  maybeChild(index: number): TNode | null {
+  maybeChild(index: number): INode | null {
     if (index < 0 || index >= this.content.length) return null;
 
     return this.content[index];
@@ -173,13 +174,13 @@ export class Fragment<TNode extends Node> {
     from: number,
     to: number,
     callback: (
-      node: TNode,
+      node: INode,
       start: number,
-      parent: TNode | null,
+      parent: INode | null,
       index: number
     ) => boolean | void,
     nodeStart = 0,
-    parent?: TNode
+    parent?: INode
   ): void {
     this.forEach((child, offset, index) => {
       const end = offset + child.nodeSize;
@@ -194,7 +195,7 @@ export class Fragment<TNode extends Node> {
             Math.min(child.content.size, to - offset - 1),
             callback as never,
             nodeStart + offset + 1,
-            child as TNode
+            child as INode
           );
         }
       }
@@ -203,9 +204,9 @@ export class Fragment<TNode extends Node> {
 
   descendants(
     callback: (
-      node: TNode,
+      node: INode,
       pos: number,
-      parent: TNode | null,
+      parent: INode | null,
       index: number
     ) => boolean | void
   ): void {
@@ -216,7 +217,7 @@ export class Fragment<TNode extends Node> {
     from: number,
     to: number,
     blockSeparator?: string | null,
-    leafText?: string | null | ((leafNode: TNode) => string)
+    leafText?: string | null | ((leafNode: INode) => string)
   ): string {
     let text = '',
       first = true;
@@ -237,19 +238,19 @@ export class Fragment<TNode extends Node> {
     return text;
   }
 
-  replaceChild(index: number, node: TNode): Fragment<TNode> {
+  replaceChild(index: number, node: INode): Fragment {
     const current = this.content[index];
     if (current === node) return this;
-    const copy = this.content.slice() as TNode[];
+    const copy = this.content.slice() as INode[];
     copy[index] = node;
     return Fragment.from(copy);
   }
 
-  addToStart(node: TNode): Fragment<TNode> {
+  addToStart(node: INode): Fragment {
     return Fragment.from([node, ...this.content]);
   }
 
-  addToEnd(node: TNode): Fragment<TNode> {
+  addToEnd(node: INode): Fragment {
     return Fragment.from([...this.content, node]);
   }
 

@@ -1,4 +1,5 @@
 import { Fragment } from '../entities/Fragment';
+import { empty, from } from '../entities/FragmentFactory';
 import { Node } from '../entities/Node';
 import { NodeSpec } from '../interfaces/SchemaSpec';
 import { Attrs, checkAttrs } from '../utils/attrs';
@@ -96,15 +97,15 @@ export class NodeType {
 
   create(
     attrs?: Record<string, unknown>,
-    content?: Fragment<Node> | Node[],
+    content?: Fragment | Node[],
     marks?: Mark[]
   ): Node {
     if (this.isText)
       throw new Error('NodeType.create cannot construct text nodes');
 
     const nodes = Array.isArray(content)
-      ? Fragment.from(content)
-      : content || Fragment.empty<Node>();
+      ? from(content)
+      : content || empty();
 
     return new Node(this, attrs || {}, nodes, marks || []);
   }
@@ -115,15 +116,15 @@ export class NodeType {
 
   createAndFill(
     attrs?: Record<string, unknown>,
-    content?: Fragment<Node> | Node[],
+    content?: Fragment | Node[],
     marks?: Mark[]
   ): Node | null {
     if (this.isText)
       throw new Error('NodeType.createAndFill cannot construct text nodes');
 
     let nodes = Array.isArray(content)
-      ? Fragment.from(content)
-      : content ?? Fragment.empty<Node>();
+      ? from(content)
+      : content ?? empty();
 
     if (nodes.size) {
       const before = this.contentMatch?.fillBefore(nodes);
@@ -132,7 +133,7 @@ export class NodeType {
     }
 
     const matched = this.contentMatch?.matchFragment(nodes);
-    const after = matched && matched.fillBefore(Fragment.empty(), true);
+    const after = matched && matched.fillBefore(empty(), true);
     if (!after) return null;
 
     return new Node(this, attrs || {}, nodes.append(after), marks || []);
@@ -153,7 +154,7 @@ export class NodeType {
     return this.spec.group.split(' ').includes(name);
   }
 
-  validContent(content: Fragment<Node>): boolean {
+  validContent(content: Fragment): boolean {
     if (content === null)
       throw new Error('NodeType validContent parameter cannot be null');
 
@@ -172,7 +173,7 @@ export class NodeType {
 
   createChecked(
     attrs?: Record<string, unknown>,
-    content?: Fragment<Node> | Node[],
+    content?: Fragment | Node[],
     marks?: Mark[]
   ): Node {
     const node = this.create(attrs, content, marks);
@@ -189,7 +190,7 @@ export class NodeType {
     );
   }
 
-  checkContent(content: Fragment<Node>): void {
+  checkContent(content: Fragment): void {
     if (!this.validContent(content)) {
       throw new RangeError(
         `Invalid content for node ${this.name}: ${content.toString()}`

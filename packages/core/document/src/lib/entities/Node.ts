@@ -7,18 +7,20 @@ import { MarkType } from '../value-objects/MarkType';
 import { NodeType } from '../value-objects/NodeType';
 import { ResolvedPos } from '../value-objects/ResolvedPos';
 import { Slice } from '../value-objects/Slice';
+import { empty } from './FragmentFactory';
 import { Fragment } from './Fragment';
+import type { INode } from './INode';
 
-export class Node<TAttrs = Record<string, unknown>> {
+export class Node implements INode {
   readonly type: NodeType;
-  readonly attrs: TAttrs;
-  readonly content: Fragment<Node>;
+  readonly attrs: Record<string, unknown>;
+  readonly content: Fragment;
   readonly marks: Mark[];
 
   constructor(
     type: NodeType,
-    attrs: TAttrs,
-    content?: Fragment<Node>,
+    attrs: Record<string, unknown>,
+    content?: Fragment,
     marks?: Mark[]
   ) {
     if (type === null) {
@@ -43,7 +45,7 @@ export class Node<TAttrs = Record<string, unknown>> {
 
     this.type = type;
     this.attrs = attrs;
-    this.content = content || Fragment.empty<Node>();
+    this.content = content || empty();
     this.marks = marks || [];
   }
 
@@ -59,11 +61,11 @@ export class Node<TAttrs = Record<string, unknown>> {
     return 2 + this.content.size;
   }
 
-  get firstChild(): Node | undefined {
+  get firstChild(): INode | undefined {
     return this.content.firstChild;
   }
 
-  get lastChild(): Node | undefined {
+  get lastChild(): INode | undefined {
     return this.content.lastChild;
   }
 
@@ -95,7 +97,7 @@ export class Node<TAttrs = Record<string, unknown>> {
     return this.type.inlineContent;
   }
 
-  equals(other: Node): boolean {
+  equals(other: INode): boolean {
     if (other === null) throw new Error('Node equals parameter cannot be null');
 
     if (other === undefined)
@@ -107,35 +109,35 @@ export class Node<TAttrs = Record<string, unknown>> {
     );
   }
 
-  copy(content?: Fragment<Node>): Node<TAttrs> {
+  copy(content?: Fragment): Node {
     if (content === this.content) return this;
     return new Node(
       this.type,
       this.attrs,
-      content ?? Fragment.empty<Node>(),
+      content ?? empty(),
       this.marks
     );
   }
 
-  cut(from: number, to: number = this.content.size): Node<TAttrs> {
+  cut(from: number, to: number = this.content.size): Node {
     if (from === 0 && to === this.content.size) return this;
     return this.copy(this.content.cut(from, to));
   }
 
-  child(index: number): Node {
+  child(index: number): INode {
     return this.content.child(index);
   }
 
-  maybeChild(index: number): Node | null {
+  maybeChild(index: number): INode | null {
     return this.content.maybeChild(index);
   }
 
-  mark(marks: Mark[]): Node<TAttrs> {
+  mark(marks: Mark[]): Node {
     if (marks === this.marks) return this;
     return new Node(this.type, this.attrs, this.content, marks);
   }
 
-  sameMarkup(other: Node): boolean {
+  sameMarkup(other: INode): boolean {
     return this.hasMarkup(other.type, other.attrs, other.marks);
   }
 
@@ -151,7 +153,7 @@ export class Node<TAttrs = Record<string, unknown>> {
     );
   }
 
-  forEach(callback: (node: Node, offset: number, index: number) => void): void {
+  forEach(callback: (node: INode, offset: number, index: number) => void): void {
     this.content.forEach(callback);
   }
 
@@ -169,8 +171,8 @@ export class Node<TAttrs = Record<string, unknown>> {
     return ResolvedPos.resolve(this as Node, pos);
   }
 
-  nodeAt(pos: number): Node | null {
-    for (let node: Node | null = this as Node; ; ) {
+  nodeAt(pos: number): INode | null {
+    for (let node: INode | null = this as Node; ; ) {
       const { index, offset } = node.content.findIndex(pos);
       node = node.content.maybeChild(index);
       if (!node) return null;
@@ -180,7 +182,7 @@ export class Node<TAttrs = Record<string, unknown>> {
   }
 
   childAfter(pos: number): {
-    node: Node | null;
+    node: INode | null;
     index: number;
     offset: number;
   } {
@@ -193,7 +195,7 @@ export class Node<TAttrs = Record<string, unknown>> {
   }
 
   childBefore(pos: number): {
-    node: Node | null;
+    node: INode | null;
     index: number;
     offset: number;
   } {
@@ -209,7 +211,7 @@ export class Node<TAttrs = Record<string, unknown>> {
   canReplace(
     from: number,
     to: number,
-    replacement: Fragment<Node> = Fragment.empty<Node>(),
+    replacement = empty(),
     start = 0,
     end = replacement.childCount
   ): boolean {
@@ -230,14 +232,14 @@ export class Node<TAttrs = Record<string, unknown>> {
     from: number,
     to: number,
     callback: (
-      node: Node,
+      node: INode,
       pos: number,
-      parent: Node | null,
+      parent: INode | null,
       index: number
     ) => void | boolean,
     startPos = 0
   ): void {
-    this.content.nodesBetween(from, to, callback, startPos, this as Node);
+    this.content.nodesBetween(from, to, callback, startPos, this as INode);
   }
 
   rangeHasMark(from: number, to: number, type: Mark | MarkType): boolean {

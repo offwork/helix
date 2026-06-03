@@ -6,10 +6,10 @@ import { ResolvedPos } from '../value-objects/ResolvedPos';
 import { Slice } from '../value-objects/Slice';
 
 export function removeRange(
-  content: Fragment<Node>,
+  content: Fragment,
   from: number,
   to: number
-): Fragment<Node> {
+): Fragment {
   const { index, offset } = content.findIndex(from);
   const child = content.maybeChild(index);
   const { index: indexTo, offset: offsetTo } = content.findIndex(to);
@@ -27,16 +27,16 @@ export function removeRange(
 
   return content.replaceChild(
     index,
-    child.copy(removeRange(child.content, from - offset - 1, to - offset - 1))
+    child.copy(removeRange(child.content as Fragment, from - offset - 1, to - offset - 1))
   );
 }
 
 export function insertInto(
-  content: Fragment<Node>,
+  content: Fragment,
   dist: number,
-  insert: Fragment<Node>,
+  insert: Fragment,
   parent?: Node | null
-): Fragment<Node> | null {
+): Fragment | null {
   const { index, offset } = content.findIndex(dist);
   const child = content.maybeChild(index);
 
@@ -47,7 +47,7 @@ export function insertInto(
     return content.cut(0, dist).append(insert).append(content.cut(dist));
   }
 
-  const inner = insertInto(child.content, dist - offset - 1, insert, child);
+  const inner = insertInto(child.content as Fragment, dist - offset - 1, insert, child as Node);
   return inner && content.replaceChild(index, child.copy(inner));
 }
 
@@ -80,7 +80,7 @@ export function joinable(
   return node;
 }
 
-export function close(node: Node, content: Fragment<Node>): Node {
+export function close(node: Node, content: Fragment): Node {
   node.type.checkContent(content);
   return node.copy(content);
 }
@@ -108,7 +108,7 @@ export function addRange(
   }
 
   for (let i = startIndex; i < endIndex; i++) {
-    addNode(node.child(i), target);
+    addNode(node.child(i) as Node, target);
   }
 
   if ($end && $end.depth === depth && $end.textOffset) {
@@ -120,7 +120,7 @@ export function replaceTwoWay(
   $from: ResolvedPos,
   $to: ResolvedPos,
   depth: number
-): Fragment<Node> {
+): Fragment {
   const content: Node[] = [];
   addRange(null, $from, depth, content);
   if ($from.depth > depth) {
@@ -137,7 +137,7 @@ export function replaceThreeWay(
   $end: ResolvedPos,
   $to: ResolvedPos,
   depth: number
-): Fragment<Node> {
+): Fragment {
   const openStart = $from.depth > depth && joinable($from, $start, depth + 1);
   const openEnd = $to.depth > depth && joinable($end, $to, depth + 1);
   const content: Node[] = [];

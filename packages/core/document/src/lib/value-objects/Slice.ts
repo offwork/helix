@@ -1,18 +1,18 @@
 import { Fragment } from '../entities/Fragment';
-import { Node } from '../entities/Node';
+import { empty } from '../entities/FragmentFactory';
 import { insertInto, removeRange } from '../utils/replace';
 export class Slice {
-  static readonly empty = new Slice(Fragment.empty<Node>(), 0, 0);
+  static readonly empty = new Slice(empty(), 0, 0);
 
   constructor(
-    public readonly content: Fragment<Node>,
+    public readonly content: Fragment,
     public readonly openStart: number,
     public readonly openEnd: number
   ) {
     Slice.validateParameters(content, openStart, openEnd);
   }
 
-  static maxOpen(fragment: Fragment<Node>, openIsolating = true): Slice {
+  static maxOpen(fragment: Fragment, openIsolating = true): Slice {
     let openStart = 0,
       openEnd = 0;
     for (
@@ -46,7 +46,7 @@ export class Slice {
     return `${this.content.toString()}(${this.openStart},${this.openEnd})`;
   }
 
-  insertAt(pos: number, fragment: Fragment<Node>): Slice | null {
+  insertAt(pos: number, fragment: Fragment): Slice | null {
     const content = insertInto(this.content, pos + this.openStart, fragment);
     return content && new Slice(content, this.openStart, this.openEnd);
   }
@@ -60,7 +60,7 @@ export class Slice {
   }
 
   private static validateParameters(
-    content: Fragment<Node>,
+    content: Fragment,
     openStart: number,
     openEnd: number
   ): void {
