@@ -1,12 +1,12 @@
-import { Mark } from '../value-objects/Mark';
-import { NodeType } from '../value-objects/NodeType';
 import { Node } from './Node';
+import { Mark } from '../value-objects/Mark';
+import type { INodeType } from '../value-objects/INodeType';
 
 export class TextNode extends Node {
   readonly text: string;
 
   constructor(
-    type: NodeType,
+    type: INodeType,
     attrs: Record<string, unknown>,
     text: string,
     marks?: Mark[]

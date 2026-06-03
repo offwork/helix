@@ -1,4 +1,3 @@
-import { Fragment } from '../entities/Fragment';
 import { Node } from '../entities/Node';
 import { TextNode } from '../entities/TextNode';
 import { ReplaceError } from '../errors/ReplaceError';
@@ -30,6 +29,7 @@ import {
   paragraphType,
   textType,
 } from '../../testing';
+import { empty, from } from '../entities/FragmentFactory';
 
 describe('removeRange', () => {
   describe('given flat range at child boundary', () => {
@@ -37,7 +37,7 @@ describe('removeRange', () => {
       const node1 = new Node(paragraphType, {});
       const node2 = new Node(paragraphType, {});
       const node3 = new Node(paragraphType, {});
-      const content = Fragment.from([node1, node2, node3]);
+      const content = from([node1, node2, node3]);
 
       const result = removeRange(content, 2, 4);
 
@@ -50,7 +50,7 @@ describe('removeRange', () => {
   describe('given range inside a text node', () => {
     it('removes the text range and returns remaining fragment', () => {
       const text = new TextNode(textType, {}, 'helloworld');
-      const content = Fragment.from([text]);
+      const content = from([text]);
 
       const result = removeRange(content, 2, 7);
 
@@ -63,16 +63,16 @@ describe('removeRange', () => {
       const inner1 = new Node(
         paragraphType,
         {},
-        Fragment.from([new Node(paragraphType, {})]),
+        from([new Node(paragraphType, {})]),
         []
       );
       const inner2 = new Node(
         paragraphType,
         {},
-        Fragment.from([new Node(paragraphType, {})]),
+        from([new Node(paragraphType, {})]),
         []
       );
-      const content = Fragment.from([inner1, inner2]);
+      const content = from([inner1, inner2]);
 
       expect(() => removeRange(content, 1, 5)).toThrow(
         'Removing non-flat range'
@@ -87,10 +87,10 @@ describe('removeRange', () => {
       const parent = new Node(
         paragraphType,
         {},
-        Fragment.from([child1, child2]),
+        from([child1, child2]),
         []
       );
-      const content = Fragment.from([parent]);
+      const content = from([parent]);
 
       const result = removeRange(content, 1, 3);
 
@@ -101,7 +101,7 @@ describe('removeRange', () => {
 
   describe('given null child at index', () => {
     it('throws "Removing non-flat range"', () => {
-      const content = Fragment.empty<Node>();
+      const content = empty();
 
       expect(() => removeRange(content, 0, 0)).toThrow(
         'Removing non-flat range'
@@ -116,9 +116,9 @@ describe('insertInto', () => {
       const node1 = new Node(paragraphType, {});
       const node2 = new Node(paragraphType, {});
       const inserted = new Node(paragraphType, {});
-      const content = Fragment.from([node1, node2]);
+      const content = from([node1, node2]);
 
-      const result = insertInto(content, 2, Fragment.from([inserted]));
+      const result = insertInto(content, 2, from([inserted]));
 
       expect(result).not.toBeNull();
       expect(result?.childCount).toBe(3);
@@ -129,8 +129,8 @@ describe('insertInto', () => {
   describe('given dist inside a text node', () => {
     it('inserts fragment and returns merged text', () => {
       const text = new TextNode(textType, {}, 'helloworld');
-      const content = Fragment.from([text]);
-      const insert = Fragment.from([new TextNode(textType, {}, ' ')]);
+      const content = from([text]);
+      const insert = from([new TextNode(textType, {}, ' ')]);
 
       const result = insertInto(content, 5, insert);
 
@@ -142,8 +142,8 @@ describe('insertInto', () => {
   describe('given parent that rejects the insert', () => {
     it('returns null', () => {
       const node1 = new Node(paragraphType, {});
-      const content = Fragment.from([node1]);
-      const insert = Fragment.from([new Node(paragraphType, {})]);
+      const content = from([node1]);
+      const insert = from([new Node(paragraphType, {})]);
       const rejectingParent = { canReplace: () => false } as unknown as Node;
 
       const result = insertInto(content, 0, insert, rejectingParent);
@@ -156,11 +156,11 @@ describe('insertInto', () => {
     it('inserts recursively and returns updated fragment', () => {
       const childType = createSelfRefNodeType('child');
       const child = new Node(childType, {});
-      const parent = new Node(childType, {}, Fragment.from([child]), []);
-      const content = Fragment.from([parent]);
+      const parent = new Node(childType, {}, from([child]), []);
+      const content = from([parent]);
       const inserted = new Node(childType, {});
 
-      const result = insertInto(content, 1, Fragment.from([inserted]));
+      const result = insertInto(content, 1, from([inserted]));
 
       expect(result).not.toBeNull();
       expect(result?.child(0).content.childCount).toBe(2);
@@ -169,12 +169,12 @@ describe('insertInto', () => {
 
   describe('given null child at index', () => {
     it('returns null', () => {
-      const content = Fragment.empty<Node>();
+      const content = empty();
 
       const result = insertInto(
         content,
         0,
-        Fragment.from([new Node(paragraphType, {})])
+        from([new Node(paragraphType, {})])
       );
 
       expect(result).toBeNull();
@@ -232,7 +232,7 @@ describe('insertInto', () => {
   describe('joinable', () => {
     it('given compatible nodes at depth, returns node', () => {
       const child = new Node(paragraphType, {});
-      const root = new Node(paragraphType, {}, Fragment.from([child]), []);
+      const root = new Node(paragraphType, {}, from([child]), []);
       const $before = ResolvedPos.resolve(root, 1);
       const $after = ResolvedPos.resolve(root, 1);
 
@@ -242,8 +242,8 @@ describe('insertInto', () => {
     it('given incompatible nodes at depth, throws ReplaceError', () => {
       const child1 = new Node(paragraphType, {});
       const child2 = new Node(headingType, {});
-      const root1 = new Node(paragraphType, {}, Fragment.from([child1]), []);
-      const root2 = new Node(headingType, {}, Fragment.from([child2]), []);
+      const root1 = new Node(paragraphType, {}, from([child1]), []);
+      const root2 = new Node(headingType, {}, from([child2]), []);
       const $before = ResolvedPos.resolve(root1, 0);
       const $after = ResolvedPos.resolve(root2, 0);
 
@@ -259,8 +259,8 @@ describe('insertInto', () => {
       });
 
       const child = new Node(paragraphType, {});
-      const content = Fragment.from([child]);
-      const node = new Node(nodeType, {}, Fragment.empty(), []);
+      const content = from([child]);
+      const node = new Node(nodeType, {}, empty(), []);
 
       const result = close(node, content);
 
@@ -273,10 +273,10 @@ describe('insertInto', () => {
         paragraph: paragraphType,
       });
 
-      const node = new Node(nodeType, {}, Fragment.empty(), []);
+      const node = new Node(nodeType, {}, empty(), []);
 
       expect(() =>
-        close(node, Fragment.from([new Node(headingType, {})]))
+        close(node, from([new Node(headingType, {})]))
       ).toThrow(RangeError);
     });
   });
@@ -296,7 +296,7 @@ describe('insertInto', () => {
       const root = new Node(
         paragraphType,
         {},
-        Fragment.from([child1, child2]),
+        from([child1, child2]),
         []
       );
       const $start = ResolvedPos.resolve(root, 0);
@@ -317,7 +317,7 @@ describe('insertInto', () => {
       const root = new Node(
         paragraphType,
         {},
-        Fragment.from([child1, child2, child3]),
+        from([child1, child2, child3]),
         []
       );
       const $from = ResolvedPos.resolve(root, child1.nodeSize);
@@ -337,7 +337,7 @@ describe('insertInto', () => {
       const root = new Node(
         paragraphType,
         {},
-        Fragment.from([child1, child2, child3]),
+        from([child1, child2, child3]),
         []
       );
       const $from = ResolvedPos.resolve(root, 0);
@@ -354,9 +354,9 @@ describe('insertInto', () => {
   describe('prepareSliceForReplace', () => {
     it('given slice with openStart 0, returns start and end resolved positions', () => {
       const child = new Node(paragraphType, {});
-      const root = new Node(paragraphType, {}, Fragment.from([child]), []);
+      const root = new Node(paragraphType, {}, from([child]), []);
       const $along = ResolvedPos.resolve(root, 0);
-      const slice = new Slice(Fragment.from([child]), 0, 0);
+      const slice = new Slice(from([child]), 0, 0);
 
       const result = prepareSliceForReplace(slice, $along);
 
@@ -373,7 +373,7 @@ describe('insertInto', () => {
       nodeType.contentMatch = ContentMatch.parse('paragraph*', {
         paragraph: paragraphType,
       });
-      const root = new Node(nodeType, {}, Fragment.from([child1, child2]), []);
+      const root = new Node(nodeType, {}, from([child1, child2]), []);
       const $from = ResolvedPos.resolve(root, child1.nodeSize);
       const $to = ResolvedPos.resolve(root, child1.nodeSize);
 
@@ -389,11 +389,11 @@ describe('insertInto', () => {
       nodeType.contentMatch = ContentMatch.parse('paragraph*', {
         paragraph: paragraphType,
       });
-      const root = new Node(nodeType, {}, Fragment.from([child1, child2]), []);
+      const root = new Node(nodeType, {}, from([child1, child2]), []);
       const $from = ResolvedPos.resolve(root, 0);
       const $to = ResolvedPos.resolve(root, child1.nodeSize);
       const inserted = new Node(paragraphType, {});
-      const slice = new Slice(Fragment.from([inserted]), 0, 0);
+      const slice = new Slice(from([inserted]), 0, 0);
 
       const result = replaceOuter($from, $to, slice, 0);
 
@@ -407,13 +407,13 @@ describe('insertInto', () => {
       const outer = new Node(
         innerType,
         {},
-        Fragment.from([inner1, inner2]),
+        from([inner1, inner2]),
         []
       );
-      const root = new Node(innerType, {}, Fragment.from([outer]), []);
+      const root = new Node(innerType, {}, from([outer]), []);
       const $from = ResolvedPos.resolve(root, 1);
       const $to = ResolvedPos.resolve(root, root.content.size - 1);
-      const slice = new Slice(Fragment.from([new Node(innerType, {})]), 1, 1);
+      const slice = new Slice(from([new Node(innerType, {})]), 1, 1);
 
       const result = replaceOuter($from, $to, slice, 0);
 
@@ -428,7 +428,7 @@ describe('insertInto', () => {
         paragraph: paragraphType,
       });
       const child = new Node(paragraphType, {});
-      const root = new Node(nodeType, {}, Fragment.from([child]), []);
+      const root = new Node(nodeType, {}, from([child]), []);
       const $from = ResolvedPos.resolve(root, 0);
       const $to = ResolvedPos.resolve(root, child.nodeSize);
 
@@ -443,10 +443,10 @@ describe('insertInto', () => {
         paragraph: paragraphType,
       });
       const child = new Node(paragraphType, {});
-      const root = new Node(nodeType, {}, Fragment.from([child]), []);
+      const root = new Node(nodeType, {}, from([child]), []);
       const $from = ResolvedPos.resolve(root, 0);
       const $to = ResolvedPos.resolve(root, child.nodeSize);
-      const slice = new Slice(Fragment.from([child]), 2, 2);
+      const slice = new Slice(from([child]), 2, 2);
 
       expect(() => replace($from, $to, slice)).toThrow(ReplaceError);
     });
@@ -457,10 +457,10 @@ describe('insertInto', () => {
         paragraph: paragraphType,
       });
       const child = new Node(paragraphType, {});
-      const root = new Node(nodeType, {}, Fragment.from([child]), []);
+      const root = new Node(nodeType, {}, from([child]), []);
       const $from = ResolvedPos.resolve(root, 0);
       const $to = ResolvedPos.resolve(root, child.nodeSize);
-      const slice = new Slice(Fragment.from([child]), 0, 1);
+      const slice = new Slice(from([child]), 0, 1);
 
       expect(() => replace($from, $to, slice)).toThrow(ReplaceError);
     });

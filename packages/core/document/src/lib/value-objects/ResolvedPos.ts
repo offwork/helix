@@ -1,9 +1,9 @@
-import { Node } from '../entities/Node';
+import type { INode } from '../entities/INode';
 
 export class ResolvedPos {
   constructor(
     public readonly pos: number,
-    public readonly path: (Node | number)[],
+    public readonly path: (INode | number)[],
     public readonly parentOffset: number
   ) {
     this.validateParameters('pos', pos);
@@ -15,11 +15,11 @@ export class ResolvedPos {
     return this.path.length / 3 - 1;
   }
 
-  get doc(): Node {
+  get doc(): INode {
     return this.node(0);
   }
 
-  get parent(): Node {
+  get parent(): INode {
     return this.node();
   }
 
@@ -27,18 +27,13 @@ export class ResolvedPos {
     return this.pos - (this.path[this.path.length - 1] as number);
   }
 
-  get nodeAfter(): Node | null {
-    if (this.index() == this.parent.childCount) return null;
-    /* if (this.textOffset > 0) {
-      const parent = this.parent;
-      const child = parent.content.child(this.index());
-      return child.cut(this.textOffset, child.text?.length ?? 0);
-    } */
-
-    return this.parent.content.child(this.index());
+  get nodeAfter(): INode | null {
+    if (this.index() === this.parent.childCount) return null;
+    const child = this.parent.content.child(this.index());
+    return this.textOffset ? child.cut(this.textOffset) : child;
   }
 
-  get nodeBefore(): Node | null {
+  get nodeBefore(): INode | null {
     const parent = this.parent;
     if (this.textOffset > 0) {
       const child = parent.content.child(this.index());
@@ -49,12 +44,12 @@ export class ResolvedPos {
     return parent.content.child(this.index() - 1);
   }
 
-  static resolve(doc: Node, pos: number): ResolvedPos {
+  static resolve(doc: INode, pos: number): ResolvedPos {
     if (!(pos >= 0 && pos <= doc.content.size)) {
       throw new RangeError(`Position ${pos} out of range`);
     }
 
-    const path: (Node | number)[] = [];
+    const path: (INode | number)[] = [];
     let start = 0,
       parentOffset = pos;
 
@@ -77,9 +72,9 @@ export class ResolvedPos {
     return this.path[resolvedDepth * 3 + 1] as number;
   }
 
-  node(depth?: number | null): Node {
+  node(depth?: number | null): INode {
     const resolvedDepth = this.resolveDepth(depth);
-    return this.path[resolvedDepth * 3] as Node;
+    return this.path[resolvedDepth * 3] as INode;
   }
 
   start(depth?: number | null): number {
@@ -111,7 +106,7 @@ export class ResolvedPos {
 
     return (
       (this.path[resolvedDepth * 3 - 1] as number) +
-      (this.path[resolvedDepth * 3] as Node).nodeSize
+      (this.path[resolvedDepth * 3] as INode).nodeSize
     );
   }
 

@@ -46,26 +46,48 @@ export class Schema {
         type.spec.content || '',
         this.nodes
       );
-      type.inlineContent = type.spec.inline === true;
+      type.inlineContent = type.contentMatch.inlineContent;
 
-      if (type.spec.marks === "") {
+      if (type.spec.marks === '') {
         type.markSet = [];
       }
     }
   }
 
   text(text: string, marks?: readonly Mark[]): TextNode {
-    const textNode = new TextNode(this.nodes['text'], {}, text, marks ? [...marks] : []);
+    const textNode = new TextNode(
+      this.nodes['text'],
+      {},
+      text,
+      marks ? [...marks] : []
+    );
     return textNode;
   }
 
-  node(type: string, attrs?: Record<string, unknown>, content?: Fragment<Node> | Node[], marks?: readonly Mark[]): Node {
+  node(
+    type: string,
+    attrs?: Record<string, unknown>,
+    content?: Fragment | Node[],
+    marks?: readonly Mark[]
+  ): Node {
     if (!this.nodes[type]) {
       throw new Error(`Unknown node type: "${type}"`);
     }
 
-    const node = this.nodes[type].create(attrs, content, marks ? [...marks] : []);
+    const node = this.nodes[type].create(
+      attrs,
+      content,
+      marks ? [...marks] : []
+    );
     return node;
+  }
+
+  nodeType(type: string): NodeType {
+    if (!this.nodes[type]) {
+      throw new RangeError(`Unknown node type: ${type}`);
+    }
+
+    return this.nodes[type];
   }
 
   mark(type: string, attrs?: Record<string, unknown>): Mark {
@@ -88,7 +110,8 @@ export class Schema {
     Object.entries(markSpec).forEach(([name, spec], index) => {
       this.marks[name] = new MarkType(name, this, spec);
       this.marks[name].rank = index;
-      this.marks[name].excluded = spec.excludes === undefined ? [this.marks[name]] : [];
+      this.marks[name].excluded =
+        spec.excludes === undefined ? [this.marks[name]] : [];
     });
   }
 

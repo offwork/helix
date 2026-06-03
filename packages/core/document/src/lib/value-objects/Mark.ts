@@ -1,21 +1,21 @@
 import { deepEqual } from '../utils/deep-equal';
-import { MarkType } from './MarkType';
+import type { IMarkType } from './IMarkType';
+import type { IMark } from './IMark';
 
-export class Mark {
-  readonly type: MarkType;
+export class Mark implements IMark {
+  readonly type: IMarkType;
   readonly attrs: Record<string, unknown>;
   static readonly none: readonly Mark[] = [];
 
-  constructor(type: MarkType, attrs: Record<string, unknown>) {
-    if (!(type instanceof MarkType))
-      throw new Error('Type must be a MarkType instance');
+  constructor(type: IMarkType, attrs: Record<string, unknown>) {
+    if (type === null || type === undefined)
+      throw new Error('type coannot be null or undefined');
     if (typeof attrs !== 'object' || attrs === null || Array.isArray(attrs))
       throw new Error('Attrs must be an object');
 
     this.attrs = { ...attrs };
     this.type = type;
   }
-
 
   static sameSet(a: readonly Mark[], b: readonly Mark[]): boolean {
     if (a.length !== b.length) return false;

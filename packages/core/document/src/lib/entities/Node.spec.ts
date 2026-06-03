@@ -1,6 +1,5 @@
 import { Node } from './Node';
 import { NodeType } from '../value-objects/NodeType';
-import { Fragment } from './Fragment';
 import { ContentMatch } from '../value-objects/ContentMatch';
 import { ResolvedPos } from '../value-objects/ResolvedPos';
 import { TextNode } from './TextNode';
@@ -22,6 +21,7 @@ import {
   createNodeSpec,
   createMockNodeType,
 } from '../../testing';
+import { empty, from } from './FragmentFactory';
 
 describe('Node', () => {
   describe('constructor', () => {
@@ -50,7 +50,7 @@ describe('Node', () => {
     });
 
     it('given null marks, throws error', () => {
-      const mockContent = Fragment.from<Node>([mockChildNode]);
+      const mockContent = from([mockChildNode]);
 
       expect(
         () => new Node(paragraphType, {}, mockContent, null as never)
@@ -60,7 +60,7 @@ describe('Node', () => {
 
   describe('childCount', () => {
     it('returns content.childCount', () => {
-      const mockContent = Fragment.from<Node>([mockChildNode]);
+      const mockContent = from([mockChildNode]);
 
       const node = new Node(paragraphType, {}, mockContent, []);
 
@@ -76,7 +76,7 @@ describe('Node', () => {
         createNodeSpec()
       );
       nodeType.contentMatch = ContentMatch.empty;
-      const mockContent = Fragment.from<Node>([mockChildNode]);
+      const mockContent = from([mockChildNode]);
 
       const node = new Node(nodeType, {}, mockContent, []);
 
@@ -84,7 +84,7 @@ describe('Node', () => {
     });
 
     it('given container node, returns 2 + content.size', () => {
-      const mockContent = Fragment.from<Node>([mockChildNode]);
+      const mockContent = from([mockChildNode]);
 
       const node = new Node(paragraphType, {}, mockContent, []);
 
@@ -121,7 +121,7 @@ describe('Node', () => {
       );
 
       const newChildNode = new Node(paragraphType, {});
-      const newContent = Fragment.from<Node>([newChildNode]);
+      const newContent = from([newChildNode]);
 
       const copy = node.copy(newContent);
 
@@ -149,7 +149,7 @@ describe('Node', () => {
     it('given partial range, returns new node with cut content', () => {
       const child1 = new Node(paragraphType, {});
       const child2 = new Node(paragraphType, {});
-      const content = Fragment.from([child1, child2]);
+      const content = from([child1, child2]);
       const node = new Node(paragraphType, {}, content, []);
 
       const result = node.cut(0, 2);
@@ -163,7 +163,7 @@ describe('Node', () => {
     it('given valid index, returns child node', () => {
       const child1 = new Node(paragraphType, {});
       const child2 = new Node(paragraphType, {});
-      const content = Fragment.from([child1, child2]);
+      const content = from([child1, child2]);
       const node = new Node(paragraphType, {}, content, []);
 
       expect(node.child(0)).toBe(child1);
@@ -174,7 +174,7 @@ describe('Node', () => {
     it('given valid index, returns child node', () => {
       const child1 = new Node(paragraphType, {});
       const child2 = new Node(paragraphType, {});
-      const content = Fragment.from([child1, child2]);
+      const content = from([child1, child2]);
       const node = new Node(paragraphType, {}, content, []);
 
       expect(node.maybeChild(0)).toBe(child1);
@@ -183,7 +183,7 @@ describe('Node', () => {
     it('given invalid index, returns null', () => {
       const child1 = new Node(paragraphType, {});
       const child2 = new Node(paragraphType, {});
-      const content = Fragment.from([child1, child2]);
+      const content = from([child1, child2]);
       const node = new Node(paragraphType, {}, content, []);
 
       expect(node.maybeChild(2)).toBeNull();
@@ -194,7 +194,7 @@ describe('Node', () => {
     it('given non-empty content, returns first child', () => {
       const child1 = new Node(paragraphType, {});
       const child2 = new Node(paragraphType, {});
-      const content = Fragment.from([child1, child2]);
+      const content = from([child1, child2]);
       const node = new Node(paragraphType, {}, content, []);
 
       expect(node.firstChild).toBe(child1);
@@ -205,7 +205,7 @@ describe('Node', () => {
     it('given non-empty content, returns last child', () => {
       const child1 = new Node(paragraphType, {});
       const child2 = new Node(paragraphType, {});
-      const content = Fragment.from([child1, child2]);
+      const content = from([child1, child2]);
       const node = new Node(paragraphType, {}, content, []);
 
       expect(node.lastChild).toBe(child2);
@@ -253,7 +253,7 @@ describe('Node', () => {
     it('given non-empty content, calls callback with each child node/offset/index', () => {
       const child1 = new Node(paragraphType, {});
       const child2 = new Node(paragraphType, {});
-      const content = Fragment.from([child1, child2]);
+      const content = from([child1, child2]);
       const node = new Node(paragraphType, {}, content, []);
 
       const callback = jest.fn();
@@ -278,7 +278,7 @@ describe('Node', () => {
 
       const child1 = new Node(nodeType, {});
       const child2 = new Node(nodeType, {});
-      const content = Fragment.from([child1, child2]);
+      const content = from([child1, child2]);
       const node = new Node(nodeType, {}, content, []);
 
       const match = node.contentMatchAt(1);
@@ -288,7 +288,7 @@ describe('Node', () => {
 
     it('given index that fails to find content match, throws error', () => {
       const child1 = new Node(paragraphType, {});
-      const content = Fragment.from([child1]);
+      const content = from([child1]);
       const node = new Node(paragraphType, {}, content, []);
 
       expect(() => node.contentMatchAt(1)).toThrow(
@@ -301,7 +301,7 @@ describe('Node', () => {
     it('given valid pos, returns ResolvedPos', () => {
       const child1 = new Node(paragraphType, {});
       const child2 = new Node(paragraphType, {});
-      const content = Fragment.from([child1, child2]);
+      const content = from([child1, child2]);
       const node = new Node(paragraphType, {}, content, []);
 
       const resolvedPos = node.resolveNoCache(1);
@@ -313,7 +313,7 @@ describe('Node', () => {
   describe('nodeAt', () => {
     it('given pos beyond content, returns null', () => {
       const child1 = new Node(paragraphType, {});
-      const content = Fragment.from([child1]);
+      const content = from([child1]);
       const node = new Node(paragraphType, {}, content, []);
 
       expect(node.nodeAt(node.content.size)).toBeNull();
@@ -322,7 +322,7 @@ describe('Node', () => {
     it('given valid pos, returns node at position', () => {
       const child1 = new Node(paragraphType, {});
       const child2 = new Node(paragraphType, {});
-      const content = Fragment.from([child1, child2]);
+      const content = from([child1, child2]);
       const node = new Node(paragraphType, {}, content, []);
 
       expect(node.nodeAt(2)).toBe(child2);
@@ -332,7 +332,7 @@ describe('Node', () => {
   describe('childAfter', () => {
     it('given pos 0, returns first child with index 0 and offset 0', () => {
       const child = new Node(paragraphType, {});
-      const node = new Node(paragraphType, {}, Fragment.from([child]), []);
+      const node = new Node(paragraphType, {}, from([child]), []);
 
       const result = node.childAfter(0);
 
@@ -341,7 +341,7 @@ describe('Node', () => {
 
     it('given pos at end of content, returns null node with index of last child and offset of last child end', () => {
       const child = new Node(paragraphType, {});
-      const node = new Node(paragraphType, {}, Fragment.from([child]), []);
+      const node = new Node(paragraphType, {}, from([child]), []);
 
       const result = node.childAfter(node.content.size);
 
@@ -352,7 +352,7 @@ describe('Node', () => {
   describe('childBefore', () => {
     it('given pos 0, returns null node with index 0 and offset 0', () => {
       const child = new Node(paragraphType, {});
-      const node = new Node(paragraphType, {}, Fragment.from([child]), []);
+      const node = new Node(paragraphType, {}, from([child]), []);
 
       const result = node.childBefore(0);
 
@@ -365,7 +365,7 @@ describe('Node', () => {
       const node = new Node(
         paragraphType,
         {},
-        Fragment.from([child1, child2]),
+        from([child1, child2]),
         []
       );
 
@@ -446,8 +446,8 @@ describe('Node', () => {
       });
 
       const child = new Node(paragraphType, {});
-      const node = new Node(nodeType, {}, Fragment.from([child]), []);
-      const replacement = Fragment.from([new Node(paragraphType, {})]);
+      const node = new Node(nodeType, {}, from([child]), []);
+      const replacement = from([new Node(paragraphType, {})]);
 
       expect(node.canReplace(0, 1, replacement)).toBe(true);
     });
@@ -459,8 +459,8 @@ describe('Node', () => {
       });
 
       const child = new Node(paragraphType, {});
-      const node = new Node(nodeType, {}, Fragment.from([child]), []);
-      const replacement = Fragment.from([new Node(headingType, {})]);
+      const node = new Node(nodeType, {}, from([child]), []);
+      const replacement = from([new Node(headingType, {})]);
 
       expect(node.canReplace(0, 1, replacement)).toBe(false);
     });
@@ -472,7 +472,7 @@ describe('Node', () => {
       });
 
       const child = new Node(paragraphType, {});
-      const node = new Node(nodeType, {}, Fragment.from([child]), []);
+      const node = new Node(nodeType, {}, from([child]), []);
 
       expect(node.canReplace(0, 1)).toBe(true);
     });
@@ -485,11 +485,11 @@ describe('Node', () => {
       nodeType.markSet = [];
 
       const child = new Node(paragraphType, {});
-      const node = new Node(nodeType, {}, Fragment.from([child]), []);
+      const node = new Node(nodeType, {}, from([child]), []);
       const markedNode = new Node(paragraphType, {}, undefined, [
         createMark(boldMarkType, {}),
       ]);
-      const replacement = Fragment.from([markedNode]);
+      const replacement = from([markedNode]);
 
       expect(node.canReplace(0, 1, replacement)).toBe(false);
     });
@@ -499,12 +499,12 @@ describe('Node', () => {
     it('given range covering all children, visits all nodes with startPos', () => {
       const child1 = new Node(paragraphType, {});
       const child2 = new Node(paragraphType, {});
-      const content = Fragment.from([child1, child2]);
+      const content = from([child1, child2]);
       const node = new Node(paragraphType, {}, content, []);
 
       const visited: { node: Node; pos: number }[] = [];
       node.nodesBetween(0, content.size, (n, pos) => {
-        visited.push({ node: n, pos });
+        visited.push({ node: n as Node, pos });
       });
 
       expect(visited[0]).toEqual({ node: child1, pos: 0 });
@@ -512,7 +512,7 @@ describe('Node', () => {
 
     it('given startPos provided, offsets visited node positions', () => {
       const child1 = new Node(paragraphType, {});
-      const content = Fragment.from([child1]);
+      const content = from([child1]);
       const node = new Node(paragraphType, {}, content, []);
 
       const visited: number[] = [];
@@ -531,7 +531,7 @@ describe('Node', () => {
 
   describe('rangeHasMark', () => {
     it('given to equals from, returns false', () => {
-      const node = new Node(paragraphType, {}, Fragment.empty(), []);
+      const node = new Node(paragraphType, {}, empty(), []);
 
       expect(node.rangeHasMark(1, 1, boldMarkType)).toBe(false);
     });
@@ -539,14 +539,14 @@ describe('Node', () => {
     it('given mark present in range, returns true', () => {
       const mark = createMark(boldMarkType, {});
       const text = new TextNode(textType, {}, 'hello', [mark]);
-      const node = new Node(paragraphType, {}, Fragment.from([text]), []);
+      const node = new Node(paragraphType, {}, from([text]), []);
 
       expect(node.rangeHasMark(0, text.nodeSize, boldMarkType)).toBe(true);
     });
 
     it('given mark not present in range, returns false', () => {
       const text = new TextNode(textType, {}, 'hello', []);
-      const node = new Node(paragraphType, {}, Fragment.from([text]), []);
+      const node = new Node(paragraphType, {}, from([text]), []);
 
       expect(node.rangeHasMark(0, text.nodeSize, boldMarkType)).toBe(false);
     });
@@ -560,7 +560,7 @@ describe('Node', () => {
       });
 
       const child = new Node(paragraphType, {});
-      const node = new Node(nodeType, {}, Fragment.from([child]), []);
+      const node = new Node(nodeType, {}, from([child]), []);
 
       expect(node.canReplaceWith(0, 1, paragraphType)).toBe(true);
     });
@@ -572,7 +572,7 @@ describe('Node', () => {
       });
 
       const child = new Node(paragraphType, {});
-      const node = new Node(nodeType, {}, Fragment.from([child]), []);
+      const node = new Node(nodeType, {}, from([child]), []);
 
       expect(node.canReplaceWith(0, 1, headingType)).toBe(false);
     });
@@ -585,7 +585,7 @@ describe('Node', () => {
       nodeType.markSet = [];
 
       const child = new Node(paragraphType, {});
-      const node = new Node(nodeType, {}, Fragment.from([child]), []);
+      const node = new Node(nodeType, {}, from([child]), []);
 
       expect(
         node.canReplaceWith(0, 1, paragraphType, [createMark(boldMarkType, {})])
@@ -601,11 +601,11 @@ describe('Node', () => {
       });
 
       const child = new Node(paragraphType, {});
-      const node = new Node(nodeType, {}, Fragment.from([child]), []);
+      const node = new Node(nodeType, {}, from([child]), []);
       const other = new Node(
         nodeType,
         {},
-        Fragment.from([new Node(paragraphType, {})]),
+        from([new Node(paragraphType, {})]),
         []
       );
 
@@ -618,8 +618,8 @@ describe('Node', () => {
         paragraph: paragraphType,
       });
 
-      const node = new Node(nodeType, {}, Fragment.empty(), []);
-      const other = new Node(nodeType, {}, Fragment.empty(), []);
+      const node = new Node(nodeType, {}, empty(), []);
+      const other = new Node(nodeType, {}, empty(), []);
 
       expect(node.canAppend(other)).toBe(true);
     });
@@ -630,7 +630,7 @@ describe('Node', () => {
       const nodeType = new NodeType('doc', defaultMockSchema, defaultNodeSpec);
       nodeType.contentMatch = ContentMatch.empty;
 
-      const node = new Node(nodeType, {}, Fragment.empty(), []);
+      const node = new Node(nodeType, {}, empty(), []);
 
       expect(() => node.check()).not.toThrow();
     });
@@ -644,7 +644,7 @@ describe('Node', () => {
       const node = new Node(
         nodeType,
         {},
-        Fragment.from([new Node(headingType, {})]),
+        from([new Node(headingType, {})]),
         []
       );
 
@@ -657,7 +657,7 @@ describe('Node', () => {
       boldMarkType.rank = 2;
       italicMarkType.rank = 1;
 
-      const node = new Node(paragraphType, {}, Fragment.empty(), [
+      const node = new Node(paragraphType, {}, empty(), [
         mark1,
         mark2,
       ]);
@@ -669,7 +669,7 @@ describe('Node', () => {
   describe('resolve', () => {
     it('given valid pos, returns ResolvedPos', () => {
       const child = new Node(paragraphType, {});
-      const node = new Node(paragraphType, {}, Fragment.from([child]), []);
+      const node = new Node(paragraphType, {}, from([child]), []);
 
       expect(node.resolve(1)).toBeInstanceOf(ResolvedPos);
     });
@@ -683,9 +683,9 @@ describe('Node', () => {
       });
       const child1 = new Node(paragraphType, {});
       const child2 = new Node(paragraphType, {});
-      const root = new Node(nodeType, {}, Fragment.from([child1, child2]), []);
+      const root = new Node(nodeType, {}, from([child1, child2]), []);
       const inserted = new Node(paragraphType, {});
-      const slice = new Slice(Fragment.from([inserted]), 0, 0);
+      const slice = new Slice(from([inserted]), 0, 0);
 
       const result = root.replace(0, child1.nodeSize, slice);
 
@@ -698,8 +698,8 @@ describe('Node', () => {
         paragraph: paragraphType,
       });
       const child = new Node(paragraphType, {});
-      const root = new Node(nodeType, {}, Fragment.from([child]), []);
-      const slice = new Slice(Fragment.from([child]), 2, 2);
+      const root = new Node(nodeType, {}, from([child]), []);
+      const slice = new Slice(from([child]), 2, 2);
 
       expect(() => root.replace(0, child.nodeSize, slice)).toThrow(
         ReplaceError
@@ -714,7 +714,7 @@ describe('Node', () => {
       nodeType.contentMatch = ContentMatch.parse('paragraph*', {
         paragraph: paragraphType,
       });
-      const root = new Node(nodeType, {}, Fragment.from([child]), []);
+      const root = new Node(nodeType, {}, from([child]), []);
 
       expect(root.slice(0, 0)).toBe(Slice.empty);
     });
@@ -726,7 +726,7 @@ describe('Node', () => {
       nodeType.contentMatch = ContentMatch.parse('paragraph*', {
         paragraph: paragraphType,
       });
-      const root = new Node(nodeType, {}, Fragment.from([child1, child2]), []);
+      const root = new Node(nodeType, {}, from([child1, child2]), []);
 
       const result = root.slice(0, child1.nodeSize);
 
@@ -740,7 +740,7 @@ describe('Node', () => {
       nodeType.contentMatch = ContentMatch.parse('paragraph*', {
         paragraph: paragraphType,
       });
-      const root = new Node(nodeType, {}, Fragment.from([child]), []);
+      const root = new Node(nodeType, {}, from([child]), []);
 
       const result = root.slice(0, child.nodeSize, true);
 

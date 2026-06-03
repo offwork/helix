@@ -48,7 +48,7 @@ describe('Schema', () => {
       expect(
         () =>
           new Schema({
-            nodes: { text: {  }, paragraph: {} },
+            nodes: { text: {}, paragraph: {} },
           })
       ).toThrow("Every schema needs a 'doc' type");
     });
@@ -59,7 +59,7 @@ describe('Schema', () => {
           new Schema({
             nodes: {
               doc: { content: 'paragraph+' },
-              text: { },
+              text: {},
               strong: {},
             },
             marks: { strong: {} },
@@ -78,7 +78,7 @@ describe('Schema', () => {
 
     it('given inline node, inlineContent is true', () => {
       const schema = new Schema({
-        nodes: createSchemaSpec({ span: { inline: true, content: 'text*' } }),
+        nodes: createSchemaSpec({ span: { content: 'text*' } }),
         marks: createMarkSpec(),
       });
 
@@ -235,6 +235,28 @@ describe('Schema', () => {
 
       expect(schema.marks.strong.name).toBe('strong');
       expect(schema.marks.em.name).toBe('em');
+    });
+  });
+
+  describe('nodeType', () => {
+    it('given valid name, returns NodeType', () => {
+      const schema = new Schema({
+        nodes: createSchemaSpec(),
+        marks: createMarkSpec(),
+      });
+
+      expect(schema.nodeType('paragraph')).toBeInstanceOf(NodeType);
+    });
+
+    it('given unknown name, throws RangeError', () => {
+      const schema = new Schema({
+        nodes: createSchemaSpec(),
+        marks: createMarkSpec(),
+      });
+
+      expect(() => schema.nodeType('unknown')).toThrow(
+        'Unknown node type: unknown'
+      );
     });
   });
 });

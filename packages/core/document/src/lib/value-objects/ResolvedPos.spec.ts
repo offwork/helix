@@ -1,7 +1,8 @@
 import { Fragment } from '../entities/Fragment';
 import { Node } from '../entities/Node';
 import { ResolvedPos } from './ResolvedPos';
-import { createMockNode } from '../../testing';
+import { TextNode } from '../entities/TextNode';
+import { createMockNode, paragraphType, textType } from '../../testing';
 
 const path: (Node | number)[] = [];
 
@@ -400,6 +401,19 @@ describe('ResolvedPos', () => {
       const resolvedPos = ResolvedPos.resolve(rootNode, 2);
 
       expect(resolvedPos?.nodeAfter).toBe(secondNode);
+    });
+
+    it('given pos inside text node, returns cut node from offset', () => {
+      const textNode = new TextNode(textType, {}, 'hello');
+      const rootNode = new Node(
+        paragraphType,
+        {},
+        Fragment.from([textNode]),
+        []
+      );
+      const resolvedPos = ResolvedPos.resolve(rootNode, 2);
+
+      expect((resolvedPos.nodeAfter as TextNode).text).toBe('llo');
     });
   });
 

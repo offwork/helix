@@ -1,5 +1,4 @@
 import { Fragment } from '../entities/Fragment';
-import { Node } from '../entities/Node';
 import { Edge } from '../interfaces/Edge';
 import {
   checkForDeadEnds,
@@ -51,6 +50,10 @@ export class ContentMatch {
     return this.edges.length;
   }
 
+  get inlineContent() {
+    return this.edges.length != 0 && this.edges[0].type.isInline;
+  }
+
   edge(index: number): Edge {
     if (index < 0) {
       throw new Error('ContentMatch edge index cannot be negative');
@@ -82,7 +85,7 @@ export class ContentMatch {
   }
 
   matchFragment(
-    fragment: Fragment<Node>,
+    fragment: Fragment,
     start = 0,
     end?: number
   ): ContentMatch | null {
@@ -96,7 +99,6 @@ export class ContentMatch {
       throw new Error('ContentMatch matchFragment invalid range');
     }
 
-    // Empty fragment always returns current match
     if (fragment.size === 0) return this;
 
     // eslint-disable-next-line @typescript-eslint/no-this-alias
@@ -105,11 +107,10 @@ export class ContentMatch {
 
     while (index < endIndex && current) {
       const node = fragment.child(index);
-      current = current.matchType(node.type);
+      current = current.matchType(node.type as NodeType);
       index++;
     }
 
-    // If we reached a valid end, return the match. Otherwise, return null
     return current;
   }
 
@@ -167,10 +168,10 @@ export class ContentMatch {
   }
 
   fillBefore(
-    after: Fragment<Node>,
+    after: Fragment,
     toEnd = false,
     startIndex = 0
-  ): Fragment<Node> | null {
+  ): Fragment | null {
     if (after === null) {
       throw new Error('ContentMatch fillBefore after parameter cannot be null');
     }
@@ -180,7 +181,7 @@ export class ContentMatch {
     const search = (
       match: ContentMatch,
       types: NodeType[]
-    ): Fragment<Node> | null => {
+    ): Fragment | null => {
       const finished = match.matchFragment(after, startIndex);
       if (finished && (!toEnd || finished.validEnd)) {
         return Fragment.from(types.map((tp) => tp.create()));

@@ -14,7 +14,7 @@ import {
 describe('Fragment', () => {
   describe('creation', () => {
     it('creates empty fragment', () => {
-      const fragment = Fragment.empty<Node>();
+      const fragment = Fragment.empty();
 
       expect(fragment).toBeInstanceOf(Fragment);
       expect(fragment.childCount).toBe(0);
@@ -97,7 +97,7 @@ describe('Fragment', () => {
     });
 
     it('returns undefined for empty fragment', () => {
-      const fragment = Fragment.empty<Node>();
+      const fragment = Fragment.empty();
 
       expect(fragment.firstChild).toBeUndefined();
       expect(fragment.lastChild).toBeUndefined();
@@ -129,18 +129,18 @@ describe('Fragment', () => {
 
       const visited: Node[] = [];
       fragment.forEach((node) => {
-        visited.push(node);
+        visited.push(node as Node);
       });
 
       expect(visited).toEqual([node1, node2, node3]);
     });
 
     it('does nothing for empty fragment', () => {
-      const fragment = Fragment.empty<Node>();
+      const fragment = Fragment.empty();
 
       const visited: Node[] = [];
       fragment.forEach((node) => {
-        visited.push(node);
+        visited.push(node as Node);
       });
 
       expect(visited).toEqual([]);
@@ -265,7 +265,7 @@ describe('Fragment', () => {
 
   describe('childCount', () => {
     it('returns 0 for empty fragment', () => {
-      const fragment = Fragment.empty<Node>();
+      const fragment = Fragment.empty();
       expect(fragment.childCount).toBe(0);
     });
 
@@ -282,8 +282,8 @@ describe('Fragment', () => {
 
   describe('equals', () => {
     it('given both empty, returns true', () => {
-      const fragment1 = Fragment.empty<Node>();
-      const fragment2 = Fragment.empty<Node>();
+      const fragment1 = Fragment.empty();
+      const fragment2 = Fragment.empty();
 
       expect(fragment1.equals(fragment2)).toBe(true);
     });
@@ -316,14 +316,14 @@ describe('Fragment', () => {
     });
 
     it('given null, throws error', () => {
-      const fragment = Fragment.empty<Node>();
+      const fragment = Fragment.empty();
       expect(() => fragment.equals(null as never)).toThrow(
         'Fragment equals parameter cannot be null'
       );
     });
 
     it('given undefined, throws error', () => {
-      const fragment = Fragment.empty<Node>();
+      const fragment = Fragment.empty();
       expect(() => fragment.equals(undefined as never)).toThrow(
         'Fragment equals parameter cannot be undefined'
       );
@@ -384,7 +384,7 @@ describe('Fragment', () => {
   });
 
   it('given negative pos, throws RangeError', () => {
-    const fragment = Fragment.empty<Node>();
+    const fragment = Fragment.empty();
 
     expect(() => fragment.findIndex(-1)).toThrow(
       'Invalid position: -1 (size: 0)'
@@ -486,13 +486,13 @@ describe('Fragment', () => {
 
       const fragment = Fragment.from([node1]);
 
-      const result = fragment.append(Fragment.empty<Node>());
+      const result = fragment.append(Fragment.empty());
 
       expect(result).toBe(fragment);
     });
 
     it('given this empty, returns other', () => {
-      const empty = Fragment.empty<Node>();
+      const empty = Fragment.empty();
       const other = Fragment.from([new Node(paragraphType, {})]);
 
       const result = empty.append(other);
@@ -567,7 +567,7 @@ describe('Fragment', () => {
 
       const visited: Node[] = [];
       fragment.nodesBetween(0, fragment.size, (node) => {
-        visited.push(node);
+        visited.push(node as Node);
       });
 
       expect(visited).toEqual([node1, node2]);
@@ -590,7 +590,7 @@ describe('Fragment', () => {
 
       const visited: Node[] = [];
       fragment.nodesBetween(0, fragment.size, (node) => {
-        visited.push(node);
+        visited.push(node as Node);
         return false;
       });
 
@@ -616,7 +616,7 @@ describe('Fragment', () => {
 
       const visited: Node[] = [];
       fragment.descendants((node) => {
-        visited.push(node);
+        visited.push(node as Node);
       });
 
       expect(visited).toEqual([parent, child1, child2]);
