@@ -1,12 +1,12 @@
-import { Mark } from '../value-objects/Mark';
-import { NodeType } from '../value-objects/NodeType';
 import { Node } from './Node';
+import { Mark } from '../value-objects/Mark';
+import type { INodeType } from '../value-objects/INodeType';
 
 export class TextNode extends Node {
   readonly text: string;
 
   constructor(
-    type: NodeType,
+    type: INodeType,
     attrs: Record<string, unknown>,
     text: string,
     marks?: Mark[]
@@ -34,7 +34,7 @@ export class TextNode extends Node {
     }
 
     return new TextNode(
-      this.type as NodeType,
+      this.type,
       this.attrs,
       this.textBetween(from, to),
       this.marks
@@ -54,7 +54,7 @@ export class TextNode extends Node {
       return this;
     }
 
-    return new TextNode(this.type as NodeType, this.attrs, this.text, marks);
+    return new TextNode(this.type, this.attrs, this.text, marks);
   }
 
   textBetween(from: number, to: number): string {
@@ -66,6 +66,6 @@ export class TextNode extends Node {
       return this;
     }
 
-    return new TextNode(this.type as NodeType, this.attrs, text, this.marks);
+    return new TextNode(this.type, this.attrs, text, this.marks);
   }
 }
