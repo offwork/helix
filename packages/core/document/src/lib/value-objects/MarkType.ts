@@ -1,14 +1,15 @@
 import { MarkSpec } from '../interfaces/SchemaSpec';
 import { Attrs, checkAttrs } from '../utils/attrs';
 import { Attribute } from './Attribute';
+import type { IMarkType } from './IMarkType';
 import { Mark } from './Mark';
 
-export class MarkType {
+export class MarkType implements IMarkType {
   readonly name: string;
   readonly schema: unknown;
   readonly spec: MarkSpec;
   readonly attrs: Record<string, Attribute>;
-  excluded: readonly MarkType[] = [];
+  excluded: readonly IMarkType[] = [];
   rank = 0;
 
   constructor(name: string, schema: unknown, spec: MarkSpec) {
@@ -54,7 +55,7 @@ export class MarkType {
     return this.name === other.name;
   }
 
-  excludes(other: MarkType): boolean {
+  excludes(other: IMarkType): boolean {
     return this.excluded.indexOf(other) > -1;
   }
 

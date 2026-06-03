@@ -7,6 +7,7 @@ import { Mark } from '../lib/value-objects/Mark';
 import { MarkSpec, NodeSpec } from '../lib/interfaces/SchemaSpec';
 import { Edge } from '../lib/interfaces/Edge';
 import { ResolvedPos } from '../lib/value-objects/ResolvedPos';
+import { empty, from } from '../lib/entities/FragmentFactory';
 
 // — Defaults
 export const defaultMockSchema = {} as never;
@@ -62,11 +63,11 @@ export const linkMarkType = new MarkType(
 
 // — Shared Node setup
 export const mockChildNode = new Node(paragraphType, { attrs: {} });
-export const mockContent = Fragment.from<Node>([mockChildNode]);
+export const mockContent = from([mockChildNode]);
 
 // — Fragment helpers
-export const emptyContent = Fragment.empty<Node>();
-export const nonEmptyContent = { size: 3 } as Fragment<Node>;
+export const emptyContent = empty();
+export const nonEmptyContent = { size: 3 } as Fragment;
 
 // — Spec factories
 export const createNodeSpec = (attrs = { attrs: {} } as NodeSpec): NodeSpec =>
@@ -140,8 +141,8 @@ export function createMockNode(
   return new Node(nodeType, {});
 }
 
-export function createMockFragment(nodes: Node[] = []): Fragment<Node> {
-  return nodes.length === 0 ? Fragment.empty() : Fragment.from(nodes);
+export function createMockFragment(nodes: Node[] = []): Fragment {
+  return nodes.length === 0 ? empty() : from(nodes);
 }
 
 export function createSelfRefNodeType(name: string): NodeType {

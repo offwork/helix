@@ -67,7 +67,7 @@ export class Schema {
   node(
     type: string,
     attrs?: Record<string, unknown>,
-    content?: Fragment<Node> | Node[],
+    content?: Fragment | Node[],
     marks?: readonly Mark[]
   ): Node {
     if (!this.nodes[type]) {

@@ -78,7 +78,7 @@ describe('Slice Value Object', () => {
   describe('equals', () => {
     it('returns true when all properties match', () => {
       const node = createMockNode(paragraphType);
-      const content = Fragment.from<Node>([node]);
+      const content = Fragment.from([node]);
       const slice1 = new Slice(content, 1, 2);
       const slice2 = new Slice(content, 1, 2);
 
@@ -86,8 +86,8 @@ describe('Slice Value Object', () => {
     });
 
     it('returns false when content differs', () => {
-      const content1 = Fragment.from<Node>([createMockNode(paragraphType)]);
-      const content2 = Fragment.from<Node>([createMockNode(headingType)]);
+      const content1 = Fragment.from([createMockNode(paragraphType)]);
+      const content2 = Fragment.from([createMockNode(headingType)]);
       const slice1 = new Slice(content1, 1, 2);
       const slice2 = new Slice(content2, 1, 2);
 
@@ -96,7 +96,7 @@ describe('Slice Value Object', () => {
 
     it('returns false when openStart differs', () => {
       const node = createMockNode(paragraphType);
-      const content = Fragment.from<Node>([node]);
+      const content = Fragment.from([node]);
       const slice1 = new Slice(content, 1, 2);
       const slice2 = new Slice(content, 2, 2);
 
@@ -105,7 +105,7 @@ describe('Slice Value Object', () => {
 
     it('returns false when openEnd differs', () => {
       const node = createMockNode(paragraphType);
-      const content = Fragment.from<Node>([node]);
+      const content = Fragment.from([node]);
       const slice1 = new Slice(content, 1, 2);
       const slice2 = new Slice(content, 1, 3);
 
@@ -114,8 +114,8 @@ describe('Slice Value Object', () => {
 
     it('given structurally equal content but different references, returns true', () => {
       const node = createMockNode(paragraphType);
-      const content1 = Fragment.from<Node>([node]);
-      const content2 = Fragment.from<Node>([node]);
+      const content1 = Fragment.from([node]);
+      const content2 = Fragment.from([node]);
       const slice1 = new Slice(content1, 1, 2);
       const slice2 = new Slice(content2, 1, 2);
 
@@ -151,7 +151,7 @@ describe('Slice Value Object', () => {
   describe('toString', () => {
     it('given non-empty slice, returns content string with open depths', () => {
       const node = createMockNode(paragraphType);
-      const content = Fragment.from<Node>([node]);
+      const content = Fragment.from([node]);
       const slice = new Slice(content, 1, 2);
 
       expect(slice.toString()).toBe(`${content.toString()}(1,2)`);
@@ -162,7 +162,7 @@ describe('Slice Value Object', () => {
     it('given fragment with non-leaf first and last children, returns slice with correct open depths', () => {
       const node1 = createMockNode(paragraphType);
       const node2 = createMockNode(headingType);
-      const content = Fragment.from<Node>([node1, node2]);
+      const content = Fragment.from([node1, node2]);
       const slice = Slice.maxOpen(content);
 
       expect(slice.openStart).toBe(1);
@@ -173,7 +173,7 @@ describe('Slice Value Object', () => {
       const leafType = createMockNodeType('image');
       leafType.contentMatch = ContentMatch.empty;
       const node = createMockNode(leafType);
-      const content = Fragment.from<Node>([node]);
+      const content = Fragment.from([node]);
       const slice = Slice.maxOpen(content);
 
       expect(slice.openStart).toBe(0);
