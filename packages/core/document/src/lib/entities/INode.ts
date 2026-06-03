@@ -1,6 +1,6 @@
 import type { IFragment } from './IFragment';
 import { Mark } from '../value-objects/Mark';
-import { NodeType } from '../value-objects/NodeType';
+import type { INodeType } from '../value-objects/INodeType';
 import { ContentMatch } from '../value-objects/ContentMatch';
 import { ResolvedPos } from '../value-objects/ResolvedPos';
 import { MarkType } from '../value-objects/MarkType';
@@ -21,7 +21,7 @@ export interface INode {
   readonly lastChild: INode | undefined;
   readonly marks: Mark[];
   readonly nodeSize: number;
-  readonly type: NodeType;
+  readonly type: INodeType;
   canAppend(other: INode): boolean;
   canReplace(
     from: number,
@@ -33,7 +33,7 @@ export interface INode {
   canReplaceWith(
     from: number,
     to: number,
-    type: NodeType,
+    type: INodeType,
     marks?: readonly Mark[]
   ): boolean;
   child(index: number): INode;
@@ -54,7 +54,7 @@ export interface INode {
   equals(other: INode): boolean;
   forEach(callback: (node: INode, offset: number, index: number) => void): void;
   hasMarkup(
-    type: NodeType,
+    type: INodeType,
     attrs?: Record<string, unknown>,
     marks?: readonly Mark[]
   ): boolean;

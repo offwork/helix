@@ -107,7 +107,7 @@ export class ContentMatch {
 
     while (index < endIndex && current) {
       const node = fragment.child(index);
-      current = current.matchType(node.type);
+      current = current.matchType(node.type as NodeType);
       index++;
     }
 

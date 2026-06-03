@@ -1,7 +1,7 @@
 import { MarkSpec } from '../interfaces/SchemaSpec';
 import { Attrs, checkAttrs } from '../utils/attrs';
 import { Attribute } from './Attribute';
-import { IMarkType } from './IMarkType';
+import type { IMarkType } from './IMarkType';
 import { Mark } from './Mark';
 
 export class MarkType implements IMarkType {

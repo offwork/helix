@@ -4,21 +4,20 @@ import { replace } from '../utils/replace';
 import { ContentMatch } from '../value-objects/ContentMatch';
 import { Mark } from '../value-objects/Mark';
 import { MarkType } from '../value-objects/MarkType';
-import { NodeType } from '../value-objects/NodeType';
 import { ResolvedPos } from '../value-objects/ResolvedPos';
 import { Slice } from '../value-objects/Slice';
-import { empty } from './FragmentFactory';
 import { Fragment } from './Fragment';
+import type { INodeType } from '../value-objects/INodeType';
 import type { INode } from './INode';
 
 export class Node implements INode {
-  readonly type: NodeType;
+  readonly type: INodeType;
   readonly attrs: Record<string, unknown>;
   readonly content: Fragment;
   readonly marks: Mark[];
 
   constructor(
-    type: NodeType,
+    type: INodeType,
     attrs: Record<string, unknown>,
     content?: Fragment,
     marks?: Mark[]
@@ -45,7 +44,7 @@ export class Node implements INode {
 
     this.type = type;
     this.attrs = attrs;
-    this.content = content || empty();
+    this.content = content || Fragment.empty();
     this.marks = marks || [];
   }
 
@@ -114,7 +113,7 @@ export class Node implements INode {
     return new Node(
       this.type,
       this.attrs,
-      content ?? empty(),
+      content ?? Fragment.empty(),
       this.marks
     );
   }
@@ -142,7 +141,7 @@ export class Node implements INode {
   }
 
   hasMarkup(
-    type: NodeType,
+    type: INodeType,
     attrs?: Record<string, unknown>,
     marks?: readonly Mark[]
   ): boolean {
@@ -211,7 +210,7 @@ export class Node implements INode {
   canReplace(
     from: number,
     to: number,
-    replacement = empty(),
+    replacement = Fragment.empty(),
     start = 0,
     end = replacement.childCount
   ): boolean {
@@ -256,11 +255,11 @@ export class Node implements INode {
   canReplaceWith(
     from: number,
     to: number,
-    type: NodeType,
+    type: INodeType,
     marks?: readonly Mark[]
   ): boolean {
     if (marks && !this.type.allowsMarks(marks)) return false;
-    const start = this.contentMatchAt(from).matchType(type);
+    const start = this.contentMatchAt(from).matchType(type as never);
     const end = start && start.matchFragment(this.content, to);
     return end ? end.validEnd : false;
   }
@@ -296,7 +295,7 @@ export class Node implements INode {
   }
 
   replace(from: number, to: number, slice: Slice): Node {
-    return replace(this.resolve(from), this.resolve(to), slice);
+    return replace(this.resolve(from), this.resolve(to), slice) as Node;
   }
 
   slice(

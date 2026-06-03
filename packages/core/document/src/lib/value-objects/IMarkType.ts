@@ -1,4 +1,9 @@
+import { Attrs } from '../utils/attrs';
+
 export interface IMarkType {
-  readonly rank: number;
+  readonly name: string;
+  excluded: readonly IMarkType[];
+  rank: number;
   excludes(other: IMarkType): boolean;
+  checkAttrs(attrs: Attrs): void;
 }

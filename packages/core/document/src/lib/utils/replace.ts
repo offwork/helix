@@ -1,15 +1,16 @@
-import { Fragment } from '../entities/Fragment';
-import { Node } from '../entities/Node';
+import { from } from '../entities/FragmentFactory';
+import type { IFragment } from '../entities/IFragment';
+import type { INode } from '../entities/INode';
 import { TextNode } from '../entities/TextNode';
 import { ReplaceError } from '../errors/ReplaceError';
 import { ResolvedPos } from '../value-objects/ResolvedPos';
 import { Slice } from '../value-objects/Slice';
 
 export function removeRange(
-  content: Fragment,
+  content: IFragment,
   from: number,
   to: number
-): Fragment {
+): IFragment {
   const { index, offset } = content.findIndex(from);
   const child = content.maybeChild(index);
   const { index: indexTo, offset: offsetTo } = content.findIndex(to);
@@ -27,31 +28,31 @@ export function removeRange(
 
   return content.replaceChild(
     index,
-    child.copy(removeRange(child.content as Fragment, from - offset - 1, to - offset - 1))
+    child.copy(removeRange(child.content, from - offset - 1, to - offset - 1))
   );
 }
 
 export function insertInto(
-  content: Fragment,
+  content: IFragment,
   dist: number,
-  insert: Fragment,
-  parent?: Node | null
-): Fragment | null {
+  insert: IFragment,
+  parent?: INode | null
+): IFragment | null {
   const { index, offset } = content.findIndex(dist);
   const child = content.maybeChild(index);
 
   if (child === null) return null;
 
   if (offset === dist || child.isText) {
-    if (parent && !parent.canReplace(index, index, insert)) return null;
+    if (parent && !parent.canReplace(index, index, insert as never)) return null;
     return content.cut(0, dist).append(insert).append(content.cut(dist));
   }
 
-  const inner = insertInto(child.content as Fragment, dist - offset - 1, insert, child as Node);
+  const inner = insertInto(child.content, dist - offset - 1, insert, child as INode);
   return inner && content.replaceChild(index, child.copy(inner));
 }
 
-export function addNode(child: Node, target: Node[]): void {
+export function addNode(child: INode, target: INode[]): void {
   const last = target.length - 1;
   if (last >= 0 && child.isText && child.sameMarkup(target[last])) {
     target[last] = (child as TextNode).withText(
@@ -62,7 +63,7 @@ export function addNode(child: Node, target: Node[]): void {
   }
 }
 
-export function checkJoin(main: Node, sub: Node): void {
+export function checkJoin(main: INode, sub: INode): void {
   if (!sub.type.compatibleContent(main.type)) {
     throw new ReplaceError(
       `Cannot join ${sub.type.name} onto ${main.type.name}`
@@ -74,14 +75,14 @@ export function joinable(
   $before: ResolvedPos,
   $after: ResolvedPos,
   depth: number
-): Node {
+): INode {
   const node = $before.node(depth);
   checkJoin(node, $after.node(depth));
   return node;
 }
 
-export function close(node: Node, content: Fragment): Node {
-  node.type.checkContent(content);
+export function close(node: INode, content: IFragment): INode {
+  node.type.checkContent(content as never);
   return node.copy(content);
 }
 
@@ -89,7 +90,7 @@ export function addRange(
   $start: ResolvedPos | null,
   $end: ResolvedPos | null,
   depth: number,
-  target: Node[]
+  target: INode[]
 ): void {
   const resolvedNode = $end ?? $start;
   if (!resolvedNode) return;
@@ -108,7 +109,7 @@ export function addRange(
   }
 
   for (let i = startIndex; i < endIndex; i++) {
-    addNode(node.child(i) as Node, target);
+    addNode(node.child(i) as INode, target);
   }
 
   if ($end && $end.depth === depth && $end.textOffset) {
@@ -120,15 +121,15 @@ export function replaceTwoWay(
   $from: ResolvedPos,
   $to: ResolvedPos,
   depth: number
-): Fragment {
-  const content: Node[] = [];
+): IFragment {
+  const content: INode[] = [];
   addRange(null, $from, depth, content);
   if ($from.depth > depth) {
     const type = joinable($from, $to, depth + 1);
     addNode(close(type, replaceTwoWay($from, $to, depth + 1)), content);
   }
   addRange($to, null, depth, content);
-  return Fragment.from(content);
+  return from(content);
 }
 
 export function replaceThreeWay(
@@ -137,10 +138,10 @@ export function replaceThreeWay(
   $end: ResolvedPos,
   $to: ResolvedPos,
   depth: number
-): Fragment {
+): IFragment {
   const openStart = $from.depth > depth && joinable($from, $start, depth + 1);
   const openEnd = $to.depth > depth && joinable($end, $to, depth + 1);
-  const content: Node[] = [];
+  const content: INode[] = [];
 
   addRange(null, $from, depth, content);
 
@@ -162,7 +163,7 @@ export function replaceThreeWay(
   }
 
   addRange($to, null, depth, content);
-  return Fragment.from(content);
+  return from(content);
 }
 
 export function prepareSliceForReplace(
@@ -173,7 +174,7 @@ export function prepareSliceForReplace(
   const parent = $along.node(extra);
   let node = parent.copy(slice.content);
   for (let i = extra - 1; i >= 0; i--) {
-    node = $along.node(i).copy(Fragment.from([node]));
+    node = $along.node(i).copy(from([node]));
   }
   return {
     start: node.resolveNoCache(slice.openStart + extra),
@@ -186,7 +187,7 @@ export function replaceOuter(
   $to: ResolvedPos,
   slice: Slice,
   depth: number
-): Node {
+): INode {
   const index = $from.index(depth);
   const node = $from.node(depth);
 
@@ -220,7 +221,7 @@ export function replace(
   $from: ResolvedPos,
   $to: ResolvedPos,
   slice: Slice
-): Node {
+): INode {
   if (slice.openStart > $from.depth)
     throw new ReplaceError('Inserted content deeper than insertion position');
   if ($from.depth - slice.openStart !== $to.depth - slice.openEnd)

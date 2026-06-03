@@ -20,16 +20,51 @@ export class Fragment implements IFragment {
     return this.content.length;
   }
 
-  get size(): number {
-    return this.content.reduce((sum, node) => (sum += node.nodeSize), 0);
-  }
-
   get firstChild(): INode | undefined {
     return this.content[0];
   }
 
   get lastChild(): INode | undefined {
     return this.content[this.content.length - 1];
+  }
+
+  get size(): number {
+    return this.content.reduce((sum, node) => (sum += node.nodeSize), 0);
+  }
+
+  addToEnd(node: INode): Fragment {
+    return Fragment.from([...this.content, node]);
+  }
+
+  addToStart(node: INode): Fragment {
+    return Fragment.from([node, ...this.content]);
+  }
+
+  append(other: Fragment): Fragment {
+    if (!other.size) return this;
+    if (!this.size) return other;
+
+    const last = this.lastChild;
+    const first = other.firstChild;
+    if (!last || !first)
+      return Fragment.from([...this.content, ...other.content]);
+    const content = this.content.slice() as INode[];
+
+    let i = 0;
+    if (last.isText && first.isText && last.sameMarkup(first)) {
+      const lastText = last as unknown as {
+        text: string;
+        withText: (t: string) => INode;
+      };
+      const firstText = first as unknown as { text: string };
+      content[content.length - 1] = lastText.withText(
+        lastText.text + firstText.text
+      );
+      i = 1;
+    }
+
+    for (; i < other.content.length; i++) content.push(other.content[i]);
+    return Fragment.from(content);
   }
 
   child(index: number): INode {
@@ -39,66 +74,6 @@ export class Fragment implements IFragment {
       );
     }
     return this.content[index];
-  }
-
-  forEach(
-    callback: (node: INode, offset: number, index: number) => void
-  ): void {
-    let offset = 0;
-    for (let i = 0; i < this.content.length; i++) {
-      const node = this.content[i];
-      callback(node, offset, i);
-      offset += node.nodeSize;
-    }
-  }
-
-  slice(from: number, to: number): Fragment {
-    if (from < 0 || to > this.content.length || from > to) {
-      throw new Error(
-        `Invalid slice range: [${from}, ${to}) (size: ${this.content.length})`
-      );
-    }
-
-    return new Fragment(this.content.slice(from, to));
-  }
-
-  equals(other: IFragment): boolean {
-    if (other === null)
-      throw new Error('Fragment equals parameter cannot be null');
-
-    if (other === undefined)
-      throw new Error('Fragment equals parameter cannot be undefined');
-
-    if (this.content.length !== other.childCount) return false;
-
-    return this.content.every((node, index) =>
-      node.equals(other.child(index))
-    );
-  }
-
-  findIndex(pos: number): { index: number; offset: number } {
-    if (pos < 0 || pos > this.size) {
-      throw new RangeError(`Invalid position: ${pos} (size: ${this.size})`);
-    }
-
-    if (pos == 0) {
-      return { index: 0, offset: 0 };
-    }
-
-    if (pos == this.size) {
-      return { index: this.childCount, offset: this.size };
-    }
-
-    let i = 0,
-      curPos = 0;
-    while (i < this.content.length) {
-      const end = curPos + this.content[i].nodeSize;
-      if (end > pos) return { index: i, offset: curPos };
-      curPos = end;
-      i++;
-    }
-
-    return { index: i, offset: curPos };
   }
 
   cut(from: number, to: number = this.size): Fragment {
@@ -137,31 +112,63 @@ export class Fragment implements IFragment {
     return Fragment.from(result);
   }
 
-  append(other: Fragment): Fragment {
-    if (!other.size) return this;
-    if (!this.size) return other;
+  descendants(
+    callback: (
+      node: INode,
+      pos: number,
+      parent: INode | null,
+      index: number
+    ) => boolean | void
+  ): void {
+    this.nodesBetween(0, this.size, callback as never);
+  }
 
-    const last = this.lastChild;
-    const first = other.firstChild;
-    if (!last || !first)
-      return Fragment.from([...this.content, ...other.content]);
-    const content = this.content.slice() as INode[];
+  equals(other: IFragment): boolean {
+    if (other === null)
+      throw new Error('Fragment equals parameter cannot be null');
 
-    let i = 0;
-    if (last.isText && first.isText && last.sameMarkup(first)) {
-      const lastText = last as unknown as {
-        text: string;
-        withText: (t: string) => INode;
-      };
-      const firstText = first as unknown as { text: string };
-      content[content.length - 1] = lastText.withText(
-        lastText.text + firstText.text
-      );
-      i = 1;
+    if (other === undefined)
+      throw new Error('Fragment equals parameter cannot be undefined');
+
+    if (this.content.length !== other.childCount) return false;
+
+    return this.content.every((node, index) => node.equals(other.child(index)));
+  }
+
+  findIndex(pos: number): { index: number; offset: number } {
+    if (pos < 0 || pos > this.size) {
+      throw new RangeError(`Invalid position: ${pos} (size: ${this.size})`);
     }
 
-    for (; i < other.content.length; i++) content.push(other.content[i]);
-    return Fragment.from(content);
+    if (pos == 0) {
+      return { index: 0, offset: 0 };
+    }
+
+    if (pos == this.size) {
+      return { index: this.childCount, offset: this.size };
+    }
+
+    let i = 0,
+      curPos = 0;
+    while (i < this.content.length) {
+      const end = curPos + this.content[i].nodeSize;
+      if (end > pos) return { index: i, offset: curPos };
+      curPos = end;
+      i++;
+    }
+
+    return { index: i, offset: curPos };
+  }
+
+  forEach(
+    callback: (node: INode, offset: number, index: number) => void
+  ): void {
+    let offset = 0;
+    for (let i = 0; i < this.content.length; i++) {
+      const node = this.content[i];
+      callback(node, offset, i);
+      offset += node.nodeSize;
+    }
   }
 
   maybeChild(index: number): INode | null {
@@ -202,15 +209,22 @@ export class Fragment implements IFragment {
     });
   }
 
-  descendants(
-    callback: (
-      node: INode,
-      pos: number,
-      parent: INode | null,
-      index: number
-    ) => boolean | void
-  ): void {
-    this.nodesBetween(0, this.size, callback as never);
+  replaceChild(index: number, node: INode): Fragment {
+    const current = this.content[index];
+    if (current === node) return this;
+    const copy = this.content.slice() as INode[];
+    copy[index] = node;
+    return Fragment.from(copy);
+  }
+
+  slice(from: number, to: number): Fragment {
+    if (from < 0 || to > this.content.length || from > to) {
+      throw new Error(
+        `Invalid slice range: [${from}, ${to}) (size: ${this.content.length})`
+      );
+    }
+
+    return new Fragment(this.content.slice(from, to));
   }
 
   textBetween(
@@ -236,22 +250,6 @@ export class Fragment implements IFragment {
       }
     });
     return text;
-  }
-
-  replaceChild(index: number, node: INode): Fragment {
-    const current = this.content[index];
-    if (current === node) return this;
-    const copy = this.content.slice() as INode[];
-    copy[index] = node;
-    return Fragment.from(copy);
-  }
-
-  addToStart(node: INode): Fragment {
-    return Fragment.from([node, ...this.content]);
-  }
-
-  addToEnd(node: INode): Fragment {
-    return Fragment.from([...this.content, node]);
   }
 
   toString(): string {

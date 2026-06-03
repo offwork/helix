@@ -21,7 +21,7 @@ export class NodeRange {
   }
 
   get parent(): Node {
-    return this.$from.node(this.depth);
+    return this.$from.node(this.depth) as Node;
   }
 
   get startIndex(): number {

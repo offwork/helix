@@ -7,8 +7,9 @@ import { Attribute } from './Attribute';
 import { ContentMatch } from './ContentMatch';
 import { Mark } from './Mark';
 import { MarkType } from './MarkType';
+import type { INodeType } from './INodeType';
 
-export class NodeType {
+export class NodeType implements INodeType {
   readonly name: string;
   readonly schema: unknown;
   readonly spec: NodeSpec;
@@ -50,7 +51,7 @@ export class NodeType {
   allowsMarks(marks: readonly Mark[]): boolean {
     if (this.markSet === null) return true;
     return marks.every(
-      (mark) => this.markSet && this.markSet.indexOf(mark.type) > -1
+      (mark) => this.markSet && this.markSet.indexOf(mark.type as MarkType) > -1
     );
   }
 
@@ -58,7 +59,7 @@ export class NodeType {
     if (this.markSet === null) return marks;
     let copy: Mark[] | null = null;
     for (let i = 0; i < marks.length; i++) {
-      if (this.markSet.indexOf(marks[i].type) > -1) {
+      if (this.markSet.indexOf(marks[i].type as MarkType) > -1) {
         if (copy) copy.push(marks[i] as Mark);
       } else {
         if (!copy) copy = marks.slice(0, i) as Mark[];
