@@ -1,26 +1,31 @@
 import { Attrs } from '../utils/attrs';
 import { deepEqual } from '../utils/deep-equal';
 import { replace } from '../utils/replace';
-import { ContentMatch } from '../value-objects/ContentMatch';
 import { Mark } from '../value-objects/Mark';
-import { MarkType } from '../value-objects/MarkType';
 import { ResolvedPos } from '../value-objects/ResolvedPos';
 import { Slice } from '../value-objects/Slice';
 import { Fragment } from './Fragment';
-import type { INodeType } from '../value-objects/INodeType';
-import type { INode } from './INode';
+import type { IContentMatch } from '../contracts/IContentMatch';
+import type { IFragment } from '../contracts/IFragment';
+import type { IMark } from '../contracts/IMark';
+import type { IMarkType } from '../contracts/IMarkType';
+import type { INode } from '../contracts/INode';
+import type { INodeType } from '../contracts/INodeType';
+import type { ISlice } from '../contracts/ISlice';
+import { SyntheticSchema } from '../contracts/types/SyntheticSchema';
+import { NodeJSON } from '../contracts/types/NodeJSON';
 
 export class Node implements INode {
   readonly type: INodeType;
   readonly attrs: Record<string, unknown>;
   readonly content: Fragment;
-  readonly marks: Mark[];
+  readonly marks: IMark[];
 
   constructor(
     type: INodeType,
     attrs: Record<string, unknown>,
     content?: Fragment,
-    marks?: Mark[]
+    marks?: IMark[]
   ) {
     if (type === null) {
       throw new Error('Node type cannot be null');
@@ -46,6 +51,16 @@ export class Node implements INode {
     this.attrs = attrs;
     this.content = content || Fragment.empty();
     this.marks = marks || [];
+  }
+
+  static fromJSON(schema: SyntheticSchema, json: NodeJSON): Node {
+    if (!json) throw new RangeError('Invalid input for Node.fromJSON');
+    const marks = json.marks?.map((m) => schema.markFromJSON(m)) ?? [];
+    if (json.type === 'text') return schema.text(json.text ?? '', marks) as Node;
+    const content = Fragment.from(
+      (json.content ?? []).map((c) => schema.nodeFromJSON(c))
+    );
+    return schema.nodeType(json.type).create(json.attrs, content, marks);
   }
 
   get childCount(): number {
@@ -108,12 +123,12 @@ export class Node implements INode {
     );
   }
 
-  copy(content?: Fragment): Node {
+  copy(content?: IFragment): Node {
     if (content === this.content) return this;
     return new Node(
       this.type,
       this.attrs,
-      content ?? Fragment.empty(),
+      (content as Fragment) ?? Fragment.empty(),
       this.marks
     );
   }
@@ -131,7 +146,7 @@ export class Node implements INode {
     return this.content.maybeChild(index);
   }
 
-  mark(marks: Mark[]): Node {
+  mark(marks: IMark[]): Node {
     if (marks === this.marks) return this;
     return new Node(this.type, this.attrs, this.content, marks);
   }
@@ -143,7 +158,7 @@ export class Node implements INode {
   hasMarkup(
     type: INodeType,
     attrs?: Record<string, unknown>,
-    marks?: readonly Mark[]
+    marks?: readonly IMark[]
   ): boolean {
     return (
       this.type === type &&
@@ -152,11 +167,13 @@ export class Node implements INode {
     );
   }
 
-  forEach(callback: (node: INode, offset: number, index: number) => void): void {
+  forEach(
+    callback: (node: INode, offset: number, index: number) => void
+  ): void {
     this.content.forEach(callback);
   }
 
-  contentMatchAt(index: number): ContentMatch {
+  contentMatchAt(index: number): IContentMatch {
     const match = this.type.contentMatch?.matchFragment(this.content, 0, index);
 
     if (!match) {
@@ -167,17 +184,24 @@ export class Node implements INode {
   }
 
   resolveNoCache(pos: number): ResolvedPos {
-    return ResolvedPos.resolve(this as Node, pos);
+    return ResolvedPos.resolve(this, pos);
   }
 
   nodeAt(pos: number): INode | null {
-    for (let node: INode | null = this as Node; ; ) {
-      const { index, offset } = node.content.findIndex(pos);
-      node = node.content.maybeChild(index);
-      if (!node) return null;
-      if (offset === pos || node.type.isText) return node;
-      pos -= offset + 1;
+    const { index: firstIndex, offset: firstOffset } = this.content.findIndex(pos);
+    let child: INode | null = this.content.maybeChild(firstIndex);
+    let remaining = pos;
+    let offset = firstOffset;
+
+    while (child) {
+      if (offset === remaining || child.type.isText) return child;
+      remaining -= offset + 1;
+      const { index, offset: nextOffset } = child.content.findIndex(remaining);
+      offset = nextOffset;
+      child = child.content.maybeChild(index);
     }
+
+    return null;
   }
 
   childAfter(pos: number): {
@@ -241,7 +265,7 @@ export class Node implements INode {
     this.content.nodesBetween(from, to, callback, startPos, this as INode);
   }
 
-  rangeHasMark(from: number, to: number, type: Mark | MarkType): boolean {
+  rangeHasMark(from: number, to: number, type: IMark | IMarkType): boolean {
     let found = false;
     if (to > from) {
       this.nodesBetween(from, to, (node) => {
@@ -256,17 +280,17 @@ export class Node implements INode {
     from: number,
     to: number,
     type: INodeType,
-    marks?: readonly Mark[]
+    marks?: readonly IMark[]
   ): boolean {
     if (marks && !this.type.allowsMarks(marks)) return false;
-    const start = this.contentMatchAt(from).matchType(type as never);
+    const start = this.contentMatchAt(from).matchType(type);
     const end = start && start.matchFragment(this.content, to);
     return end ? end.validEnd : false;
   }
 
-  canAppend(other: Node): boolean {
+  canAppend(other: INode): boolean {
     if (other.content.size) {
-      return this.canReplace(this.childCount, this.childCount, other.content);
+      return this.canReplace(this.childCount, this.childCount, other.content as Fragment);
     }
     return this.type.compatibleContent(other.type);
   }
@@ -274,7 +298,7 @@ export class Node implements INode {
   check(): void {
     this.type.checkContent(this.content);
     this.type.checkAttrs(this.attrs as Attrs);
-    let copy: readonly Mark[] = Mark.none;
+    let copy: readonly IMark[] = Mark.none;
     for (let i = 0; i < this.marks.length; i++) {
       const mark = this.marks[i];
       mark.type.checkAttrs(mark.attrs);
@@ -294,8 +318,8 @@ export class Node implements INode {
     return this.resolveNoCache(pos);
   }
 
-  replace(from: number, to: number, slice: Slice): Node {
-    return replace(this.resolve(from), this.resolve(to), slice) as Node;
+  replace(from: number, to: number, slice: ISlice): Node {
+    return replace(this.resolve(from), this.resolve(to), slice as Slice) as Node;
   }
 
   slice(
@@ -309,7 +333,30 @@ export class Node implements INode {
     const depth = includeParents ? 0 : $from.sharedDepth(to);
     const start = $from.start(depth);
     const node = $from.node(depth);
-    const content = node.content.cut($from.pos - start, $to.pos - start);
+    const content = node.content.cut($from.pos - start, $to.pos - start) as Fragment;
     return new Slice(content, $from.depth - depth, $to.depth - depth);
+  }
+
+  toJSON(): NodeJSON {
+    const json: NodeJSON = {
+      type: this.type.name,
+    };
+
+    if (Object.keys(this.attrs).length > 0) {
+      json.attrs = { ...this.attrs };
+    }
+
+    if (this.marks.length > 0) {
+      json.marks = this.marks.map((mark) => mark.toJSON());
+    }
+
+    if (this.content.size > 0) {
+      json.content = [];
+      this.content.forEach((node) => {
+        (json.content as NodeJSON[]).push(node.toJSON());
+      });
+    }
+
+    return json;
   }
 }

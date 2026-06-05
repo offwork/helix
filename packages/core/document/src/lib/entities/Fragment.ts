@@ -1,5 +1,7 @@
-import type { IFragment } from './IFragment';
-import type { INode } from './INode';
+import { NodeJSON } from '../contracts';
+import type { IFragment } from '../contracts/IFragment';
+import type { INode } from '../contracts/INode';
+import { SyntheticSchema } from '../contracts/types/SyntheticSchema';
 
 export class Fragment implements IFragment {
   private readonly content: readonly INode[];
@@ -13,7 +15,14 @@ export class Fragment implements IFragment {
   }
 
   static from(nodes: readonly INode[]): Fragment {
-    return new Fragment([...nodes]); // Defensive copy
+    return new Fragment([...nodes]);
+  }
+
+  static fromJSON(schema: SyntheticSchema, value: NodeJSON[] | null): Fragment {
+    if (!value) return Fragment.empty();
+    return Fragment.from(
+      value.map((node) => schema.nodeFromJSON(node))
+    );
   }
 
   get childCount(): number {
@@ -120,7 +129,7 @@ export class Fragment implements IFragment {
       index: number
     ) => boolean | void
   ): void {
-    this.nodesBetween(0, this.size, callback as never);
+    this.nodesBetween(0, this.size, callback);
   }
 
   equals(other: IFragment): boolean {
@@ -200,7 +209,7 @@ export class Fragment implements IFragment {
           child.content.nodesBetween(
             Math.max(0, from - offset - 1),
             Math.min(child.content.size, to - offset - 1),
-            callback as never,
+            callback,
             nodeStart + offset + 1,
             child as INode
           );
@@ -250,6 +259,12 @@ export class Fragment implements IFragment {
       }
     });
     return text;
+  }
+
+  toJSON(): NodeJSON[] | null {
+    if (this.content.length === 0) return null;
+
+    return this.content.map((node) => node.toJSON());
   }
 
   toString(): string {

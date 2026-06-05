@@ -17,7 +17,7 @@ export interface NodeSpec {
 }
 
 export interface MarkSpec {
-  attrs?: Record<string, unknown>;
+  attrs?: Record<string, AttributeSpec>;
   excludes?: string;
   group?: string;
 }

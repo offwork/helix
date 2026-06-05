@@ -2,6 +2,7 @@ import { Fragment } from '../entities/Fragment';
 import { Node } from '../entities/Node';
 import { Slice } from './Slice';
 import { ContentMatch } from './ContentMatch';
+import { Schema } from '../services/Schema';
 import {
   createMockNode,
   paragraphType,
@@ -10,6 +11,8 @@ import {
   nonEmptyContent,
   createMockNodeType,
   createSelfRefNodeType,
+  createMarkSpec,
+  createSchemaSpec,
 } from '../../testing';
 
 describe('Slice Value Object', () => {
@@ -249,6 +252,73 @@ describe('Slice Value Object', () => {
       const slice = new Slice(Fragment.from([outer]), 1, 1);
 
       const result = slice.removeBetween(0, 2);
+
+      expect(result.openStart).toBe(1);
+      expect(result.openEnd).toBe(1);
+    });
+  });
+
+  describe('toJSON', () => {
+    it('given empty slice, returns null', () => {
+      const emptySlice = new Slice(Fragment.empty(), 0, 0);
+      expect(emptySlice.toJSON()).toBeNull();
+    });
+
+    it('given slice with content and zero opens, returns object with content', () => {
+      const node = new Node(paragraphType, {});
+      const slice = new Slice(Fragment.from([node]), 0, 0);
+
+      expect(slice.toJSON()).toEqual({
+        content: [{ type: 'paragraph' }],
+      });
+    });
+
+    it('given slice with open depths, returns object with content and open depths', () => {
+      const node = new Node(paragraphType, {});
+      const slice = new Slice(Fragment.from([node]), 1, 1);
+
+      expect(slice.toJSON()).toEqual({
+        content: [{ type: 'paragraph' }],
+        openStart: 1,
+        openEnd: 1,
+      });
+    });
+  });
+
+  describe('fromJSON', () => {
+    it('given null json, returns Slice.empty', () => {
+      const schema = new Schema({
+        nodes: createSchemaSpec(),
+        marks: createMarkSpec(),
+      });
+
+      expect(Slice.fromJSON(schema, null as never)).toBe(Slice.empty);
+    });
+
+    it('given json with content, returns Slice with correct content', () => {
+      const schema = new Schema({
+        nodes: createSchemaSpec(),
+        marks: createMarkSpec(),
+      });
+
+      const node = schema.node('paragraph');
+      const slice = new Slice(Fragment.from([node]), 0, 0);
+      const json = slice.toJSON();
+
+      expect(Slice.fromJSON(schema, json)).toEqual(slice);
+    });
+
+    it('given json with open depths, returns Slice with correct open depths', () => {
+      const schema = new Schema({
+        nodes: createSchemaSpec(),
+        marks: createMarkSpec(),
+      });
+
+      const node = schema.node('paragraph');
+      const slice = new Slice(Fragment.from([node]), 1, 1);
+      const json = slice.toJSON();
+
+      const result = Slice.fromJSON(schema, json);
 
       expect(result.openStart).toBe(1);
       expect(result.openEnd).toBe(1);

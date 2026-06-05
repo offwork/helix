@@ -1,0 +1,24 @@
+import type { INode } from './INode';
+
+export interface IResolvedPos {
+  readonly depth: number;
+  readonly doc: INode;
+  readonly nodeAfter: INode | null;
+  readonly nodeBefore: INode | null;
+  readonly parent: INode;
+  readonly parentOffset: number;
+  readonly pos: number;
+  readonly textOffset: number;
+  after(depth?: number | null): number;
+  before(depth?: number | null): number;
+  end(depth?: number | null): number;
+  equals(other: IResolvedPos): boolean;
+  index(depth?: number | null): number;
+  indexAfter(depth?: number | null): number;
+  max(other: IResolvedPos): IResolvedPos;
+  min(other: IResolvedPos): IResolvedPos;
+  node(depth?: number | null): INode;
+  sameParent(other: IResolvedPos): boolean;
+  sharedDepth(pos: number): number;
+  start(depth?: number | null): number;
+}

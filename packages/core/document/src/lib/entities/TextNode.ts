@@ -1,6 +1,8 @@
 import { Node } from './Node';
-import { Mark } from '../value-objects/Mark';
-import type { INodeType } from '../value-objects/INodeType';
+import type { IMark } from '../contracts/IMark';
+import type { INode } from '../contracts/INode';
+import type { INodeType } from '../contracts/INodeType';
+import { NodeJSON } from '../contracts/types/NodeJSON';
 
 export class TextNode extends Node {
   readonly text: string;
@@ -9,7 +11,7 @@ export class TextNode extends Node {
     type: INodeType,
     attrs: Record<string, unknown>,
     text: string,
-    marks?: Mark[]
+    marks?: IMark[]
   ) {
     super(type, attrs, undefined, marks);
 
@@ -20,8 +22,8 @@ export class TextNode extends Node {
     this.text = text;
   }
 
-  override equals(other: Node): boolean {
-    return this.text === (other as TextNode).text;
+  override equals(other: INode): boolean {
+    return this.sameMarkup(other) && this.text === (other as TextNode).text;
   }
 
   override get nodeSize(): number {
@@ -44,17 +46,26 @@ export class TextNode extends Node {
   get textContent(): string {
     return this.text;
   }
-
-  override toString(): string {
-    return `"${this.text}"`;
-  }
-
-  override mark(marks: Mark[]): TextNode {
+  
+  override mark(marks: IMark[]): TextNode {
     if (this.marks === marks) {
       return this;
     }
 
     return new TextNode(this.type, this.attrs, this.text, marks);
+  }
+
+  override toJSON(): NodeJSON {
+    const base = super.toJSON();
+
+    return {
+      ...base,
+      text: this.text,
+    };
+  }
+
+  override toString(): string {
+    return `"${this.text}"`;
   }
 
   textBetween(from: number, to: number): string {

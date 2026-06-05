@@ -137,6 +137,15 @@ describe('TextNode', () => {
   });
 
   describe('equals', () => {
+    it('given same text and same marks, returns true', () => {
+      const marks = [createMark(boldMarkType, {})];
+
+      const textNode1 = new TextNode(textType, {}, 'hello', marks);
+      const textNode2 = new TextNode(textType, {}, 'hello', marks);
+
+      expect(textNode1.equals(textNode2)).toBe(true);
+    });
+
     it('given different text, returns false', () => {
       const attrs = { color: 'red' };
       const marks = [createMark(boldMarkType, {})];
@@ -146,14 +155,38 @@ describe('TextNode', () => {
 
       expect(textNode1.equals(textNode2)).toBe(false);
     });
+
+    it('given same text but different marks, returns false', () => {
+      const textNode1 = new TextNode(textType, {}, 'hello', [createMark(boldMarkType, {})]);
+      const textNode2 = new TextNode(textType, {}, 'hello', [createMark(italicMarkType, {})]);
+
+      expect(textNode1.equals(textNode2)).toBe(false);
+    });
+
+    it('given same text but one has no marks, returns false', () => {
+      const textNode1 = new TextNode(textType, {}, 'hello', [createMark(boldMarkType, {})]);
+      const textNode2 = new TextNode(textType, {}, 'hello', []);
+
+      expect(textNode1.equals(textNode2)).toBe(false);
+    });
   });
 
   describe('toString', () => {
-    // TextNode.spec.ts
     it('given a text node, returns string representation', () => {
       const textNode = new TextNode(textType, {}, 'hello');
 
       expect(textNode.toString()).toBe('"hello"');
+    });
+  });
+
+  describe('toJSON', () => {
+    it('given text node, returns object with type and text', () => {
+      const textNode = new TextNode(textType, {}, 'hello');
+
+      expect(textNode.toJSON()).toEqual({
+        type: 'text',
+        text: 'hello',
+      });
     });
   });
 });

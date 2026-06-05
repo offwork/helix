@@ -1,5 +1,5 @@
-import { Fragment } from "./Fragment";
-import { INode } from "./INode";
+import { Fragment } from './Fragment';
+import type { INode } from '../contracts/INode';
 
 export function empty(): Fragment {
   return Fragment.empty();

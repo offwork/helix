@@ -1,18 +1,26 @@
-import type { IFragment } from '../entities/IFragment';
+import { SliceJSON, SyntheticSchema } from '../contracts';
+import { Fragment } from '../entities/Fragment';
 import { empty } from '../entities/FragmentFactory';
 import { insertInto, removeRange } from '../utils/replace';
+import type { ISlice } from '../contracts/ISlice';
 export class Slice {
   static readonly empty = new Slice(empty(), 0, 0);
 
   constructor(
-    public readonly content: IFragment,
+    public readonly content: Fragment,
     public readonly openStart: number,
     public readonly openEnd: number
   ) {
     Slice.validateParameters(content, openStart, openEnd);
   }
 
-  static maxOpen(fragment: IFragment, openIsolating = true): Slice {
+  static fromJSON(schema: SyntheticSchema, json: SliceJSON | null): Slice {
+    if (!json) return Slice.empty;
+    const content = Fragment.fromJSON(schema, json.content);
+    return new Slice(content, json.openStart ?? 0, json.openEnd ?? 0);
+  }
+
+  static maxOpen(fragment: Fragment, openIsolating = true): Slice {
     let openStart = 0,
       openEnd = 0;
     for (
@@ -34,7 +42,7 @@ export class Slice {
     return this.content.size - this.openStart - this.openEnd;
   }
 
-  equals(other: Slice): boolean {
+  equals(other: ISlice): boolean {
     return (
       this.content.equals(other.content) &&
       this.openStart === other.openStart &&
@@ -42,25 +50,39 @@ export class Slice {
     );
   }
 
-  toString(): string {
-    return `${this.content.toString()}(${this.openStart},${this.openEnd})`;
-  }
-
-  insertAt(pos: number, fragment: IFragment): Slice | null {
-    const content = insertInto(this.content, pos + this.openStart, fragment);
+  insertAt(pos: number, fragment: Fragment): Slice | null {
+    const content = insertInto(this.content, pos + this.openStart, fragment) as Fragment;
     return content && new Slice(content, this.openStart, this.openEnd);
   }
 
   removeBetween(from: number, to: number): Slice {
     return new Slice(
-      removeRange(this.content, from + this.openStart, to + this.openStart),
+      removeRange(this.content, from + this.openStart, to + this.openStart) as Fragment,
       this.openStart,
       this.openEnd
     );
   }
 
+  toJSON(): SliceJSON | null {
+    const json: SliceJSON = { content: this.content.size ? this.content.toJSON() : null };
+
+    if (this.openStart > 0) {
+      json.openStart = this.openStart;
+    }
+
+    if (this.openEnd > 0) {
+      json.openEnd = this.openEnd;
+    }
+
+    return this.content.size ? json : null;
+  }
+
+  toString(): string {
+    return `${this.content.toString()}(${this.openStart},${this.openEnd})`;
+  }
+
   private static validateParameters(
-    content: IFragment,
+    content: Fragment,
     openStart: number,
     openEnd: number
   ): void {

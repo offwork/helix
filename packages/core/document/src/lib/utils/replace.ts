@@ -1,9 +1,9 @@
 import { from } from '../entities/FragmentFactory';
-import type { IFragment } from '../entities/IFragment';
-import type { INode } from '../entities/INode';
+import type { IFragment } from '../contracts/IFragment';
+import type { INode } from '../contracts/INode';
+import type { IResolvedPos } from '../contracts/IResolvedPos';
 import { TextNode } from '../entities/TextNode';
 import { ReplaceError } from '../errors/ReplaceError';
-import { ResolvedPos } from '../value-objects/ResolvedPos';
 import { Slice } from '../value-objects/Slice';
 
 export function removeRange(
@@ -44,7 +44,7 @@ export function insertInto(
   if (child === null) return null;
 
   if (offset === dist || child.isText) {
-    if (parent && !parent.canReplace(index, index, insert as never)) return null;
+    if (parent && !parent.canReplace(index, index, insert)) return null;
     return content.cut(0, dist).append(insert).append(content.cut(dist));
   }
 
@@ -72,8 +72,8 @@ export function checkJoin(main: INode, sub: INode): void {
 }
 
 export function joinable(
-  $before: ResolvedPos,
-  $after: ResolvedPos,
+  $before: IResolvedPos,
+  $after: IResolvedPos,
   depth: number
 ): INode {
   const node = $before.node(depth);
@@ -82,13 +82,13 @@ export function joinable(
 }
 
 export function close(node: INode, content: IFragment): INode {
-  node.type.checkContent(content as never);
+  node.type.checkContent(content);
   return node.copy(content);
 }
 
 export function addRange(
-  $start: ResolvedPos | null,
-  $end: ResolvedPos | null,
+  $start: IResolvedPos | null,
+  $end: IResolvedPos | null,
   depth: number,
   target: INode[]
 ): void {
@@ -118,8 +118,8 @@ export function addRange(
 }
 
 export function replaceTwoWay(
-  $from: ResolvedPos,
-  $to: ResolvedPos,
+  $from: IResolvedPos,
+  $to: IResolvedPos,
   depth: number
 ): IFragment {
   const content: INode[] = [];
@@ -133,10 +133,10 @@ export function replaceTwoWay(
 }
 
 export function replaceThreeWay(
-  $from: ResolvedPos,
-  $start: ResolvedPos,
-  $end: ResolvedPos,
-  $to: ResolvedPos,
+  $from: IResolvedPos,
+  $start: IResolvedPos,
+  $end: IResolvedPos,
+  $to: IResolvedPos,
   depth: number
 ): IFragment {
   const openStart = $from.depth > depth && joinable($from, $start, depth + 1);
@@ -168,8 +168,8 @@ export function replaceThreeWay(
 
 export function prepareSliceForReplace(
   slice: Slice,
-  $along: ResolvedPos
-): { start: ResolvedPos; end: ResolvedPos } {
+  $along: IResolvedPos
+): { start: IResolvedPos; end: IResolvedPos } {
   const extra = $along.depth - slice.openStart;
   const parent = $along.node(extra);
   let node = parent.copy(slice.content);
@@ -183,8 +183,8 @@ export function prepareSliceForReplace(
 }
 
 export function replaceOuter(
-  $from: ResolvedPos,
-  $to: ResolvedPos,
+  $from: IResolvedPos,
+  $to: IResolvedPos,
   slice: Slice,
   depth: number
 ): INode {
@@ -218,8 +218,8 @@ export function replaceOuter(
 }
 
 export function replace(
-  $from: ResolvedPos,
-  $to: ResolvedPos,
+  $from: IResolvedPos,
+  $to: IResolvedPos,
   slice: Slice
 ): INode {
   if (slice.openStart > $from.depth)

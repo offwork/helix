@@ -4,7 +4,10 @@ import {
   boldMarkType,
   italicMarkType,
   createMark,
+  createSchemaSpec,
+  createMarkSpec,
 } from '../../testing';
+import { Schema } from '../services/Schema';
 
 describe('Mark', () => {
   describe('constructor', () => {
@@ -90,11 +93,11 @@ describe('Mark', () => {
   });
 
   describe('isInSet', () => {
-    it('given mark is in set, returns true', () => {
+    it('given mark is in set, returns the mark', () => {
       const mark = createMark(boldMarkType, { color: 'purple' });
       const set = [createMark(italicMarkType, { color: 'purple' }), mark];
 
-      expect(mark.isInSet(set)).toBe(true);
+      expect(mark.isInSet(set)).toBe(mark);
     });
 
     it('given null set, throws error', () => {
@@ -242,6 +245,70 @@ describe('Mark', () => {
       ];
 
       expect(Mark.sameSet(marks1, marks2)).toBe(false);
+    });
+  });
+
+  describe('toJSON', () => {
+    it('given mark with no attrs, returns object with only type name', () => {
+      const mark = createMark(boldMarkType, {});
+
+      expect(mark.toJSON()).toEqual({ type: 'bold' });
+    });
+
+    it('given mark with attrs, returns object with type name and attrs', () => {
+      const mark = createMark(boldMarkType, { color: 'purple' });
+
+      expect(mark.toJSON()).toEqual({
+        type: 'bold',
+        attrs: { color: 'purple' },
+      });
+    });
+  });
+
+  describe('fromJSON', () => {
+    it('given valid json with no attrs, returns Mark instance', () => {
+      const schema = new Schema({
+        nodes: createSchemaSpec(),
+        marks: createMarkSpec(),
+      });
+      const json = { type: 'strong' };
+      const mark = Mark.fromJSON(schema, json);
+
+      expect(mark).toBeInstanceOf(Mark);
+    });
+
+    it('given valid json with attrs, returns Mark with correct attrs', () => {
+      const schema = new Schema({
+        nodes: createSchemaSpec(),
+        marks: createMarkSpec(),
+      });
+      const json = { type: 'strong', attrs: { color: 'purple' } };
+      const mark = Mark.fromJSON(schema, json);
+
+      expect(mark.attrs).toEqual({ color: 'purple' });
+    });
+
+    it('given null json, throws RangeError', () => {
+      const schema = new Schema({
+        nodes: createSchemaSpec(),
+        marks: createMarkSpec(),
+      });
+
+      expect(() => Mark.fromJSON(schema, null as never)).toThrow(
+        'Invalid input for Mark.fromJSON'
+      );
+    });
+
+    it('given json with unknown type, throws RangeError', () => {
+      const schema = new Schema({
+        nodes: createSchemaSpec(),
+        marks: createMarkSpec(),
+      });
+      const json = { type: 'unknown_mark' };
+
+      expect(() => Mark.fromJSON(schema, json)).toThrow(
+        'There is no mark type unknown_mark in this schema'
+      );
     });
   });
 });
