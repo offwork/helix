@@ -9,7 +9,10 @@ import {
   createMockNodeType,
   defaultMockSchema,
   createNodeSpec,
+  createSchemaSpec,
+  createMarkSpec,
 } from '../../testing';
+import { Schema } from '../services/Schema';
 
 describe('Fragment', () => {
   describe('creation', () => {
@@ -707,6 +710,52 @@ describe('Fragment', () => {
       const fragment = Fragment.from([node]);
 
       expect(fragment.toString()).toBe(`<${node}>`);
+    });
+  });
+
+  describe('toJSON', () => {
+    it('given empty fragment, returns null', () => {
+      const fragment = Fragment.empty();
+
+      expect(fragment.toJSON()).toBeNull();
+    });
+
+    it('given non-empty fragment, returns array of node json objects', () => {
+      const node1 = new Node(paragraphType, {});
+      const node2 = new Node(paragraphType, {});
+      const fragment = Fragment.from([node1, node2]);
+
+      expect(fragment.toJSON()).toEqual([
+        { type: node1.type.name },
+        { type: node2.type.name },
+      ]);
+    });
+  });
+
+  describe('fromJSON', () => {
+    it('given null, returns empty fragment', () => {
+      const schema = new Schema({
+        nodes: createSchemaSpec(),
+        marks: createMarkSpec(),
+      });
+
+      expect(Fragment.fromJSON(schema, null)).toEqual(Fragment.empty());
+    });
+
+    it('given array of node json objects, returns fragment with corresponding nodes', () => {
+      const schema = new Schema({
+        nodes: createSchemaSpec(),
+        marks: createMarkSpec(),
+      });
+
+      const node1 = schema.node('paragraph');
+      const node2 = schema.node('paragraph');
+
+      const json = [node1.toJSON(), node2.toJSON()];
+
+      expect(Fragment.fromJSON(schema, json)).toEqual(
+        Fragment.from([node1, node2])
+      );
     });
   });
 });

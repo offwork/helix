@@ -1,4 +1,4 @@
-import { INode } from './INode';
+import type { INode } from './INode';
 
 export interface IFragment {
   readonly childCount: number;
@@ -19,5 +19,6 @@ export interface IFragment {
   replaceChild(index: number, node: INode): IFragment;
   slice(from: number, to: number): IFragment;
   textBetween(from: number, to: number, blockSeparator?: string | null, leafText?: string | null | ((leafNode: INode) => string)): string;
+  toJSON(): Record<string, unknown>[] | null;
   toString(): string;
 }

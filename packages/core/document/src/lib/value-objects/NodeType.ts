@@ -7,7 +7,11 @@ import { Attribute } from './Attribute';
 import { ContentMatch } from './ContentMatch';
 import { Mark } from './Mark';
 import { MarkType } from './MarkType';
-import type { INodeType } from './INodeType';
+import type { IFragment } from '../contracts/IFragment';
+import type { IMark } from '../contracts/IMark';
+import type { IMarkType } from '../contracts/IMarkType';
+import type { INode } from '../contracts/INode';
+import type { INodeType } from '../contracts/INodeType';
 
 export class NodeType implements INodeType {
   readonly name: string;
@@ -17,7 +21,7 @@ export class NodeType implements INodeType {
 
   contentMatch: ContentMatch | null = null;
   inlineContent: boolean | null = null;
-  markSet: readonly MarkType[] | null = null;
+  markSet: readonly IMarkType[] | null = null;
 
   constructor(name: string, schema: unknown, spec: NodeSpec) {
     this.validateParameter('name', name);
@@ -36,7 +40,7 @@ export class NodeType implements INodeType {
     this.spec = spec;
   }
 
-  equals(other: NodeType): boolean {
+  equals(other: INodeType): boolean {
     if (other === null) {
       throw new Error('NodeType equals parameter cannot be null');
     }
@@ -48,21 +52,21 @@ export class NodeType implements INodeType {
     return this.markSet === null || this.markSet.indexOf(markType) > -1;
   }
 
-  allowsMarks(marks: readonly Mark[]): boolean {
+  allowsMarks(marks: readonly IMark[]): boolean {
     if (this.markSet === null) return true;
     return marks.every(
-      (mark) => this.markSet && this.markSet.indexOf(mark.type as MarkType) > -1
+      (mark) => this.markSet && this.markSet.indexOf(mark.type as IMarkType) > -1
     );
   }
 
-  allowedMarks(marks: readonly Mark[]): readonly Mark[] {
+  allowedMarks(marks: readonly IMark[]): readonly IMark[] {
     if (this.markSet === null) return marks;
-    let copy: Mark[] | null = null;
+    let copy: IMark[] | null = null;
     for (let i = 0; i < marks.length; i++) {
-      if (this.markSet.indexOf(marks[i].type as MarkType) > -1) {
-        if (copy) copy.push(marks[i] as Mark);
+      if (this.markSet.indexOf(marks[i].type as IMarkType) > -1) {
+        if (copy) copy.push(marks[i]);
       } else {
-        if (!copy) copy = marks.slice(0, i) as Mark[];
+        if (!copy) copy = marks.slice(0, i);
       }
     }
     return !copy ? marks : copy.length ? copy : Mark.none;
@@ -98,15 +102,15 @@ export class NodeType implements INodeType {
 
   create(
     attrs?: Record<string, unknown>,
-    content?: Fragment | Node[],
-    marks?: Mark[]
+    content?: IFragment | INode[],
+    marks?: IMark[]
   ): Node {
     if (this.isText)
       throw new Error('NodeType.create cannot construct text nodes');
 
     const nodes = Array.isArray(content)
-      ? from(content)
-      : content || empty();
+      ? from(content as INode[])
+      : (content as Fragment) || empty();
 
     return new Node(this, attrs || {}, nodes, marks || []);
   }
@@ -117,15 +121,15 @@ export class NodeType implements INodeType {
 
   createAndFill(
     attrs?: Record<string, unknown>,
-    content?: Fragment | Node[],
-    marks?: Mark[]
+    content?: IFragment | INode[],
+    marks?: IMark[]
   ): Node | null {
     if (this.isText)
       throw new Error('NodeType.createAndFill cannot construct text nodes');
 
     let nodes = Array.isArray(content)
-      ? from(content)
-      : content ?? empty();
+      ? from(content as INode[])
+      : (content as Fragment) ?? empty();
 
     if (nodes.size) {
       const before = this.contentMatch?.fillBefore(nodes);
@@ -174,19 +178,19 @@ export class NodeType implements INodeType {
 
   createChecked(
     attrs?: Record<string, unknown>,
-    content?: Fragment | Node[],
-    marks?: Mark[]
+    content?: IFragment | INode[],
+    marks?: IMark[]
   ): Node {
     const node = this.create(attrs, content, marks);
     this.checkContent(node.content);
     return node;
   }
 
-  compatibleContent(other: NodeType): boolean {
+  compatibleContent(other: INodeType): boolean {
     return (
       this === other ||
       this.contentMatch?.compatible(
-        other.contentMatch ?? ContentMatch.empty
+        (other as NodeType).contentMatch ?? ContentMatch.empty
       ) === true
     );
   }

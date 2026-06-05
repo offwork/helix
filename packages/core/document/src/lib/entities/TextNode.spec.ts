@@ -149,11 +149,21 @@ describe('TextNode', () => {
   });
 
   describe('toString', () => {
-    // TextNode.spec.ts
     it('given a text node, returns string representation', () => {
       const textNode = new TextNode(textType, {}, 'hello');
 
       expect(textNode.toString()).toBe('"hello"');
+    });
+  });
+
+  describe('toJSON', () => {
+    it('given text node, returns object with type and text', () => {
+      const textNode = new TextNode(textType, {}, 'hello');
+
+      expect(textNode.toJSON()).toEqual({
+        type: 'text',
+        text: 'hello',
+      });
     });
   });
 });

@@ -1,0 +1,7 @@
+export type NodeJSON = {
+  type: string;
+  text?: string;
+  attrs?: Record<string, unknown>;
+  marks?: { type: string; attrs?: Record<string, unknown> }[];
+  content?: NodeJSON[];
+};

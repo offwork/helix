@@ -3,14 +3,18 @@ import { Node } from '../entities/Node';
 import { TextNode } from '../entities/TextNode';
 import { MarkSpec, NodeSpec, SchemaSpec } from '../interfaces/SchemaSpec';
 import { ContentMatch } from '../value-objects/ContentMatch';
-import { Mark } from '../value-objects/Mark';
+import type { IMark } from '../contracts/IMark';
+import type { INode } from '../contracts/INode';
 import { MarkType } from '../value-objects/MarkType';
 import { NodeType } from '../value-objects/NodeType';
+import { NodeJSON } from '../contracts/types/NodeJSON';
 
 export class Schema {
   readonly nodes: Record<string, NodeType>;
   readonly marks: Record<string, MarkType>;
   readonly topNodeType: NodeType;
+  readonly nodeFromJSON: (json: NodeJSON) => Node;
+  readonly markFromJSON: (json: { type: string; attrs?: Record<string, unknown> }) => IMark;
 
   constructor(spec: SchemaSpec) {
     this.validateParameter('nodes spec', spec.nodes);
@@ -52,9 +56,14 @@ export class Schema {
         type.markSet = [];
       }
     }
+
+    this.nodeFromJSON = (json) => Node.fromJSON(this, json);
+    this.markFromJSON = (json: { type: string; attrs?: Record<string, unknown> }) => {
+      return this.marks[json.type].create(json.attrs);
+    }
   }
 
-  text(text: string, marks?: readonly Mark[]): TextNode {
+  text(text: string, marks?: readonly IMark[]): TextNode {
     const textNode = new TextNode(
       this.nodes['text'],
       {},
@@ -67,8 +76,8 @@ export class Schema {
   node(
     type: string,
     attrs?: Record<string, unknown>,
-    content?: Fragment | Node[],
-    marks?: readonly Mark[]
+    content?: Fragment | INode[],
+    marks?: readonly IMark[]
   ): Node {
     if (!this.nodes[type]) {
       throw new Error(`Unknown node type: "${type}"`);
@@ -90,7 +99,7 @@ export class Schema {
     return this.nodes[type];
   }
 
-  mark(type: string, attrs?: Record<string, unknown>): Mark {
+  mark(type: string, attrs?: Record<string, unknown>): IMark {
     if (!this.marks[type]) {
       throw new Error(`Unknown mark type: "${type}"`);
     }

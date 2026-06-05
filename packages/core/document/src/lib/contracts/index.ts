@@ -1,0 +1,13 @@
+export type { IAttribute } from './IAttribute';
+export type { IContentMatch } from './IContentMatch';
+export type { IFragment } from './IFragment';
+export type { IMark } from './IMark';
+export type { IMarkType } from './IMarkType';
+export type { INode } from './INode';
+export type { INodeType } from './INodeType';
+export type { IResolvedPos } from './IResolvedPos';
+export type { ISlice } from './ISlice';
+export type { NodeJSON } from './types/NodeJSON';
+export type { SyntheticSchema } from './types/SyntheticSchema';
+export type { SliceJSON } from './types/SliceJSON';
+export type { MarkJSON } from './types/MarkJSON';

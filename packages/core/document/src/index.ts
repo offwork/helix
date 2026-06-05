@@ -4,12 +4,27 @@ export * from './lib/document';
 export { ReplaceError } from './lib/errors/ReplaceError';
 
 // Entities
-export type { IFragment } from './lib/entities/IFragment';
 export { Fragment } from './lib/entities/Fragment';
 export { empty, from } from './lib/entities/FragmentFactory';
-export type { INode } from './lib/entities/INode';
 export { Node } from './lib/entities/Node';
 export { TextNode } from './lib/entities/TextNode';
+
+// Contracts
+export type {
+  IAttribute,
+  IContentMatch,
+  IFragment,
+  IMark,
+  IMarkType,
+  INode,
+  INodeType,
+  IResolvedPos,
+  ISlice,
+  MarkJSON,
+  NodeJSON,
+  SliceJSON,
+  SyntheticSchema,
+} from './lib/contracts';
 
 // Interfaces
 export type { Edge } from './lib/interfaces/Edge';
@@ -31,12 +46,9 @@ export { Attribute } from './lib/value-objects/Attribute';
 export { ContentMatch } from './lib/value-objects/ContentMatch';
 export { NodeRange } from './lib/value-objects/NodeRange';
 export { NodeType } from './lib/value-objects/NodeType';
-export type { INodeType } from './lib/value-objects/INodeType';
 export { Mark } from './lib/value-objects/Mark';
-export type { IMark } from './lib/value-objects/IMark';
 export { MarkSet } from './lib/value-objects/MarkSet';
 export { MarkType } from './lib/value-objects/MarkType';
-export type { IMarkType } from './lib/value-objects/IMarkType';
 export { Position } from './lib/value-objects/Position';
 export { ResolvedPos } from './lib/value-objects/ResolvedPos';
 export { Slice } from './lib/value-objects/Slice';

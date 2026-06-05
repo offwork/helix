@@ -1,7 +1,8 @@
 import { MarkSpec } from '../interfaces/SchemaSpec';
 import { Attrs, checkAttrs } from '../utils/attrs';
 import { Attribute } from './Attribute';
-import type { IMarkType } from './IMarkType';
+import type { IMark } from '../contracts/IMark';
+import type { IMarkType } from '../contracts/IMarkType';
 import { Mark } from './Mark';
 
 export class MarkType implements IMarkType {
@@ -24,7 +25,7 @@ export class MarkType implements IMarkType {
 
     if (spec.attrs) {
       for (const [attrName, attrSpec] of Object.entries(spec.attrs)) {
-        this.attrs[attrName] = new Attribute(attrSpec as never);
+        this.attrs[attrName] = new Attribute(attrSpec);
       }
     }
   }
@@ -33,11 +34,11 @@ export class MarkType implements IMarkType {
     return new Mark(this, attrs || {});
   }
 
-  isInSet(set: readonly Mark[]): Mark | undefined {
+  isInSet(set: readonly IMark[]): IMark | undefined {
     return set.find((mark) => mark.type === this);
   }
 
-  removeFromSet(set: readonly Mark[]): readonly Mark[] {
+  removeFromSet(set: readonly IMark[]): readonly IMark[] {
     for (let i = 0; i < set.length; i++) {
       if (set[i].type === this) {
         return set.slice(0, i).concat(set.slice(i + 1));

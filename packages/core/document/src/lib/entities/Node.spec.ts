@@ -5,6 +5,7 @@ import { ResolvedPos } from '../value-objects/ResolvedPos';
 import { TextNode } from './TextNode';
 import { Slice } from '../value-objects/Slice';
 import { ReplaceError } from '../errors/ReplaceError';
+import { empty, from } from './FragmentFactory';
 import {
   defaultMockSchema,
   defaultNodeSpec,
@@ -20,8 +21,10 @@ import {
   textType,
   createNodeSpec,
   createMockNodeType,
+  createSchemaSpec,
+  createMarkSpec,
 } from '../../testing';
-import { empty, from } from './FragmentFactory';
+import { Schema } from '../services/Schema';
 
 describe('Node', () => {
   describe('constructor', () => {
@@ -362,12 +365,7 @@ describe('Node', () => {
     it('given pos at boundary, returns previous child with index of previous child and offset of previous child start', () => {
       const child1 = new Node(paragraphType, {});
       const child2 = new Node(paragraphType, {});
-      const node = new Node(
-        paragraphType,
-        {},
-        from([child1, child2]),
-        []
-      );
+      const node = new Node(paragraphType, {}, from([child1, child2]), []);
 
       const result = node.childBefore(child1.nodeSize);
 
@@ -657,10 +655,7 @@ describe('Node', () => {
       boldMarkType.rank = 2;
       italicMarkType.rank = 1;
 
-      const node = new Node(paragraphType, {}, empty(), [
-        mark1,
-        mark2,
-      ]);
+      const node = new Node(paragraphType, {}, empty(), [mark1, mark2]);
 
       expect(() => node.check()).toThrow(RangeError);
     });
@@ -746,6 +741,85 @@ describe('Node', () => {
 
       expect(result.openStart).toBe(0);
       expect(result.openEnd).toBe(0);
+    });
+  });
+
+  describe('toJSON', () => {
+    it('given node with no attrs and no content, returns object with only type name', () => {
+      const node = new Node(paragraphType, {});
+
+      expect(node.toJSON()).toEqual({ type: 'paragraph' });
+    });
+
+    it('given node with attrs, returns object with type name and attrs', () => {
+      const node = new Node(paragraphType, { level: 1, visible: true });
+
+      expect(node.toJSON()).toEqual({
+        type: 'paragraph',
+        attrs: { level: 1, visible: true },
+      });
+    });
+
+    it('given node with marks, returns object with marks array', () => {
+      const marks = [createMark(boldMarkType, { color: 'purple' })];
+      const node = new Node(paragraphType, {}, empty(), marks);
+
+      expect(node.toJSON()).toEqual({
+        type: 'paragraph',
+        marks: [{ type: 'bold', attrs: { color: 'purple' } }],
+      });
+    });
+
+    it('given node with content, returns object with content array', () => {
+      const child = new Node(paragraphType, {});
+      const node = new Node(paragraphType, {}, from([child]), []);
+
+      expect(node.toJSON()).toEqual({
+        type: 'paragraph',
+        content: [{ type: 'paragraph' }],
+      });
+    });
+  });
+
+  describe('fromJSON', () => {
+    it('given null json, throws RangeError', () => {
+      expect(() => Node.fromJSON(defaultMockSchema, null as never)).toThrow(
+        RangeError
+      );
+    });
+
+    it('given simple node json, returns Node instance', () => {
+      const schema = new Schema({
+        nodes: createSchemaSpec(),
+        marks: createMarkSpec(),
+      });
+
+      expect(Node.fromJSON(schema, { type: 'paragraph' })).toBeInstanceOf(Node);
+    });
+
+    it('given node json with marks, returns Node with marks', () => {
+      const schema = new Schema({
+        nodes: createSchemaSpec(),
+        marks: createMarkSpec(),
+      });
+
+      const json = {
+        type: schema.node('paragraph').type.name,
+        marks: [schema.mark('strong').toJSON()],
+      };
+
+      expect(Node.fromJSON(schema, json).marks.length).toBe(1);
+    });
+
+    it('given text node json, returns TextNode', () => {
+      const schema = new Schema({
+        nodes: createSchemaSpec(),
+        marks: createMarkSpec(),
+      });
+
+      const json = { type: 'text', text: 'hello' };
+
+      expect(Node.fromJSON(schema, json)).toBeInstanceOf(TextNode);
     });
   });
 });

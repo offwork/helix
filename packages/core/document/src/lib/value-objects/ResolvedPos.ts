@@ -1,4 +1,4 @@
-import type { INode } from '../entities/INode';
+import type { INode } from '../contracts/INode';
 
 export class ResolvedPos {
   constructor(

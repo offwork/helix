@@ -7,6 +7,9 @@ import {
   parseExpr,
   TokenStream,
 } from '../utils/content-match-parser';
+import type { IContentMatch } from '../contracts/IContentMatch';
+import type { IFragment } from '../contracts/IFragment';
+import type { INodeType } from '../contracts/INodeType';
 import { NodeType } from './NodeType';
 
 type Active = {
@@ -15,7 +18,7 @@ type Active = {
   via: Active | null;
 };
 export class ContentMatch {
-  readonly wrapCache: (NodeType | NodeType[] | null)[] = [];
+  readonly wrapCache: (INodeType | INodeType[] | null)[] = [];
 
   private static _empty: ContentMatch;
 
@@ -66,7 +69,7 @@ export class ContentMatch {
     return this.edges[index];
   }
 
-  matchType(type: NodeType): ContentMatch | null {
+  matchType(type: INodeType): ContentMatch | null {
     if (type === null) {
       throw new Error('ContentMatch matchType parameter cannot be null');
     }
@@ -85,7 +88,7 @@ export class ContentMatch {
   }
 
   matchFragment(
-    fragment: Fragment,
+    fragment: IFragment,
     start = 0,
     end?: number
   ): ContentMatch | null {
@@ -155,20 +158,18 @@ export class ContentMatch {
     return null;
   }
 
-  compatible(other: ContentMatch): boolean {
+  compatible(other: IContentMatch): boolean {
     if (other === null || other === undefined) return false;
 
     for (const edge of this.edges) {
-      for (const otherEdge of other.edges) {
-        if (edge.type === otherEdge.type) return true;
-      }
+      if (other.matchType(edge.type) !== null) return true;
     }
 
     return false;
   }
 
   fillBefore(
-    after: Fragment,
+    after: IFragment,
     toEnd = false,
     startIndex = 0
   ): Fragment | null {
@@ -203,11 +204,11 @@ export class ContentMatch {
     return search(this, []);
   }
 
-  findWrapping(target: NodeType): NodeType[] | null {
+  findWrapping(target: INodeType): INodeType[] | null {
     for (let i = 0; i < this.wrapCache.length; i += 2)
       if (this.wrapCache[i] === target)
-        return this.wrapCache[i + 1] as NodeType[] | null;
-    const computed = this.computeWrapping(target);
+        return this.wrapCache[i + 1] as INodeType[] | null;
+    const computed = this.computeWrapping(target as NodeType);
     this.wrapCache.push(target, computed);
     return computed;
   }
