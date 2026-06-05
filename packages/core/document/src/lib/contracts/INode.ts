@@ -46,6 +46,6 @@ export interface INode {
   resolveNoCache(pos: number): IResolvedPos;
   sameMarkup(other: INode): boolean;
   slice(from: number, to?: number, includeParents?: boolean): ISlice;
-  toJSON(): NodeJSON | null;
+  toJSON(): NodeJSON;
   toString(): string;
 }

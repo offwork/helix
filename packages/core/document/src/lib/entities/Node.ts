@@ -55,7 +55,7 @@ export class Node implements INode {
 
   static fromJSON(schema: SyntheticSchema, json: NodeJSON): Node {
     if (!json) throw new RangeError('Invalid input for Node.fromJSON');
-    const marks = json.marks?.map((m) => schema.markFromJSON(m) as Mark) ?? [];
+    const marks = json.marks?.map((m) => schema.markFromJSON(m)) ?? [];
     if (json.type === 'text') return schema.text(json.text ?? '', marks) as Node;
     const content = Fragment.from(
       (json.content ?? []).map((c) => schema.nodeFromJSON(c))
@@ -343,12 +343,7 @@ export class Node implements INode {
     };
 
     if (Object.keys(this.attrs).length > 0) {
-      json.attrs = {};
-      for (const key in this.attrs) {
-        if (Object.prototype.hasOwnProperty.call(this.attrs, key)) {
-          json.attrs[key] = this.attrs[key];
-        }
-      }
+      json.attrs = { ...this.attrs };
     }
 
     if (this.marks.length > 0) {
@@ -358,10 +353,7 @@ export class Node implements INode {
     if (this.content.size > 0) {
       json.content = [];
       this.content.forEach((node) => {
-        const nodeJson = node.toJSON();
-        if (nodeJson !== null) {
-          (json.content as Record<string, unknown>[]).push(nodeJson);
-        }
+        (json.content as NodeJSON[]).push(node.toJSON());
       });
     }
 

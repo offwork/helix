@@ -137,12 +137,35 @@ describe('TextNode', () => {
   });
 
   describe('equals', () => {
+    it('given same text and same marks, returns true', () => {
+      const marks = [createMark(boldMarkType, {})];
+
+      const textNode1 = new TextNode(textType, {}, 'hello', marks);
+      const textNode2 = new TextNode(textType, {}, 'hello', marks);
+
+      expect(textNode1.equals(textNode2)).toBe(true);
+    });
+
     it('given different text, returns false', () => {
       const attrs = { color: 'red' };
       const marks = [createMark(boldMarkType, {})];
 
       const textNode1 = new TextNode(textType, attrs, 'hello world', marks);
       const textNode2 = new TextNode(textType, attrs, 'Hola mundo', marks);
+
+      expect(textNode1.equals(textNode2)).toBe(false);
+    });
+
+    it('given same text but different marks, returns false', () => {
+      const textNode1 = new TextNode(textType, {}, 'hello', [createMark(boldMarkType, {})]);
+      const textNode2 = new TextNode(textType, {}, 'hello', [createMark(italicMarkType, {})]);
+
+      expect(textNode1.equals(textNode2)).toBe(false);
+    });
+
+    it('given same text but one has no marks, returns false', () => {
+      const textNode1 = new TextNode(textType, {}, 'hello', [createMark(boldMarkType, {})]);
+      const textNode2 = new TextNode(textType, {}, 'hello', []);
 
       expect(textNode1.equals(textNode2)).toBe(false);
     });

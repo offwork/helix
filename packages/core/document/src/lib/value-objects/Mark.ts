@@ -106,12 +106,7 @@ export class Mark implements IMark {
     };
 
     if (Object.keys(this.attrs).length > 0) {
-      json.attrs = {};
-      for (const key in this.attrs) {
-        if (Object.prototype.hasOwnProperty.call(this.attrs, key)) {
-          json.attrs[key] = this.attrs[key];
-        }
-      }
+      json.attrs = { ...this.attrs };
     }
 
     return json;

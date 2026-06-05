@@ -23,7 +23,7 @@ export class TextNode extends Node {
   }
 
   override equals(other: INode): boolean {
-    return this.text === (other as TextNode).text;
+    return this.sameMarkup(other) && this.text === (other as TextNode).text;
   }
 
   override get nodeSize(): number {

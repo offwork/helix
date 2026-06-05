@@ -264,9 +264,7 @@ export class Fragment implements IFragment {
   toJSON(): NodeJSON[] | null {
     if (this.content.length === 0) return null;
 
-    return this.content
-      .map((node) => node.toJSON())
-      .filter((n) => n !== null) as NodeJSON[];
+    return this.content.map((node) => node.toJSON());
   }
 
   toString(): string {
