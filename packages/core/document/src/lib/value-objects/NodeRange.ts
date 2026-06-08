@@ -1,10 +1,9 @@
-import { Node } from '../entities/Node';
-import { ResolvedPos } from './ResolvedPos';
+import { INode, IResolvedPos } from '../contracts';
 
 export class NodeRange {
   constructor(
-    public readonly $from: ResolvedPos,
-    public readonly $to: ResolvedPos,
+    public readonly $from: IResolvedPos,
+    public readonly $to: IResolvedPos,
     public readonly depth: number
   ) {
     this.validateParameter($from, '$from');
@@ -20,8 +19,8 @@ export class NodeRange {
     return this.$to.after(this.depth + 1);
   }
 
-  get parent(): Node {
-    return this.$from.node(this.depth) as Node;
+  get parent(): INode {
+    return this.$from.node(this.depth);
   }
 
   get startIndex(): number {
