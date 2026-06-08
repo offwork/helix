@@ -1,3 +1,4 @@
+import { IMark } from '../contracts';
 import type { INode } from '../contracts/INode';
 
 export class ResolvedPos {
@@ -95,6 +96,8 @@ export class ResolvedPos {
       throw new Error('There is no position before the top-level node');
     }
 
+    if (resolvedDepth === this.depth + 1) return this.pos;
+
     return this.path[resolvedDepth * 3 - 1] as number;
   }
 
@@ -103,6 +106,8 @@ export class ResolvedPos {
     if (resolvedDepth === 0) {
       throw new Error('There is no position after the top-level node');
     }
+
+    if (resolvedDepth === this.depth + 1) return this.pos;
 
     return (
       (this.path[resolvedDepth * 3 - 1] as number) +
@@ -137,6 +142,76 @@ export class ResolvedPos {
 
   min(other: ResolvedPos): ResolvedPos {
     return this.pos < other.pos ? this : other;
+  }
+
+  marksAcross($end: ResolvedPos): readonly IMark[] | null {
+    const after = this.parent.maybeChild(this.index());
+    if (!after || !after.isInline) return null;
+
+    let marks: readonly IMark[] = after.marks;
+    const next = $end.parent.maybeChild($end.index());
+    for (let i = 0; i < marks.length; i++) {
+      if (
+        marks[i].type.inclusive === false &&
+        (!next || !marks[i].isInSet(next.marks))
+      ) {
+        marks = marks[i--].removeFromSet(marks);
+      }
+    }
+    return marks;
+  }
+
+  marks(): readonly IMark[] {
+    const parent = this.parent;
+    const index = this.index();
+
+    if (parent.content.size === 0) return [];
+    if (this.textOffset) return parent.child(index).marks;
+
+    let main = parent.maybeChild(index - 1);
+    let other = parent.maybeChild(index);
+
+    if (!main) {
+      const tmp = main;
+      main = other;
+      other = tmp;
+    }
+    if (!main) return [];
+
+    let marks: readonly IMark[] = main.marks;
+    for (let i = 0; i < marks.length; i++) {
+      if (
+        marks[i].type.inclusive === false &&
+        (!other || !marks[i].isInSet(other.marks))
+      ) {
+        marks = marks[i--].removeFromSet(marks);
+      }
+    }
+    return marks;
+  }
+
+  posAtIndex(index: number, depth?: number | null): number {
+    const resolvedDepth = this.resolveDepth(depth);
+    let pos = this.start(resolvedDepth);
+    for (let i = 0; i < index; i++) {
+      pos += (this.node(resolvedDepth).content.child(i) as INode).nodeSize;
+    }
+    return pos;
+  }
+
+  static resolveCached(doc: INode, pos: number): ResolvedPos {
+    let cache = resolveCache.get(doc);
+    if (cache) {
+      for (let i = 0; i < cache.elts.length; i++) {
+        const elt = cache.elts[i];
+        if (elt.pos === pos) return elt;
+      }
+    } else {
+      resolveCache.set(doc, (cache = new ResolveCache()));
+    }
+    const result = (cache.elts[cache.i] = ResolvedPos.resolve(doc, pos));
+    cache.i = (cache.i + 1) % resolveCacheSize;
+    return result;
   }
 
   equals(other: ResolvedPos): boolean {
@@ -175,3 +250,10 @@ export class ResolvedPos {
     }
   }
 }
+
+class ResolveCache {
+  elts: ResolvedPos[] = [];
+  i = 0;
+}
+const resolveCacheSize = 12;
+const resolveCache = new WeakMap<INode, ResolveCache>();

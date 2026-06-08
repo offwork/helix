@@ -2,7 +2,16 @@ import { Fragment } from '../entities/Fragment';
 import { Node } from '../entities/Node';
 import { ResolvedPos } from './ResolvedPos';
 import { TextNode } from '../entities/TextNode';
-import { createMockNode, paragraphType, textType } from '../../testing';
+import {
+  boldMarkType,
+  createMark,
+  createMarkType,
+  createMockNode,
+  defaultMarkSpec,
+  defaultMockSchema,
+  paragraphType,
+  textType,
+} from '../../testing';
 
 const path: (Node | number)[] = [];
 
@@ -196,6 +205,18 @@ describe('ResolvedPos', () => {
 
       expect(resolvedPos.before(1)).toBe(0);
     });
+
+    it('given depth equals this.depth + 1, returns pos', () => {
+      const childNode = createMockNode();
+      const rootNode = new Node(
+        createMockNode().type,
+        {},
+        Fragment.from([childNode])
+      );
+      const resolvedPos = ResolvedPos.resolve(rootNode, 0);
+
+      expect(resolvedPos.before(resolvedPos.depth + 1)).toBe(resolvedPos.pos);
+    });
   });
 
   describe('after', () => {
@@ -215,6 +236,18 @@ describe('ResolvedPos', () => {
       );
 
       expect(resolvedPos.after(1)).toBe(2);
+    });
+
+    it('given depth equals this.depth + 1, returns pos', () => {
+      const childNode = createMockNode();
+      const rootNode = new Node(
+        createMockNode().type,
+        {},
+        Fragment.from([childNode])
+      );
+      const resolvedPos = ResolvedPos.resolve(rootNode, 0);
+
+      expect(resolvedPos.after(resolvedPos.depth + 1)).toBe(resolvedPos.pos);
     });
   });
 
@@ -429,5 +462,211 @@ describe('ResolvedPos', () => {
 
       expect(resolvedPos?.nodeBefore).toBeNull();
     });
+  });
+
+  describe('posAtIndex', () => {
+    it('given index 0 and default depth, returns start of first child', () => {
+      const firstNode = createMockNode();
+      const secondNode = createMockNode();
+      const rootNode = new Node(
+        createMockNode().type,
+        {},
+        Fragment.from([firstNode, secondNode])
+      );
+      const resolvedPos = ResolvedPos.resolve(rootNode, 0);
+
+      expect(resolvedPos.posAtIndex(0)).toBe(0);
+    });
+
+    it('given index 1 and default depth, returns start of second child', () => {
+      const firstNode = createMockNode();
+      const secondNode = createMockNode();
+      const rootNode = new Node(
+        createMockNode().type,
+        {},
+        Fragment.from([firstNode, secondNode])
+      );
+      const resolvedPos = ResolvedPos.resolve(rootNode, 0);
+
+      expect(resolvedPos.posAtIndex(1)).toBe(firstNode.nodeSize);
+    });
+
+    it('given explicit depth, returns position at that depth', () => {
+      const childNode = createMockNode();
+      const paragraphNode = new Node(
+        paragraphType,
+        {},
+        Fragment.from([childNode])
+      );
+      const rootNode = new Node(
+        createMockNode().type,
+        {},
+        Fragment.from([paragraphNode])
+      );
+      const resolvedPos = ResolvedPos.resolve(rootNode, 1);
+
+      expect(resolvedPos.posAtIndex(0, 1)).toBe(1);
+    });
+  });
+
+  describe('marks', () => {
+    it('given empty parent, returns Mark.none', () => {
+      const rootNode = createMockNode();
+      const resolvedPos = ResolvedPos.resolve(rootNode, 0);
+
+      expect(resolvedPos.marks()).toEqual([]);
+    });
+
+    it('given cursor inside text node, returns text node marks', () => {
+      const mark = createMark(boldMarkType, { color: 'black' });
+      const textNode = new TextNode(textType, {}, 'hello', [mark]);
+      const rootNode = new Node(
+        paragraphType,
+        {},
+        Fragment.from([textNode]),
+        []
+      );
+      const resolvedPos = ResolvedPos.resolve(rootNode, 2);
+
+      expect(resolvedPos.marks()).toEqual([mark]);
+    });
+    it('given cursor between nodes, returns left node marks', () => {
+      const mark = createMark(boldMarkType, {});
+      const textNode1 = new TextNode(textType, {}, 'hello', [mark]);
+      const textNode2 = new TextNode(textType, {}, 'world', []);
+      const para = new Node(
+        paragraphType,
+        {},
+        Fragment.from([textNode1, textNode2]),
+        []
+      );
+      const rootNode = new Node(paragraphType, {}, Fragment.from([para]), []);
+      const resolvedPos = ResolvedPos.resolve(rootNode, 6);
+
+      expect(resolvedPos.marks()).toEqual([mark]);
+    });
+    it('given cursor between nodes with inclusive=false mark absent on right, excludes that mark', () => {
+      const markType = createMarkType('bold', defaultMockSchema, {
+        ...defaultMarkSpec,
+        inclusive: false,
+      });
+      const mark = createMark(markType, {});
+      const textNode1 = new TextNode(textType, {}, 'hello', [mark]);
+      const textNode2 = new TextNode(textType, {}, 'world', []);
+      const para = new Node(
+        paragraphType,
+        {},
+        Fragment.from([textNode1, textNode2]),
+        []
+      );
+      const rootNode = new Node(paragraphType, {}, Fragment.from([para]), []);
+      const resolvedPos = ResolvedPos.resolve(rootNode, 6);
+
+      expect(resolvedPos.marks()).toEqual([]);
+    });
+    it('given cursor at start of parent (no left node), returns right node marks', () => {
+      const mark = createMark(boldMarkType, {});
+      const textNode = new TextNode(textType, {}, 'hello', [mark]);
+      const para = new Node(paragraphType, {}, Fragment.from([textNode]), []);
+      const rootNode = new Node(paragraphType, {}, Fragment.from([para]), []);
+      const resolvedPos = ResolvedPos.resolve(rootNode, 1);
+
+      expect(resolvedPos.marks()).toEqual([mark]);
+    });
+  });
+
+  describe('marksAcross', () => {
+    it('given no node after position, returns null', () => {
+      const textNode = new TextNode(textType, {}, 'hello', []);
+      const para = new Node(paragraphType, {}, Fragment.from([textNode]), []);
+      const rootNode = new Node(paragraphType, {}, Fragment.from([para]), []);
+      const $from = ResolvedPos.resolve(rootNode, 7);
+      const $end = ResolvedPos.resolve(rootNode, 7);
+
+      expect($from.marksAcross($end)).toBeNull();
+    });
+
+    it('given non-inline node after position, returns null', () => {
+      const child = new Node(paragraphType, {});
+      const rootNode = new Node(paragraphType, {}, Fragment.from([child]), []);
+      const $from = ResolvedPos.resolve(rootNode, 0);
+      const $end = ResolvedPos.resolve(rootNode, 0);
+
+      expect($from.marksAcross($end)).toBeNull();
+    });
+
+    it('given inline node after, returns its marks', () => {
+      const mark = createMark(boldMarkType, {});
+      const textNode = new TextNode(textType, {}, 'hello', [mark]);
+      const para = new Node(paragraphType, {}, Fragment.from([textNode]), []);
+      const rootNode = new Node(paragraphType, {}, Fragment.from([para]), []);
+      const $from = ResolvedPos.resolve(rootNode, 1);
+      const $end = ResolvedPos.resolve(rootNode, 1);
+
+      expect($from.marksAcross($end)).toEqual([mark]);
+    });
+
+    it('given inclusive=false mark absent at $end, excludes that mark', () => {
+      const markType = createMarkType('bold', defaultMockSchema, {
+        ...defaultMarkSpec,
+        inclusive: false,
+      });
+      markType.inclusive = false;
+      const mark = createMark(markType, {});
+      const textNode1 = new TextNode(textType, {}, 'hello', [mark]);
+      const textNode2 = new TextNode(textType, {}, 'world', []);
+      const para = new Node(
+        paragraphType,
+        {},
+        Fragment.from([textNode1, textNode2]),
+        []
+      );
+      const rootNode = new Node(paragraphType, {}, Fragment.from([para]), []);
+      const $from = ResolvedPos.resolve(rootNode, 1);
+      const $end = ResolvedPos.resolve(rootNode, 7);
+
+      expect($from.marksAcross($end)).toEqual([]);
+    });
+  });
+
+  describe('resolveCached', () => {
+    it('given same doc and pos, returns same reference', () => {
+  const childNode = createMockNode();
+  const rootNode = new Node(
+    createMockNode().type,
+    {},
+    Fragment.from([childNode])
+  );
+
+  const first = ResolvedPos.resolveCached(rootNode, 0);
+  const second = ResolvedPos.resolveCached(rootNode, 0);
+
+  expect(first).toBe(second);
+});
+
+it('given different pos, returns different instance', () => {
+  const childNode = createMockNode();
+  const rootNode = new Node(
+    createMockNode().type,
+    {},
+    Fragment.from([childNode])
+  );
+
+  const first = ResolvedPos.resolveCached(rootNode, 0);
+  const second = ResolvedPos.resolveCached(rootNode, 1);
+
+  expect(first).not.toBe(second);
+});
+
+it('given different doc, returns different instance', () => {
+  const childNode = createMockNode();
+  const rootNode1 = new Node(createMockNode().type, {}, Fragment.from([childNode]));
+  const rootNode2 = new Node(createMockNode().type, {}, Fragment.from([childNode]));
+
+  const first = ResolvedPos.resolveCached(rootNode1, 0);
+  const second = ResolvedPos.resolveCached(rootNode2, 0);
+
+  expect(first).not.toBe(second);
+});
   });
 });

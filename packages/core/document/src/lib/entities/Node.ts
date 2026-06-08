@@ -315,7 +315,7 @@ export class Node implements INode {
   }
 
   resolve(pos: number): ResolvedPos {
-    return this.resolveNoCache(pos);
+    return ResolvedPos.resolveCached(this, pos);
   }
 
   replace(from: number, to: number, slice: ISlice): Node {

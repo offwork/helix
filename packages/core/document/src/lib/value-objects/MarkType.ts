@@ -10,6 +10,7 @@ export class MarkType implements IMarkType {
   readonly schema: unknown;
   readonly spec: MarkSpec;
   readonly attrs: Record<string, Attribute>;
+  inclusive?: boolean;
   excluded: readonly IMarkType[] = [];
   rank = 0;
 
@@ -21,6 +22,7 @@ export class MarkType implements IMarkType {
     this.name = name;
     this.schema = schema;
     this.spec = spec;
+    this.inclusive = spec.inclusive;
     this.attrs = {};
 
     if (spec.attrs) {
