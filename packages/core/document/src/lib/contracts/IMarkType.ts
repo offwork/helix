@@ -2,7 +2,8 @@ import type { IMark } from './IMark';
 
 export interface IMarkType {
   readonly name: string;
-  readonly rank: number;
+  rank: number;
+  inclusive?: boolean;
   excluded: readonly IMarkType[];
   checkAttrs(attrs: Record<string, unknown>): void;
   excludes(other: IMarkType): boolean;

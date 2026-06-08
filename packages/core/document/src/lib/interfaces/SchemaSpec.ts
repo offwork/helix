@@ -20,6 +20,7 @@ export interface MarkSpec {
   attrs?: Record<string, AttributeSpec>;
   excludes?: string;
   group?: string;
+  inclusive?: boolean;
 }
 
 export interface AttributeSpec {
