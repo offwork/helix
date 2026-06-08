@@ -1,3 +1,4 @@
+import type { IMark } from './IMark';
 import type { INode } from './INode';
 
 export interface IResolvedPos {
@@ -15,9 +16,12 @@ export interface IResolvedPos {
   equals(other: IResolvedPos): boolean;
   index(depth?: number | null): number;
   indexAfter(depth?: number | null): number;
+  marks(): readonly IMark[];
+  marksAcross($end: IResolvedPos): readonly IMark[] | null
   max(other: IResolvedPos): IResolvedPos;
   min(other: IResolvedPos): IResolvedPos;
   node(depth?: number | null): INode;
+  posAtIndex(index: number, depth?: number | null): number 
   sameParent(other: IResolvedPos): boolean;
   sharedDepth(pos: number): number;
   start(depth?: number | null): number;

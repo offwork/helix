@@ -76,7 +76,7 @@ describe('MarkType', () => {
         defaultMarkSpec
       );
       const markType2 = createMarkType('strong', defaultMockSchema, {
-        attrs: { color: 'blue' },
+        attrs: { color: { default: 'blue' } },
       });
 
       expect(markType1.equals(markType2)).toBe(true);
@@ -89,7 +89,7 @@ describe('MarkType', () => {
         defaultMarkSpec
       );
       const markType2 = createMarkType('em', defaultMockSchema, {
-        attrs: { color: 'blue' },
+        attrs: { color: { default: 'blue' } },
       });
 
       expect(markType1.equals(markType2)).toBe(false);

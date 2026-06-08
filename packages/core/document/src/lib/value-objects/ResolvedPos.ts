@@ -1,5 +1,5 @@
-import { IMark } from '../contracts';
-import type { INode } from '../contracts/INode';
+import type { INode, IMark } from '../contracts';
+import { NodeRange } from './NodeRange';
 
 export class ResolvedPos {
   constructor(
@@ -99,6 +99,25 @@ export class ResolvedPos {
     if (resolvedDepth === this.depth + 1) return this.pos;
 
     return this.path[resolvedDepth * 3 - 1] as number;
+  }
+
+  blockRange(
+    other: ResolvedPos = this,
+    pred?: (node: INode) => boolean
+  ): NodeRange | null {
+    if (other.pos < this.pos) return other.blockRange(this, pred);
+    for (
+      let d =
+        this.depth -
+        (this.parent.inlineContent || this.pos == other.pos ? 1 : 0);
+      d >= 0;
+      d--
+    ) {
+      if (other.pos <= this.end(d) && (!pred || pred(this.node(d)))) {
+        return new NodeRange(this, other, d);
+      }
+    }
+    return null;
   }
 
   after(depth?: number | null): number {

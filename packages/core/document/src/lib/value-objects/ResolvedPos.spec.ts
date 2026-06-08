@@ -1,6 +1,7 @@
 import { Fragment } from '../entities/Fragment';
 import { Node } from '../entities/Node';
 import { ResolvedPos } from './ResolvedPos';
+import { NodeRange } from './NodeRange';
 import { TextNode } from '../entities/TextNode';
 import {
   boldMarkType,
@@ -631,42 +632,134 @@ describe('ResolvedPos', () => {
 
   describe('resolveCached', () => {
     it('given same doc and pos, returns same reference', () => {
-  const childNode = createMockNode();
-  const rootNode = new Node(
-    createMockNode().type,
-    {},
-    Fragment.from([childNode])
-  );
+      const childNode = createMockNode();
+      const rootNode = new Node(
+        createMockNode().type,
+        {},
+        Fragment.from([childNode])
+      );
 
-  const first = ResolvedPos.resolveCached(rootNode, 0);
-  const second = ResolvedPos.resolveCached(rootNode, 0);
+      const first = ResolvedPos.resolveCached(rootNode, 0);
+      const second = ResolvedPos.resolveCached(rootNode, 0);
 
-  expect(first).toBe(second);
-});
+      expect(first).toBe(second);
+    });
 
-it('given different pos, returns different instance', () => {
-  const childNode = createMockNode();
-  const rootNode = new Node(
-    createMockNode().type,
-    {},
-    Fragment.from([childNode])
-  );
+    it('given different pos, returns different instance', () => {
+      const childNode = createMockNode();
+      const rootNode = new Node(
+        createMockNode().type,
+        {},
+        Fragment.from([childNode])
+      );
 
-  const first = ResolvedPos.resolveCached(rootNode, 0);
-  const second = ResolvedPos.resolveCached(rootNode, 1);
+      const first = ResolvedPos.resolveCached(rootNode, 0);
+      const second = ResolvedPos.resolveCached(rootNode, 1);
 
-  expect(first).not.toBe(second);
-});
+      expect(first).not.toBe(second);
+    });
 
-it('given different doc, returns different instance', () => {
-  const childNode = createMockNode();
-  const rootNode1 = new Node(createMockNode().type, {}, Fragment.from([childNode]));
-  const rootNode2 = new Node(createMockNode().type, {}, Fragment.from([childNode]));
+    it('given different doc, returns different instance', () => {
+      const childNode = createMockNode();
+      const rootNode1 = new Node(
+        createMockNode().type,
+        {},
+        Fragment.from([childNode])
+      );
+      const rootNode2 = new Node(
+        createMockNode().type,
+        {},
+        Fragment.from([childNode])
+      );
 
-  const first = ResolvedPos.resolveCached(rootNode1, 0);
-  const second = ResolvedPos.resolveCached(rootNode2, 0);
+      const first = ResolvedPos.resolveCached(rootNode1, 0);
+      const second = ResolvedPos.resolveCached(rootNode2, 0);
 
-  expect(first).not.toBe(second);
-});
+      expect(first).not.toBe(second);
+    });
+  });
+
+  describe('blockRange', () => {
+    it('given both positions in same textblock, returns NodeRange for that textblock', () => {
+      const textNode = new TextNode(textType, {}, 'hello');
+      const para = new Node(paragraphType, {}, Fragment.from([textNode]), []);
+      const rootNode = new Node(paragraphType, {}, Fragment.from([para]), []);
+      const $from = ResolvedPos.resolve(rootNode, 2);
+      const $to = ResolvedPos.resolve(rootNode, 4);
+
+      const range = $from.blockRange($to);
+
+      expect(range).toBeInstanceOf(NodeRange);
+      expect(range?.depth).toBe(1);
+    });
+
+    it('given positions in different blocks, returns NodeRange at shared ancestor depth', () => {
+      const para1 = new Node(paragraphType, {});
+      const para2 = new Node(paragraphType, {});
+      const rootNode = new Node(
+        paragraphType,
+        {},
+        Fragment.from([para1, para2]),
+        []
+      );
+      const $from = ResolvedPos.resolve(rootNode, 0);
+      const $to = ResolvedPos.resolve(
+        rootNode,
+        para1.nodeSize + para2.nodeSize
+      );
+
+      const range = $from.blockRange($to);
+
+      expect(range).toBeInstanceOf(NodeRange);
+      expect(range?.depth).toBe(0);
+    });
+
+    it('given other.pos < this.pos, returns same range as swapped call', () => {
+      const para1 = new Node(paragraphType, {});
+      const para2 = new Node(paragraphType, {});
+      const rootNode = new Node(
+        paragraphType,
+        {},
+        Fragment.from([para1, para2]),
+        []
+      );
+      const $from = ResolvedPos.resolve(rootNode, 0);
+      const $to = ResolvedPos.resolve(rootNode, para1.nodeSize);
+
+      const rangeForward = $from.blockRange($to);
+      const rangeBackward = $to.blockRange($from);
+
+      expect(rangeForward?.depth).toBe(rangeBackward?.depth);
+    });
+
+    it('given collapsed range, returns NodeRange', () => {
+      const para = new Node(paragraphType, {});
+      const rootNode = new Node(paragraphType, {}, Fragment.from([para]), []);
+      const $pos = ResolvedPos.resolve(rootNode, 1);
+
+      const range = $pos.blockRange($pos);
+
+      expect(range).toBeInstanceOf(NodeRange);
+    });
+
+    it('given pred that accepts the node, returns NodeRange', () => {
+      const para = new Node(paragraphType, {});
+      const rootNode = new Node(paragraphType, {}, Fragment.from([para]), []);
+      const $pos = ResolvedPos.resolve(rootNode, 1);
+
+      const range = $pos.blockRange($pos, () => true);
+
+      expect(range).toBeInstanceOf(NodeRange);
+    });
+
+    it('given pred that rejects all nodes, returns null', () => {
+      const para = new Node(paragraphType, {});
+      const rootNode = new Node(paragraphType, {}, Fragment.from([para]), []);
+      const $pos = ResolvedPos.resolve(rootNode, 0);
+
+      const range = $pos.blockRange($pos, () => false);
+
+      expect(range).toBeNull();
+    });
   });
 });
