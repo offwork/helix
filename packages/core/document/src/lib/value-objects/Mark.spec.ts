@@ -311,4 +311,57 @@ describe('Mark', () => {
       );
     });
   });
+
+  describe('setFrom', () => {
+    it('given undefined value, returns Mark.none', () => {
+      expect(Mark.setFrom(undefined as never)).toBe(Mark.none);
+    });
+
+    it('given null value, returns Mark.none', () => {
+      expect(Mark.setFrom(null as never)).toBe(Mark.none);
+    });
+
+    it('given empty array, returns Mark.none', () => {
+      expect(Mark.setFrom([])).toBe(Mark.none);
+    });
+
+    it('given single mark, returns array containing that mark', () => {
+      const mark = createMark(createMarkType('strong', {}, {}), {});
+
+      expect(Mark.setFrom(mark)[0]).toBe(mark);
+    });
+
+    it('given sorted array, returns sorted copy', () => {
+      const mark1 = createMark(createMarkType('strong', {}, {}), {});
+      const mark2 = createMark(createMarkType('em', {}, {}), {});
+      const mark3 = createMark(createMarkType('underline', {}, {}), {});
+      mark1.type.rank = 1;
+      mark2.type.rank = 2;
+      mark3.type.rank = 3;
+
+      const sortedMarks = [mark1, mark2, mark3];
+
+      expect(Mark.setFrom(sortedMarks)).toEqual(sortedMarks);
+    });
+
+    it('given unsorted array, returns array sorted by rank', () => {
+      const mark1 = createMark(createMarkType('strong', {}, {}), {});
+      const mark2 = createMark(createMarkType('em', {}, {}), {});
+      const mark3 = createMark(createMarkType('underline', {}, {}), {});
+      mark1.type.rank = 2;
+      mark2.type.rank = 3;
+      mark3.type.rank = 1;
+
+      const sortedMarks = [mark2, mark1, mark3];
+
+      expect(Mark.setFrom(sortedMarks)).toEqual([mark3, mark1, mark2]);
+    });
+
+    it('given array with one mark, returns copy not same reference', () => {
+      const mark = createMark(createMarkType('strong', {}, {}), {});
+      const marks = [mark];
+
+      expect(Mark.setFrom(marks)).not.toBe(marks);
+    });
+  });
 });

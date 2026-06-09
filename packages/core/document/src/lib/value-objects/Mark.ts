@@ -46,6 +46,16 @@ export class Mark implements IMark {
     return true;
   }
 
+  static setFrom(marks?: IMark | readonly IMark[] | null): readonly IMark[] {
+    if (!marks) return Mark.none;
+
+    if (!Array.isArray(marks)) return [marks] as IMark[];
+
+    if (marks.length === 0) return Mark.none;
+
+    return (marks as IMark[]).slice().sort((a, b) => a.type.rank - b.type.rank);
+  }
+
   addToSet(set: readonly IMark[]): readonly IMark[] {
     if (set.length === 0) return [this];
 
