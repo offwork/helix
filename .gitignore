@@ -39,6 +39,9 @@ testem.log
 .DS_Store
 Thumbs.db
 
+# Claude Code
+.claude/
+
 .nx/cache
 .nx/workspace-data
 .cursor/rules/nx-rules.mdc
