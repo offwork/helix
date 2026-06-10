@@ -2,6 +2,7 @@ import { ContentMatch } from '../value-objects/ContentMatch';
 import { Fragment } from './Fragment';
 import { Node } from './Node';
 import { TextNode } from './TextNode';
+import { Schema } from '../services/Schema';
 import {
   paragraphType,
   textType,
@@ -11,8 +12,8 @@ import {
   createNodeSpec,
   createSchemaSpec,
   createMarkSpec,
+  imageType,
 } from '../../testing';
-import { Schema } from '../services/Schema';
 
 describe('Fragment', () => {
   describe('creation', () => {
@@ -757,5 +758,96 @@ describe('Fragment', () => {
         Fragment.from([node1, node2])
       );
     });
+  });
+
+  describe('findDiffStart', () => {
+    describe('when comparing empty fragment to empty fragment', () => {
+      it('returns null', () => {
+        const fragment = Fragment.empty();
+        const otherFragment = Fragment.empty();
+
+        expect(fragment.findDiffStart(otherFragment)).toBeNull();
+      });
+    });
+
+    describe('when comparing identical fragments', () => {
+      it('returns null', () => {
+        const node = new Node(paragraphType, {});
+        const fragment = Fragment.from([node]);
+        const otherFragment = Fragment.from([node]);
+
+        expect(fragment.findDiffStart(otherFragment)).toBeNull();
+      });
+    });
+
+    describe('when first child markup differs', () => {
+      it('returns 0', () => {
+        const paragraphNode = new Node(paragraphType, {});
+        const headingNode = new Node(headingType, {});
+        const fragment = Fragment.from([paragraphNode]);
+        const otherFragment = Fragment.from([headingNode]);
+
+        expect(fragment.findDiffStart(otherFragment)).toEqual(0);
+      });
+    });
+
+    describe('when second child differs', () => {
+      it('returns size of first child', () => {
+        const paragraph = new Node(paragraphType, {});
+        const heading = new Node(headingType, {});
+        const image = new Node(imageType, {});
+        const fragment = Fragment.from([paragraph, heading]);
+        const other = Fragment.from([paragraph, image]);
+
+        expect(fragment.findDiffStart(other)).toBe(paragraph.nodeSize);
+      });
+    });
+
+    describe('when other is shorter', () => {
+      it('returns divergence position', () => {
+        const firstChild = new Node(paragraphType, {});
+        const secondChild = new Node(headingType, {});
+        const fragment = Fragment.from([firstChild, secondChild]);
+        const other = Fragment.from([firstChild]);
+
+        expect(fragment.findDiffStart(other)).toBe(firstChild.nodeSize);
+      });
+    });
+
+    describe('given pos offset', () => {
+      it('returns offset divergence position', () => {
+        const paragraph = new Node(paragraphType, {});
+        const heading = new Node(headingType, {});
+        const fragment = Fragment.from([paragraph]);
+        const other = Fragment.from([heading]);
+
+        expect(fragment.findDiffStart(other, 10)).toBe(10);
+      });
+    });
+
+    describe('when text nodes differ mid-text', () => {
+      it('returns char position', () => {
+        const textA = new TextNode(textType, {}, 'hello', []);
+        const textB = new TextNode(textType, {}, 'helXo', []);
+        const fragment = Fragment.from([textA]);
+        const other = Fragment.from([textB]);
+
+        expect(fragment.findDiffStart(other)).toBe(3);
+      });
+    });
+
+    describe('when child nodes have inner content that differs', () => {
+      it('returns inner position', () => {
+        const innerA = new Node(paragraphType, {});
+        const innerB = new Node(headingType, {});
+        const parentA = new Node(paragraphType, {}, Fragment.from([innerA]));
+        const parentB = new Node(paragraphType, {}, Fragment.from([innerB]));
+        const fragment = Fragment.from([parentA]);
+        const other = Fragment.from([parentB]);
+
+        expect(fragment.findDiffStart(other)).toBe(1);
+      });
+    });
+
   });
 });
