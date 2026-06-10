@@ -12,6 +12,7 @@ export interface IFragment {
   cut(from: number, to?: number): IFragment;
   descendants(callback: (node: INode, pos: number, parent: INode | null, index: number) => boolean | void): void;
   equals(other: IFragment): boolean;
+  findDiffStart(other: IFragment, pos?: number): number | null;
   findIndex(pos: number): { index: number; offset: number };
   forEach(callback: (node: INode, offset: number, index: number) => void): void;
   maybeChild(index: number): INode | null;

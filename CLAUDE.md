@@ -13,13 +13,22 @@ If you violate any rule:
 
 ## Critical Reading
 
-Before doing anything, read these in order:
+**MANDATORY — every session, before the first response.**
+Do not answer, plan, or write anything until all 5 files are read.
+No exceptions. No shortcuts. Skipping any file is a rule violation.
+
+Read in this exact order:
 
 1. [`.claude/docs/architecture.md`](.claude/docs/architecture.md) — bounded contexts, folder structure, domain rules, dependency direction
 2. [`.claude/docs/tech-stack.md`](.claude/docs/tech-stack.md) — exact packages, versions, build tooling, what is/isn't installed
 3. [`.claude/docs/enforcements.md`](.claude/docs/enforcements.md) — TDD rules, testing strategy, forbidden patterns
 4. [`.claude/docs/git-workflow.md`](.claude/docs/git-workflow.md) — branch strategy, commit convention
 5. [`.claude/agents/tdd-session.md`](.claude/agents/tdd-session.md) — session roles, briefing format, research rules
+
+After reading, confirm internally:
+- [ ] Test naming format understood (plain English, `given / throws / returns`)
+- [ ] TDD role understood (Navigator: briefing + test list only, never write the test)
+- [ ] Canon TDD order understood (Red → Green → Refactor, one test at a time)
 
 ## Commands
 

@@ -20,9 +20,7 @@ export class Fragment implements IFragment {
 
   static fromJSON(schema: SyntheticSchema, value: NodeJSON[] | null): Fragment {
     if (!value) return Fragment.empty();
-    return Fragment.from(
-      value.map((node) => schema.nodeFromJSON(node))
-    );
+    return Fragment.from(value.map((node) => schema.nodeFromJSON(node)));
   }
 
   get childCount(): number {
@@ -167,6 +165,37 @@ export class Fragment implements IFragment {
     }
 
     return { index: i, offset: curPos };
+  }
+
+  findDiffStart(other: IFragment, pos?: number): number | null {
+    let position = pos ?? 0;
+    for (let i = 0;; i++) {
+      if (i === this.childCount || i === other.childCount)
+        return this.childCount === other.childCount ? null : position;
+
+      const childA = this.child(i);
+      const childB = other.child(i);
+
+      if (childA === childB) { position += childA.nodeSize; continue; }
+
+      if (!childA.sameMarkup(childB)) return position;
+
+      if (childA.isText) {
+        const textA = (childA as unknown as { text: string }).text;
+        const textB = (childB as unknown as { text: string }).text;
+        if (textA !== textB) {
+          for (let j = 0; textA[j] === textB[j]; j++) position++;
+          return position;
+        }
+      }
+
+      if (childA.content.size || childB.content.size) {
+        const inner = childA.content.findDiffStart(childB.content, position + 1);
+        if (inner !== null) return inner;
+      }
+
+      position += childA.nodeSize;
+    }
   }
 
   forEach(
