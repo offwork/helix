@@ -6,6 +6,8 @@ import { TextNode } from './TextNode';
 import { Slice } from '../value-objects/Slice';
 import { ReplaceError } from '../errors/ReplaceError';
 import { empty, from } from './FragmentFactory';
+import { Schema } from '../services/Schema';
+import { INode } from '../contracts';
 import {
   defaultMockSchema,
   defaultNodeSpec,
@@ -24,7 +26,6 @@ import {
   createSchemaSpec,
   createMarkSpec,
 } from '../../testing';
-import { Schema } from '../services/Schema';
 
 describe('Node', () => {
   describe('constructor', () => {
@@ -820,6 +821,24 @@ describe('Node', () => {
       const json = { type: 'text', text: 'hello' };
 
       expect(Node.fromJSON(schema, json)).toBeInstanceOf(TextNode);
+    });
+  });
+
+  describe('descendants', () => {
+    describe('given a node with children', () => {
+      it('calls callback for each child with correct pos and parent', () => {
+        const inner1 = new TextNode(textType, {}, 'Hello');
+        const inner2 = new TextNode(textType, {}, 'world');
+        const content = from([inner1, inner2]);
+        const node = new Node(paragraphType, {}, content, []);
+
+        const visited: INode[] = [];
+        node.descendants((child) => {
+          visited.push(child);
+        });
+
+        expect(visited).toEqual([inner1, inner2]);
+      });
     });
   });
 });
