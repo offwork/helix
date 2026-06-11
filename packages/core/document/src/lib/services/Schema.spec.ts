@@ -148,6 +148,21 @@ describe('Schema', () => {
 
       expect(schema.topNodeType).toBe(schema.nodes.paragraph);
     });
+
+    describe('spec', () => {
+      describe('given a schema constructed with a spec', () => {
+        it('returns the original spec', () => {
+          const spec = {
+            nodes: createSchemaSpec(),
+            marks: createMarkSpec(),
+            topNode: 'paragraph',
+          };
+          const schema = new Schema(spec);
+
+          expect(schema.spec).toBe(spec);
+        });
+      });
+    });
   });
 
   describe('text()', () => {
