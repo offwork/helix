@@ -56,7 +56,8 @@ export class Node implements INode {
   static fromJSON(schema: SyntheticSchema, json: NodeJSON): Node {
     if (!json) throw new RangeError('Invalid input for Node.fromJSON');
     const marks = json.marks?.map((m) => schema.markFromJSON(m)) ?? [];
-    if (json.type === 'text') return schema.text(json.text ?? '', marks) as Node;
+    if (json.type === 'text')
+      return schema.text(json.text ?? '', marks) as Node;
     const content = Fragment.from(
       (json.content ?? []).map((c) => schema.nodeFromJSON(c))
     );
@@ -142,6 +143,17 @@ export class Node implements INode {
     return this.content.child(index);
   }
 
+  descendants(
+    callback: (
+      node: INode,
+      pos: number,
+      parent: INode | null,
+      index: number
+    ) => boolean | void
+  ): void {
+    this.nodesBetween(0, this.content.size, callback);
+  }
+
   maybeChild(index: number): INode | null {
     return this.content.maybeChild(index);
   }
@@ -188,7 +200,8 @@ export class Node implements INode {
   }
 
   nodeAt(pos: number): INode | null {
-    const { index: firstIndex, offset: firstOffset } = this.content.findIndex(pos);
+    const { index: firstIndex, offset: firstOffset } =
+      this.content.findIndex(pos);
     let child: INode | null = this.content.maybeChild(firstIndex);
     let remaining = pos;
     let offset = firstOffset;
@@ -290,7 +303,11 @@ export class Node implements INode {
 
   canAppend(other: INode): boolean {
     if (other.content.size) {
-      return this.canReplace(this.childCount, this.childCount, other.content as Fragment);
+      return this.canReplace(
+        this.childCount,
+        this.childCount,
+        other.content as Fragment
+      );
     }
     return this.type.compatibleContent(other.type);
   }
@@ -319,7 +336,11 @@ export class Node implements INode {
   }
 
   replace(from: number, to: number, slice: ISlice): Node {
-    return replace(this.resolve(from), this.resolve(to), slice as Slice) as Node;
+    return replace(
+      this.resolve(from),
+      this.resolve(to),
+      slice as Slice
+    ) as Node;
   }
 
   slice(
@@ -333,7 +354,10 @@ export class Node implements INode {
     const depth = includeParents ? 0 : $from.sharedDepth(to);
     const start = $from.start(depth);
     const node = $from.node(depth);
-    const content = node.content.cut($from.pos - start, $to.pos - start) as Fragment;
+    const content = node.content.cut(
+      $from.pos - start,
+      $to.pos - start
+    ) as Fragment;
     return new Slice(content, $from.depth - depth, $to.depth - depth);
   }
 
