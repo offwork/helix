@@ -13,8 +13,12 @@ export class Schema {
   readonly nodes: Record<string, NodeType>;
   readonly marks: Record<string, MarkType>;
   readonly topNodeType: NodeType;
+  readonly spec: SchemaSpec;
   readonly nodeFromJSON: (json: NodeJSON) => Node;
-  readonly markFromJSON: (json: { type: string; attrs?: Record<string, unknown> }) => IMark;
+  readonly markFromJSON: (json: {
+    type: string;
+    attrs?: Record<string, unknown>;
+  }) => IMark;
 
   constructor(spec: SchemaSpec) {
     this.validateParameter('nodes spec', spec.nodes);
@@ -58,9 +62,14 @@ export class Schema {
     }
 
     this.nodeFromJSON = (json) => Node.fromJSON(this, json);
-    this.markFromJSON = (json: { type: string; attrs?: Record<string, unknown> }) => {
+    this.markFromJSON = (json: {
+      type: string;
+      attrs?: Record<string, unknown>;
+    }) => {
       return this.marks[json.type].create(json.attrs);
-    }
+    };
+
+    this.spec = spec;
   }
 
   text(text: string, marks?: readonly IMark[]): TextNode {
