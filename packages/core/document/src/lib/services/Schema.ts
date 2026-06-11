@@ -12,6 +12,7 @@ import { NodeJSON } from '../contracts/types/NodeJSON';
 export class Schema {
   readonly nodes: Record<string, NodeType>;
   readonly marks: Record<string, MarkType>;
+  readonly cached: Record<string, unknown> = {};
   readonly topNodeType: NodeType;
   readonly spec: SchemaSpec;
   readonly nodeFromJSON: (json: NodeJSON) => Node;

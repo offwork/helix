@@ -165,6 +165,19 @@ describe('Schema', () => {
     });
   });
 
+  describe('cached', () => {
+    describe('given a newly constructed schema', () => {
+      it('is an empty object', () => {
+        const schema = new Schema({
+          nodes: createSchemaSpec(),
+          marks: createMarkSpec(),
+          topNode: 'paragraph',
+        });
+        expect(schema.cached).toEqual({});
+      });
+    });
+  });
+
   describe('text()', () => {
     it('given a string to text(), returns TextNode', () => {
       const schema = new Schema({
