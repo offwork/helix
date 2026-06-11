@@ -22,6 +22,7 @@ export interface INode {
   readonly lastChild: INode | undefined;
   readonly marks: IMark[];
   readonly nodeSize: number;
+  readonly text?: string;
   readonly type: INodeType;
   canAppend(other: INode): boolean;
   canReplace(from: number, to: number, replacement?: IFragment, start?: number, end?: number): boolean;

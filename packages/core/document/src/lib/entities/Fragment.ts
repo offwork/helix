@@ -63,7 +63,7 @@ export class Fragment implements IFragment {
         text: string;
         withText: (t: string) => INode;
       };
-      const firstText = first as unknown as { text: string };
+      const firstText = first;
       content[content.length - 1] = lastText.withText(
         lastText.text + firstText.text
       );
@@ -99,7 +99,7 @@ export class Fragment implements IFragment {
               child = child.cut(
                 Math.max(0, from - pos),
                 Math.min(
-                  (child as unknown as { text: string }).text.length,
+                  (child.text as string).length,
                   to - pos
                 )
               ) as INode;
@@ -169,20 +169,23 @@ export class Fragment implements IFragment {
 
   findDiffStart(other: IFragment, pos?: number): number | null {
     let position = pos ?? 0;
-    for (let i = 0;; i++) {
+    for (let i = 0; ; i++) {
       if (i === this.childCount || i === other.childCount)
         return this.childCount === other.childCount ? null : position;
 
       const childA = this.child(i);
       const childB = other.child(i);
 
-      if (childA === childB) { position += childA.nodeSize; continue; }
+      if (childA === childB) {
+        position += childA.nodeSize;
+        continue;
+      }
 
       if (!childA.sameMarkup(childB)) return position;
 
       if (childA.isText) {
-        const textA = (childA as unknown as { text: string }).text;
-        const textB = (childB as unknown as { text: string }).text;
+        const textA = childA.text as string;
+        const textB = childB.text as string;
         if (textA !== textB) {
           for (let j = 0; textA[j] === textB[j]; j++) position++;
           return position;
@@ -190,11 +193,60 @@ export class Fragment implements IFragment {
       }
 
       if (childA.content.size || childB.content.size) {
-        const inner = childA.content.findDiffStart(childB.content, position + 1);
+        const inner = childA.content.findDiffStart(
+          childB.content,
+          position + 1
+        );
         if (inner !== null) return inner;
       }
 
       position += childA.nodeSize;
+    }
+  }
+
+  findDiffEnd(other: IFragment, pos?: number, otherPos?: number) {
+    let posA = pos ?? this.size;
+    let posB = otherPos ?? other.size;
+
+    for (let iA = this.childCount, iB = other.childCount; ; ) {
+      if (iA === 0 || iB === 0) return iA === iB ? null : { a: posA, b: posB };
+
+      const childA = this.child(--iA);
+      const childB = other.child(--iB);
+      const size = childA.nodeSize;
+
+      if (!childA.sameMarkup(childB)) return { a: posA, b: posB };
+
+      if (childA.isText) {
+        const textA = childA.text as string;
+        const textB = childB.text as string;
+        if (textA !== textB) {
+          let same = 0;
+          const minSize = Math.min(textA.length, textB.length);
+          while (
+            same < minSize &&
+            textA[textA.length - same - 1] === textB[textB.length - same - 1]
+          ) {
+            same++;
+            posA--;
+            posB--;
+          }
+
+          return { a: posA, b: posB };
+        }
+      }
+
+      if (childA.content.size || childB.content.size) {
+        const inner = childA.content.findDiffEnd(
+          childB.content,
+          posA - 1,
+          posB - 1
+        );
+        if (inner !== null) return inner;
+      }
+
+      posA -= size;
+      posB -= size;
     }
   }
 
@@ -275,7 +327,7 @@ export class Fragment implements IFragment {
       first = true;
     this.nodesBetween(from, to, (node, pos) => {
       if (node.isText) {
-        text += (node as unknown as { text: string }).text.slice(
+        text += (node.text as string).slice(
           Math.max(from, pos) - pos,
           to - pos
         );

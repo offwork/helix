@@ -848,6 +848,70 @@ describe('Fragment', () => {
         expect(fragment.findDiffStart(other)).toBe(1);
       });
     });
+  });
 
+  describe('findDiffEnd', () => {
+    describe('given two empty fragments', () => {
+      it('returns null', () => {
+        const fragment = Fragment.empty();
+        const ohter = Fragment.empty();
+
+        expect(fragment.findDiffEnd(ohter)).toBeNull();
+      });
+    });
+
+    describe('given two identical single-node fragments', () => {
+      it('returns null', () => {
+        const node = new Node(paragraphType, {});
+        const fragment = Fragment.from([node]);
+        const ohter = Fragment.from([node]);
+
+        expect(fragment.findDiffEnd(ohter)).toBeNull();
+      });
+    });
+
+    describe('given fragments where last nodes differ in markup', () => {
+      it('returns {a: sizeA, b: sizeB}', () => {
+        const paragraph = new Node(paragraphType, { text: 'Hello, world' });
+        const heading = new Node(headingType, { text: 'Hola', visible: true });
+        const fragment = Fragment.from([paragraph]);
+        const ohter = Fragment.from([heading]);
+
+        expect(fragment.findDiffEnd(ohter)).toEqual({
+          a: paragraph.nodeSize,
+          b: heading.nodeSize,
+        });
+      });
+    });
+
+    describe('given text nodes with different trailing characters', () => {
+      it('returns position after last common character', () => {
+        const node1 = new TextNode(textType, {}, 'Hello, world');
+        const node2 = new TextNode(textType, {}, 'Hello, aerth');
+        const fragment = Fragment.from([node1]);
+        const ohter = Fragment.from([node2]);
+
+        expect(fragment.findDiffEnd(ohter)).toEqual({
+          a: 12,
+          b: 12,
+        });
+      });
+    });
+
+    describe('given nodes with same markup but different inner content', () => {
+      it('returns inner diff position', () => {
+        const inner1 = new TextNode(textType, {}, 'Hello, world');
+        const inner2 = new TextNode(textType, {}, 'Hello, aerth');
+        const node1 = new Node(paragraphType, {}, Fragment.from([inner1]));
+        const node2 = new Node(paragraphType, {}, Fragment.from([inner2]));
+        const fragment = Fragment.from([node1]);
+        const ohter = Fragment.from([node2]);
+
+        expect(fragment.findDiffEnd(ohter)).toEqual({
+          a: 13,
+          b: 13,
+        });
+      });
+    });
   });
 });

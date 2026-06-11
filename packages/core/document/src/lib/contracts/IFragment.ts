@@ -10,16 +10,44 @@ export interface IFragment {
   append(other: IFragment): IFragment;
   child(index: number): INode;
   cut(from: number, to?: number): IFragment;
-  descendants(callback: (node: INode, pos: number, parent: INode | null, index: number) => boolean | void): void;
+  descendants(
+    callback: (
+      node: INode,
+      pos: number,
+      parent: INode | null,
+      index: number
+    ) => boolean | void
+  ): void;
   equals(other: IFragment): boolean;
   findDiffStart(other: IFragment, pos?: number): number | null;
+  findDiffEnd(
+    other: IFragment,
+    pos?: number,
+    otherPos?: number
+  ): { a: number; b: number } | null;
   findIndex(pos: number): { index: number; offset: number };
   forEach(callback: (node: INode, offset: number, index: number) => void): void;
   maybeChild(index: number): INode | null;
-  nodesBetween(from: number, to: number, callback: (node: INode, start: number, parent: INode | null, index: number) => boolean | void, nodeStart?: number, parent?: INode): void;
+  nodesBetween(
+    from: number,
+    to: number,
+    callback: (
+      node: INode,
+      start: number,
+      parent: INode | null,
+      index: number
+    ) => boolean | void,
+    nodeStart?: number,
+    parent?: INode
+  ): void;
   replaceChild(index: number, node: INode): IFragment;
   slice(from: number, to: number): IFragment;
-  textBetween(from: number, to: number, blockSeparator?: string | null, leafText?: string | null | ((leafNode: INode) => string)): string;
+  textBetween(
+    from: number,
+    to: number,
+    blockSeparator?: string | null,
+    leafText?: string | null | ((leafNode: INode) => string)
+  ): string;
   toJSON(): Record<string, unknown>[] | null;
   toString(): string;
 }
