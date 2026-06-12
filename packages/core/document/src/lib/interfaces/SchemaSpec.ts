@@ -25,5 +25,5 @@ export interface MarkSpec {
 
 export interface AttributeSpec {
   default?: unknown;
-  validate?: (value: unknown) => void;
+  validate?: string | ((value: unknown) => void);
 }

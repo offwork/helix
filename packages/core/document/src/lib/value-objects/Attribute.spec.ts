@@ -34,4 +34,35 @@ describe('Attribute', () => {
       expect(attribute.isRequired).toBe(true);
     });
   });
+
+  describe('validate', () => {
+    describe('given string "number" and a non-number value', () => {
+      it('throws RangeError', () => {
+        const attribute = new Attribute({ validate: 'number' });
+
+        expect(() => attribute.validate?.('hello')).toThrow(RangeError);
+      });
+    });
+
+    describe('given string "number" and a number value', () => {
+      it('does not throw', () => {
+        const attribute = new Attribute({ validate: 'number' });
+        expect(() => attribute.validate?.(42)).not.toThrow();
+      });
+    });
+
+    describe('given string "null" and null value', () => {
+      it('does not throw', () => {
+        const attribute = new Attribute({ validate: 'null' });
+        expect(() => attribute.validate?.(null)).not.toThrow();
+      });
+    });
+
+    describe('given string "number|string" and a string value', () => {
+      it('does not throw', () => {
+        const attribute = new Attribute({ validate: 'number|string' });
+        expect(() => attribute.validate?.('hello')).not.toThrow();
+      });
+    });
+  });
 });
