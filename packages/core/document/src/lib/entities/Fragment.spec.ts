@@ -913,5 +913,23 @@ describe('Fragment', () => {
         });
       });
     });
+
+    describe('toArray', () => {
+      describe('given empty fragment', () => {
+        it('returns empty array', () => {
+          const emptyFragment = Fragment.empty();
+          expect(emptyFragment.toArray()).toEqual([]);
+        });
+      });
+
+      describe('given fragment with nodes', () => {
+        it('returns array of those nodes', () => {
+          const child = new TextNode(textType, {}, 'Hello, world');
+          const node = new Node(paragraphType, {}, Fragment.from([child]));
+          const fragment = Fragment.from([node]);
+          expect(fragment.toArray()).toEqual([node]);
+        });
+      });
+    });
   });
 });

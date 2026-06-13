@@ -98,10 +98,7 @@ export class Fragment implements IFragment {
             if (child.isText) {
               child = child.cut(
                 Math.max(0, from - pos),
-                Math.min(
-                  (child.text as string).length,
-                  to - pos
-                )
+                Math.min((child.text as string).length, to - pos)
               ) as INode;
             } else {
               child = child.cut(
@@ -340,6 +337,11 @@ export class Fragment implements IFragment {
       }
     });
     return text;
+  }
+
+  toArray(): INode[] {
+    if (!this.childCount) return [];
+    return this.content.slice();
   }
 
   toJSON(): NodeJSON[] | null {
