@@ -10,6 +10,7 @@ import { NodeJSON } from './types/NodeJSON';
 export interface INode {
   readonly attrs: Record<string, unknown>;
   readonly childCount: number;
+  readonly children: INode[];
   readonly content: IFragment;
   readonly firstChild: INode | undefined;
   readonly inlineContent: boolean | null;

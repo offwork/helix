@@ -68,6 +68,10 @@ export class Node implements INode {
     return this.content.childCount;
   }
 
+  get children(): INode[] {
+    return this.content.toArray();
+  }
+
   get nodeSize(): number {
     if (this.type.isLeaf) {
       return 1;
