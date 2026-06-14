@@ -18,6 +18,15 @@ export class Fragment implements IFragment {
     return new Fragment([...nodes]);
   }
 
+  static fromArray(nodes: readonly INode[]): Fragment {
+    if (!nodes.length) return Fragment.empty();
+    let result = Fragment.empty();
+    for (const node of nodes) {
+      result = result.append(Fragment.from([node]));
+    }
+    return result;
+  }
+
   static fromJSON(schema: SyntheticSchema, value: NodeJSON[] | null): Fragment {
     if (!value) return Fragment.empty();
     return Fragment.from(value.map((node) => schema.nodeFromJSON(node)));
