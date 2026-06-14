@@ -26,6 +26,7 @@ import {
   createSchemaSpec,
   createMarkSpec,
 } from '../../testing';
+import { Fragment } from './Fragment';
 
 describe('Node', () => {
   describe('constructor', () => {
@@ -838,6 +839,24 @@ describe('Node', () => {
         });
 
         expect(visited).toEqual([inner1, inner2]);
+      });
+    });
+  });
+
+  describe('children', () => {
+    describe('given node with no content', () => {
+      it('returns empty array', () => {
+        const parent = new Node(paragraphType, {});
+        expect(parent.children).toEqual([])
+      });
+    });
+
+    describe('given node with children', () => {
+      it('returns array of child nodes', () => {
+        const child1 = new TextNode(textType, {}, 'Hello');
+        const child2 = new TextNode(textType, {}, 'world');
+        const parent = new Node(paragraphType, {}, Fragment.from([child1, child2]));
+        expect(parent.children).toEqual([child1, child2])
       });
     });
   });
