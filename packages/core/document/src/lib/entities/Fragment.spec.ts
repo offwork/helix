@@ -931,5 +931,34 @@ describe('Fragment', () => {
         });
       });
     });
+
+    describe('fromArray', () => {
+      describe('given empty array', () => {
+        it('returns empty fragment', () => {
+          expect(Fragment.fromArray([])).toEqual(Fragment.empty());
+        });
+      });
+
+      describe('given non-text nodes', () => {
+        it('returns fragment with those nodes', () => {
+          const node1 = new Node(paragraphType, {});
+          const node2 = new Node(headingType, {});
+
+          expect(Fragment.fromArray([node1, node2]).toArray()).toEqual([
+            node1,
+            node2,
+          ]);
+        });
+      });
+
+      describe('given adjacent text nodes with same markup', () => {
+        it('merges them into one', () => {
+          const t1 = new TextNode(textType, {}, 'Hello');
+          const t2 = new TextNode(textType, {}, ' world');
+          const result = Fragment.fromArray([t1, t2]);
+          expect(result.child(0).text).toBe('Hello world');
+        });
+      });
+    });
   });
 });

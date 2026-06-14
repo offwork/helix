@@ -48,6 +48,7 @@ export interface IFragment {
     blockSeparator?: string | null,
     leafText?: string | null | ((leafNode: INode) => string)
   ): string;
+  toArray(): INode[];
   toJSON(): Record<string, unknown>[] | null;
   toString(): string;
 }
