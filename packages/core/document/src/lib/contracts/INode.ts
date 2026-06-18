@@ -21,6 +21,7 @@ export interface INode {
   readonly isText: boolean;
   readonly isTextblock: boolean;
   readonly lastChild: INode | undefined;
+  readonly textContent: string
   readonly marks: IMark[];
   readonly nodeSize: number;
   readonly text?: string;

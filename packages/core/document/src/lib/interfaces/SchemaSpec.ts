@@ -1,3 +1,5 @@
+import { INode } from "../contracts";
+
 export interface SchemaSpec {
   nodes: Record<string, NodeSpec>;
   marks?: Record<string, MarkSpec>;
@@ -12,6 +14,7 @@ export interface NodeSpec {
   group?: string;
   inline?: boolean;
   isolating?: boolean;
+  leafText?: (node: INode) => string
   marks?: string;
   whitespace?: 'normal' | 'pre';
 }
