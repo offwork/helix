@@ -847,7 +847,7 @@ describe('Node', () => {
     describe('given node with no content', () => {
       it('returns empty array', () => {
         const parent = new Node(paragraphType, {});
-        expect(parent.children).toEqual([])
+        expect(parent.children).toEqual([]);
       });
     });
 
@@ -855,8 +855,39 @@ describe('Node', () => {
       it('returns array of child nodes', () => {
         const child1 = new TextNode(textType, {}, 'Hello');
         const child2 = new TextNode(textType, {}, 'world');
-        const parent = new Node(paragraphType, {}, Fragment.from([child1, child2]));
-        expect(parent.children).toEqual([child1, child2])
+        const parent = new Node(
+          paragraphType,
+          {},
+          Fragment.from([child1, child2])
+        );
+        expect(parent.children).toEqual([child1, child2]);
+      });
+    });
+  });
+
+  describe('textContent', () => {
+    describe('given leaf node with leafText defined', () => {
+      it('returns leafText result', () => {
+        const imageType = new NodeType('image', defaultMockSchema, {
+          leafText: (node) => node.attrs['alt'] as string,
+        });
+        imageType.contentMatch = ContentMatch.empty;
+        const node = new Node(imageType, { alt: 'cat' });
+
+        const result = node.textContent;
+
+        expect(result).toBe('cat');
+      });
+    });
+
+    describe('given non-leaf node with text content', () => {
+      it('returns concatenated text', () => {
+        const textNode = new TextNode(textType, {}, 'merhaba');
+        const para = new Node(paragraphType, {}, from([textNode]));
+
+        const result = para.textContent;
+
+        expect(result).toBe('merhaba');
       });
     });
   });

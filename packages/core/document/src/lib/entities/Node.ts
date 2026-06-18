@@ -88,6 +88,12 @@ export class Node implements INode {
     return this.content.lastChild;
   }
 
+  get textContent(): string {
+    return this.isLeaf && this.type.spec.leafText
+      ? this.type.spec.leafText(this)
+      : this.content.textBetween(0, this.content.size, '');
+  }
+
   get isBlock(): boolean {
     return this.type.isBlock;
   }
