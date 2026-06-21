@@ -891,4 +891,53 @@ describe('Node', () => {
       });
     });
   });
+
+  describe('textBetween', () => {
+    describe('given from/to range over text content', () => {
+      it('returns content.textBetween(from, to) result', () => {
+        const text = new TextNode(textType, {}, 'hello');
+        const parent = new Node(paragraphType, {}, from([text]));
+
+        const result = parent.textBetween(0, 5);
+
+        expect(result).toBe('hello');
+      });
+    });
+
+    describe('given blockSeparator across multiple block nodes', () => {
+      it('forwards blockSeparator to content.textBetween', () => {
+        const text1 = new TextNode(textType, {}, 'hello');
+        const text2 = new TextNode(textType, {}, 'world');
+        const block1 = new Node(paragraphType, {}, from([text1]));
+        const block2 = new Node(paragraphType, {}, from([text2]));
+        const root = new Node(paragraphType, {}, from([block1, block2]));
+
+        const result = root.textBetween(0, root.content.size, '\n');
+
+        expect(result).toBe('hello\nworld');
+      });
+    });
+
+    describe('given leafText function over a leaf node', () => {
+      it('forwards leafText to content.textBetween', () => {
+        const imageType = new NodeType(
+          'image',
+          defaultMockSchema,
+          defaultNodeSpec
+        );
+        imageType.contentMatch = ContentMatch.empty;
+        const image = new Node(imageType, { alt: 'cat' });
+        const parent = new Node(paragraphType, {}, from([image]));
+
+        const result = parent.textBetween(
+          0,
+          parent.content.size,
+          '',
+          (n) => n.attrs['alt'] as string
+        );
+
+        expect(result).toBe('cat');
+      });
+    });
+  });
 });

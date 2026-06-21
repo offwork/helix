@@ -371,6 +371,15 @@ export class Node implements INode {
     return new Slice(content, $from.depth - depth, $to.depth - depth);
   }
 
+  textBetween(
+    from: number,
+    to: number,
+    blockSeparator?: string | null,
+    leafText?: string | null | ((leafNode: INode) => string)
+  ): string {
+    return this.content.textBetween(from, to, blockSeparator, leafText);
+  }
+
   toJSON(): NodeJSON {
     const json: NodeJSON = {
       type: this.type.name,
