@@ -15,6 +15,7 @@ export interface NodeSpec {
   inline?: boolean;
   isolating?: boolean;
   leafText?: (node: INode) => string
+  linebreakReplacement?: boolean;
   marks?: string;
   whitespace?: 'normal' | 'pre';
 }

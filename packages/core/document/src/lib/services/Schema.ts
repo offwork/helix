@@ -13,6 +13,7 @@ export class Schema {
   readonly nodes: Record<string, NodeType>;
   readonly marks: Record<string, MarkType>;
   readonly cached: Record<string, unknown> = {};
+  readonly linebreakReplacement: NodeType | null = null;
   readonly topNodeType: NodeType;
   readonly spec: SchemaSpec;
   readonly nodeFromJSON: (json: NodeJSON) => Node;
@@ -59,6 +60,16 @@ export class Schema {
 
       if (type.spec.marks === '') {
         type.markSet = [];
+      }
+
+      if (type.spec.linebreakReplacement) {
+        if (this.linebreakReplacement)
+          throw new RangeError('Multiple linebreak nodes defined');
+        if (!type.isInline || !type.isLeaf)
+          throw new RangeError(
+            'Linebreak replacement nodes must be inline leaf nodes'
+          );
+        this.linebreakReplacement = type;
       }
     }
 
