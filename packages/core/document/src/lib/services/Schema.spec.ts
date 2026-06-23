@@ -149,6 +149,51 @@ describe('Schema', () => {
       expect(schema.topNodeType).toBe(schema.nodes.paragraph);
     });
 
+    it('given no node spec has linebreakReplacement, linebreakReplacement is null', () => {
+      const schema = new Schema({
+        nodes: createSchemaSpec(),
+      });
+
+      expect(schema.linebreakReplacement).toBeNull();
+    });
+
+    it('given one inline leaf node with linebreakReplacement true, linebreakReplacement returns that NodeType', () => {
+      const schema = new Schema({
+        nodes: createSchemaSpec({
+          br: { content: '', inline: true, linebreakReplacement: true },
+        }),
+      });
+
+      expect(schema.linebreakReplacement).toBe(schema.nodes['br']);
+    });
+
+    it('given two nodes with linebreakReplacement true, throws Multiple linebreak nodes defined', () => {
+      expect(
+        () =>
+          new Schema({
+            nodes: createSchemaSpec({
+              newline: {
+                content: '',
+                inline: true,
+                linebreakReplacement: true,
+              }, // eski, unutulmuş
+              br: { content: '', inline: true, linebreakReplacement: true }, // yeni, <br> için eklenen
+            }),
+          })
+      ).toThrow('Multiple linebreak nodes defined');
+    });
+
+    it('given a non-inline-leaf node with linebreakReplacement true, throws Linebreak replacement nodes must be inline leaf nodes', () => {
+      expect(
+        () =>
+          new Schema({
+            nodes: createSchemaSpec({
+              br: { linebreakReplacement: true }, // inline: true unutulmuş → block sayılıyor, <div> gibi davranıyor
+            }),
+          })
+      ).toThrow('Linebreak replacement nodes must be inline leaf nodes');
+    });
+
     describe('spec', () => {
       describe('given a schema constructed with a spec', () => {
         it('returns the original spec', () => {
