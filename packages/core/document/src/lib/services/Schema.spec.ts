@@ -5,6 +5,7 @@ import { MarkType } from '../value-objects/MarkType';
 import { NodeType } from '../value-objects/NodeType';
 import { Schema } from './Schema';
 import { createSchemaSpec, createMarkSpec } from '../../testing';
+import { OrderedMap } from '../value-objects/OrderedMap';
 
 describe('Schema', () => {
   describe('constructor', () => {
@@ -192,6 +193,27 @@ describe('Schema', () => {
             }),
           })
       ).toThrow('Linebreak replacement nodes must be inline leaf nodes');
+    });
+
+    it('given nodes as an OrderedMap instance, registers the node types from it', () => {
+      const nodes = OrderedMap.from({
+        doc: { content: 'text*' },
+        text: {},
+      });
+
+      const schema = new Schema({ nodes });
+
+      expect(schema.nodes['text']).toBeDefined();
+      expect(schema.nodes['doc']).toBeDefined();
+    });
+
+    it('given marks as an OrderedMap instance, registers the mark types from it', () => {
+      const nodes = { doc: { content: 'text*' }, text: {} };
+      const marks = OrderedMap.from({ bold: {} });
+
+      const schema = new Schema({ nodes, marks });
+
+      expect(schema.marks['bold']).toBeDefined();
     });
 
     describe('spec', () => {
