@@ -1,8 +1,9 @@
 import { INode } from "../contracts";
+import { OrderedMap } from "../value-objects/OrderedMap";
 
 export interface SchemaSpec {
-  nodes: Record<string, NodeSpec>;
-  marks?: Record<string, MarkSpec>;
+  nodes: Record<string, NodeSpec> | OrderedMap<NodeSpec>;
+  marks?: Record<string, MarkSpec> | OrderedMap<MarkSpec>;
   topNode?: string;
 }
 

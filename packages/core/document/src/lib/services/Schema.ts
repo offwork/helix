@@ -8,6 +8,7 @@ import type { INode } from '../contracts/INode';
 import { MarkType } from '../value-objects/MarkType';
 import { NodeType } from '../value-objects/NodeType';
 import { NodeJSON } from '../contracts/types/NodeJSON';
+import { OrderedMap } from '../value-objects/OrderedMap';
 
 export class Schema {
   readonly nodes: Record<string, NodeType>;
@@ -26,19 +27,24 @@ export class Schema {
     this.validateParameter('nodes spec', spec.nodes);
     this.validateParameter('marks spec', spec.marks);
 
-    if (!spec.nodes['text']) {
+    const nodes = OrderedMap.from(spec.nodes);
+    const marks = OrderedMap.from(spec.marks ?? {});
+
+    if (!nodes.get('text')) {
       throw Error("Every schema needs a 'text' type");
     }
 
-    if (!spec.nodes['doc']) {
+    if (!nodes.get('doc')) {
       throw Error("Every schema needs a 'doc' type");
     }
 
-    if (spec.marks) {
-      const specs = Object.keys(spec.nodes).concat(Object.keys(spec.marks));
+    if (marks) {
+      const names: string[] = [];
+      nodes.forEach((name) => names.push(name));
+      marks.forEach((name) => names.push(name));
 
-      specs.forEach((item, index) => {
-        if (specs.indexOf(item) !== index) {
+      names.forEach((item, index) => {
+        if (names.indexOf(item) !== index) {
           throw Error(`${item} can not be both a node and a mark`);
         }
       });
@@ -47,7 +53,7 @@ export class Schema {
     this.nodes = {};
     this.marks = {};
 
-    this.populateRegistry(spec.nodes, spec.marks ?? {});
+    this.populateRegistry(nodes, marks);
 
     this.topNodeType = this.nodes[spec.topNode ?? 'doc'];
 
@@ -130,16 +136,17 @@ export class Schema {
   }
 
   private populateRegistry(
-    nodeSpec: Record<string, NodeSpec>,
-    markSpec: Record<string, MarkSpec>
+    nodeSpec: OrderedMap<NodeSpec>,
+    markSpec: OrderedMap<MarkSpec>
   ): void {
-    for (const [name, spec] of Object.entries(nodeSpec)) {
+    nodeSpec.forEach((name, spec) => {
       this.nodes[name] = new NodeType(name, this, spec);
-    }
+    });
 
-    Object.entries(markSpec).forEach(([name, spec], index) => {
+    let index = 0;
+    markSpec.forEach((name, spec) => {
       this.marks[name] = new MarkType(name, this, spec);
-      this.marks[name].rank = index;
+      this.marks[name].rank = index++;
       this.marks[name].excluded =
         spec.excludes === undefined ? [this.marks[name]] : [];
     });
