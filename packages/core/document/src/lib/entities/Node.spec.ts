@@ -430,11 +430,56 @@ describe('Node', () => {
   });
 
   describe('toString', () => {
-    // Node.spec.ts
-    it('given a node, returns string representation', () => {
-      const node = new Node(paragraphType, {});
+    describe('given a node', () => {
+      it('returns string representation', () => {
+        const node = new Node(paragraphType, {});
 
-      expect(node.toString()).toBe('paragraph');
+        expect(node.toString()).toBe('paragraph');
+      });
+    });
+
+    describe('given a node with content', () => {
+      it('returns the type name with content wrapped in parentheses', () => {
+        const node = new Node(headingType, {}, mockContent, []);
+
+        const result = node.toString();
+
+        expect(result).toBe('heading(<paragraph>)');
+      });
+    });
+
+    describe('given a node with one mark', () => {
+      it('wraps the result with the mark name', () => {
+        const mark = createMark(boldMarkType, {});
+        const node = new Node(paragraphType, {}, undefined, [mark]);
+
+        const result = node.toString();
+
+        expect(result).toBe('bold(paragraph)');
+      });
+    });
+
+    describe('given a node with two marks', () => {
+      it('wraps outermost-to-innermost in array order', () => {
+        const bold = createMark(boldMarkType, {});
+        const italic = createMark(italicMarkType, {});
+        const node = new Node(paragraphType, {}, undefined, [bold, italic]);
+
+        const result = node.toString();
+
+        expect(result).toBe('bold(italic(paragraph))');
+      });
+    });
+    describe('given spec.toDebugString is defined', () => {
+      it('returns its result', () => {
+        const spec = { attrs: {}, toDebugString: () => 'CUSTOM' };
+        const customType = new NodeType('custom', defaultMockSchema, spec);
+        const node = new Node(customType, {});
+
+        const result = node.toString();
+
+        expect(result).toBe('CUSTOM');
+      });
     });
   });
 

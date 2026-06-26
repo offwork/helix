@@ -251,7 +251,21 @@ export class Node implements INode {
   }
 
   toString(): string {
-    return this.type.name;
+    if (this.type.spec.toDebugString) {
+      return this.type.spec.toDebugString(this);
+    }
+
+    let name = this.type.name;
+
+    if (this.content.size > 0) {
+      name = `${name}(${this.content.toString()})`;
+    }
+
+    for (let i = this.marks.length - 1; i >= 0; i--) {
+      name = `${this.marks[i].type.name}(${name})`;
+    }
+
+    return name;
   }
 
   canReplace(
