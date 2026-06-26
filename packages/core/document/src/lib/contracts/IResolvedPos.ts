@@ -17,12 +17,13 @@ export interface IResolvedPos {
   index(depth?: number | null): number;
   indexAfter(depth?: number | null): number;
   marks(): readonly IMark[];
-  marksAcross($end: IResolvedPos): readonly IMark[] | null
+  marksAcross($end: IResolvedPos): readonly IMark[] | null;
   max(other: IResolvedPos): IResolvedPos;
   min(other: IResolvedPos): IResolvedPos;
   node(depth?: number | null): INode;
-  posAtIndex(index: number, depth?: number | null): number 
+  posAtIndex(index: number, depth?: number | null): number;
   sameParent(other: IResolvedPos): boolean;
   sharedDepth(pos: number): number;
   start(depth?: number | null): number;
+  toString(): string;
 }

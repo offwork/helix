@@ -239,6 +239,15 @@ export class ResolvedPos {
     return this.pos === other.pos && this.doc === other.doc;
   }
 
+  toString(): string {
+    let str = '';
+    for (let i = 1; i <= this.depth; i++) {
+      str +=
+        (str ? '/' : '') + this.node(i).type.name + '_' + this.index(i - 1);
+    }
+    return str + ':' + this.parentOffset;
+  }
+
   private resolveDepth(depth?: number | null): number {
     if (depth === null || depth === undefined) {
       return this.depth;

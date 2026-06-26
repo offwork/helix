@@ -762,4 +762,34 @@ describe('ResolvedPos', () => {
       expect(range).toBeNull();
     });
   });
+
+  describe('toString', () => {
+    describe('given a resolved position at depth 0', () => {
+      it('returns just the parentOffset', () => {
+        const resolvedPos = new ResolvedPos(
+          0,
+          [createMockNode('doc'), 0, 0],
+          4
+        );
+
+        const result = resolvedPos.toString();
+
+        expect(result).toBe(':4');
+      });
+    });
+
+    describe('given a resolved position at depth 1', () => {
+      it('returns the node path and parentOffset', () => {
+        const resolvedPos = new ResolvedPos(
+          5,
+          [createMockNode('doc'), 0, 0, createMockNode('paragraph'), 0, 0],
+          3
+        );
+
+        const result = resolvedPos.toString();
+
+        expect(result).toBe('paragraph_0:3');
+      });
+    });
+  });
 });
